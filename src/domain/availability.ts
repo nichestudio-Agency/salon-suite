@@ -14,3 +14,20 @@ export function mergeIntervals(intervals: Interval[]): Interval[] {
   }
   return merged;
 }
+
+/** Restituisce le porzioni libere di `base` dopo aver tolto gli intervalli `busy`. */
+export function subtractIntervals(base: Interval[], busy: Interval[]): Interval[] {
+  const mergedBusy = mergeIntervals(busy);
+  const result: Interval[] = [];
+  for (const b of base) {
+    let cursor = b.start;
+    for (const x of mergedBusy) {
+      if (x.end <= cursor || x.start >= b.end) continue; // nessuna sovrapposizione utile
+      if (x.start > cursor) result.push({ start: cursor, end: x.start });
+      cursor = Math.max(cursor, x.end);
+      if (cursor >= b.end) break;
+    }
+    if (cursor < b.end) result.push({ start: cursor, end: b.end });
+  }
+  return result;
+}
