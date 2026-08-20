@@ -98,7 +98,7 @@ salons/{salonId}/operators/{operatorId}
 salons/{salonId}/services/{serviceId}
   titolo: string
   descrizione: string
-  prezzo: number              # centesimi o decimale (da fissare in implementazione)
+  prezzo: number              # in centesimi (interi), per evitare errori di arrotondamento
   durataMin: number
   attivo: boolean
 
