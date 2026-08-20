@@ -73,3 +73,27 @@ export function resolveWorkingHours(
   }
   return salon[day] ?? [];
 }
+
+export interface AvailabilityInput {
+  salonHours: WeeklyHours;
+  operatorHours: WeeklyHours | undefined;
+  day: Weekday;
+  busy: Interval[]; // prenotazioni in_attesa + confermate dell'operatore quel giorno
+  durationMin: number;
+  stepMin: number;
+}
+
+/**
+ * Orchestratore: orari di lavoro effettivi -> sottrai gli impegni ->
+ * genera gli orari di inizio col passo. Restituisce minuti dalla mezzanotte.
+ */
+export function computeAvailableStartTimes(input: AvailabilityInput): number[] {
+  const working = resolveWorkingHours(
+    input.salonHours,
+    input.operatorHours,
+    input.day
+  );
+  if (working.length === 0) return [];
+  const free = subtractIntervals(working, input.busy);
+  return generateStartTimes(free, input.durationMin, input.stepMin);
+}

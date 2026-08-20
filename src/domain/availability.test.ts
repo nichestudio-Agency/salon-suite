@@ -157,3 +157,48 @@ describe("resolveWorkingHours", () => {
     expect(resolveWorkingHours(salonHours, opHours, "lun")).toEqual([]);
   });
 });
+
+import { computeAvailableStartTimes } from "./availability";
+
+describe("computeAvailableStartTimes", () => {
+  it("scenario completo dall'esempio approvato", () => {
+    // Salone lun 9:00-13:00, operatore senza override.
+    // Occupato 9:00-10:00 e 11:30-12:00. Servizio 30', passo 15'.
+    const starts = computeAvailableStartTimes({
+      salonHours: { lun: [{ start: 540, end: 780 }] },
+      operatorHours: undefined,
+      day: "lun",
+      busy: [
+        { start: 540, end: 600 },
+        { start: 690, end: 720 },
+      ],
+      durationMin: 30,
+      stepMin: 15,
+    });
+    expect(starts).toEqual([600, 615, 630, 645, 660, 720, 735, 750]);
+  });
+
+  it("giorno di chiusura -> nessuna disponibilità", () => {
+    const starts = computeAvailableStartTimes({
+      salonHours: { lun: [{ start: 540, end: 780 }] },
+      operatorHours: undefined,
+      day: "mer",
+      busy: [],
+      durationMin: 30,
+      stepMin: 15,
+    });
+    expect(starts).toEqual([]);
+  });
+
+  it("l'override part-time dell'operatore restringe la disponibilità", () => {
+    const starts = computeAvailableStartTimes({
+      salonHours: { lun: [{ start: 540, end: 1140 }] }, // 9-19
+      operatorHours: { lun: [{ start: 600, end: 660 }] }, // 10-11
+      day: "lun",
+      busy: [],
+      durationMin: 30,
+      stepMin: 15,
+    });
+    expect(starts).toEqual([600, 615, 630]); // 10:00,10:15,10:30 (10:30+30=11:00 ok)
+  });
+});
