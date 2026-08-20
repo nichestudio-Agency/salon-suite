@@ -52,3 +52,24 @@ export function generateStartTimes(
   }
   return starts;
 }
+
+export type Weekday = "lun" | "mar" | "mer" | "gio" | "ven" | "sab" | "dom";
+
+/** Orari settimanali: per ogni giorno, zero o più fasce di lavoro. */
+export type WeeklyHours = Partial<Record<Weekday, Interval[]>>;
+
+/**
+ * Risolve gli orari di lavoro effettivi per un giorno, con logica ibrida:
+ * se l'operatore ha un override per quel giorno (anche array vuoto = libero)
+ * vince quello, altrimenti valgono gli orari del salone.
+ */
+export function resolveWorkingHours(
+  salon: WeeklyHours,
+  operator: WeeklyHours | undefined,
+  day: Weekday
+): Interval[] {
+  if (operator && Object.prototype.hasOwnProperty.call(operator, day)) {
+    return operator[day] ?? [];
+  }
+  return salon[day] ?? [];
+}

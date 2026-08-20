@@ -125,3 +125,35 @@ describe("generateStartTimes", () => {
     ]);
   });
 });
+
+import { resolveWorkingHours, type WeeklyHours } from "./availability";
+
+const salonHours: WeeklyHours = {
+  lun: [{ start: 540, end: 1140 }], // 9:00-19:00
+  mar: [{ start: 540, end: 1140 }],
+  // mercoledì assente = salone chiuso
+};
+
+describe("resolveWorkingHours", () => {
+  it("usa gli orari del salone quando l'operatore non ha override", () => {
+    expect(resolveWorkingHours(salonHours, undefined, "lun")).toEqual([
+      { start: 540, end: 1140 },
+    ]);
+  });
+
+  it("usa l'override dell'operatore quando presente per quel giorno", () => {
+    const opHours: WeeklyHours = { lun: [{ start: 600, end: 780 }] }; // part-time 10-13
+    expect(resolveWorkingHours(salonHours, opHours, "lun")).toEqual([
+      { start: 600, end: 780 },
+    ]);
+  });
+
+  it("giorno di chiusura del salone -> nessun orario", () => {
+    expect(resolveWorkingHours(salonHours, undefined, "mer")).toEqual([]);
+  });
+
+  it("override con giorno libero esplicito (array vuoto) -> nessun orario", () => {
+    const opHours: WeeklyHours = { lun: [] }; // operatore libero il lunedì
+    expect(resolveWorkingHours(salonHours, opHours, "lun")).toEqual([]);
+  });
+});
