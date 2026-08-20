@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { mergeIntervals } from "./availability";
+import {
+  mergeIntervals,
+  subtractIntervals,
+  generateStartTimes,
+  resolveWorkingHours,
+  computeAvailableStartTimes,
+  type WeeklyHours,
+} from "./availability";
 
 describe("mergeIntervals", () => {
   it("ordina e fonde intervalli che si toccano o sovrappongono", () => {
@@ -32,8 +39,6 @@ describe("mergeIntervals", () => {
     expect(mergeIntervals([])).toEqual([]);
   });
 });
-
-import { subtractIntervals } from "./availability";
 
 describe("subtractIntervals", () => {
   it("rimuove gli intervalli occupati dagli orari di lavoro", () => {
@@ -81,9 +86,25 @@ describe("subtractIntervals", () => {
       { start: 840, end: 1080 },
     ]);
   });
-});
 
-import { generateStartTimes } from "./availability";
+  it("ignora gli intervalli occupati a lunghezza zero", () => {
+    expect(
+      subtractIntervals([{ start: 540, end: 780 }], [{ start: 600, end: 600 }])
+    ).toEqual([{ start: 540, end: 780 }]);
+  });
+
+  it("ritaglia un occupato che sborda oltre l'orario di lavoro", () => {
+    expect(
+      subtractIntervals(
+        [{ start: 540, end: 780 }],
+        [
+          { start: 500, end: 560 },
+          { start: 750, end: 800 },
+        ]
+      )
+    ).toEqual([{ start: 560, end: 750 }]);
+  });
+});
 
 describe("generateStartTimes", () => {
   it("passo 15 min: riproduce l'esempio approvato (servizio da 30')", () => {
@@ -126,8 +147,6 @@ describe("generateStartTimes", () => {
   });
 });
 
-import { resolveWorkingHours, type WeeklyHours } from "./availability";
-
 const salonHours: WeeklyHours = {
   lun: [{ start: 540, end: 1140 }], // 9:00-19:00
   mar: [{ start: 540, end: 1140 }],
@@ -157,8 +176,6 @@ describe("resolveWorkingHours", () => {
     expect(resolveWorkingHours(salonHours, opHours, "lun")).toEqual([]);
   });
 });
-
-import { computeAvailableStartTimes } from "./availability";
 
 describe("computeAvailableStartTimes", () => {
   it("scenario completo dall'esempio approvato", () => {

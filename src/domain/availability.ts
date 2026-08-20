@@ -17,7 +17,7 @@ export function mergeIntervals(intervals: Interval[]): Interval[] {
 
 /** Restituisce le porzioni libere di `base` dopo aver tolto gli intervalli `busy`. */
 export function subtractIntervals(base: Interval[], busy: Interval[]): Interval[] {
-  const mergedBusy = mergeIntervals(busy);
+  const mergedBusy = mergeIntervals(busy.filter((b) => b.end > b.start));
   const result: Interval[] = [];
   for (const b of base) {
     let cursor = b.start;
