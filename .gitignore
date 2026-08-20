@@ -6,3 +6,20 @@ node_modules/
 .firebase/
 dist/
 build/
+
+# Vite
+dist-ssr/
+*.local
+logs
+*.log
+npm-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
