@@ -31,3 +31,24 @@ export function subtractIntervals(base: Interval[], busy: Interval[]): Interval[
   }
   return result;
 }
+
+/**
+ * Enumera gli orari di inizio (minuti dalla mezzanotte) allineati alla griglia
+ * del passo `stepMin`, tenendo solo quelli in cui [inizio, inizio+durataMin]
+ * rientra interamente in un intervallo libero.
+ */
+export function generateStartTimes(
+  free: Interval[],
+  durationMin: number,
+  stepMin: number
+): number[] {
+  const starts: number[] = [];
+  for (const iv of free) {
+    let start = Math.ceil(iv.start / stepMin) * stepMin;
+    while (start + durationMin <= iv.end) {
+      starts.push(start);
+      start += stepMin;
+    }
+  }
+  return starts;
+}
