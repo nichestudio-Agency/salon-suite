@@ -69,7 +69,7 @@ Create `firebase.json`:
   },
   "emulators": {
     "auth": { "port": 9099 },
-    "firestore": { "port": 8080 },
+    "firestore": { "port": 8085 },
     "ui": { "enabled": false },
     "singleProjectMode": true
   }
@@ -403,7 +403,7 @@ let emulatorsConnected = false;
 export function connectEmulators(
   host = "127.0.0.1",
   authPort = 9099,
-  firestorePort = 8080
+  firestorePort = 8085
 ): void {
   if (emulatorsConnected) return;
   connectAuthEmulator(auth, `http://${host}:${authPort}`, { disableWarnings: true });
@@ -584,14 +584,22 @@ git commit -m "feat(firebase): servizio auth (registerClient/signIn/signOut) + t
 ### Task 7: Security Rules multi-tenant + test
 
 **Files:**
-- Modify: `firestore.rules`
+- Modify: `firestore.rules`, `tsconfig.app.json`
 - Test: `src/firebase/rules.emu.test.ts`
+
+- [ ] **Step 0: Rendi visibile `@types/node` ai file sotto `src`**
+
+Il test delle rules importa `readFileSync` da `node:fs`. `tsconfig.app.json` ha `"types": ["vite/client"]`, che limita i tipi ambientali e nasconde `@types/node`. Aggiungi `"node"` all'array:
+```jsonc
+// tsconfig.app.json → compilerOptions.types
+"types": ["vite/client", "node"]
+```
 
 - [ ] **Step 1: Scrivi i test delle rules (falliscono con le regole attuali permissive)**
 
 Create `src/firebase/rules.emu.test.ts`:
 ```ts
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
 import {
   initializeTestEnvironment,
@@ -609,7 +617,7 @@ beforeAll(async () => {
     firestore: {
       rules: readFileSync("firestore.rules", "utf8"),
       host: "127.0.0.1",
-      port: 8080,
+      port: 8085,
     },
   });
 });

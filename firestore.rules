@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isStaffOf(salonId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userData().salonId == salonId
+        && userData().ruolo in ['owner', 'staff'];
+    }
+
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid)
+        && request.resource.data.ruolo == 'cliente'
+        && request.resource.data.keys().hasOnly(['nome','email','sesso','dataNascita','ruolo','fcmTokens']);
+      allow update: if isSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['nome','email','sesso','dataNascita','fcmTokens']);
+      allow delete: if false;
+    }
+
+    match /salons/{salonId} {
+      allow read: if isSignedIn();
+      allow write: if isStaffOf(salonId);
+
+      match /operators/{operatorId} {
+        allow read: if isSignedIn();
+        allow write: if isStaffOf(salonId);
+      }
+
+      match /services/{serviceId} {
+        allow read: if isSignedIn();
+        allow write: if isStaffOf(salonId);
+      }
+
+      match /bookings/{bookingId} {
+        allow read: if isSignedIn()
+          && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
+        allow create: if isSignedIn()
+          && request.resource.data.clientId == request.auth.uid
+          && request.resource.data.stato == 'in_attesa';
+        allow update: if isStaffOf(salonId)
+          || (isSignedIn()
+              && resource.data.clientId == request.auth.uid
+              && request.resource.data.stato == 'annullata'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato']));
+        allow delete: if false;
+      }
+    }
+  }
+}
