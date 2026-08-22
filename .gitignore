@@ -6,6 +6,7 @@ node_modules/
 .firebase/
 dist/
 build/
+functions/lib/
 
 # Vite
 dist-ssr/
