@@ -15,30 +15,33 @@ export const createSalon = onCall<CreateSalonData>(async (request) => {
   if (!uid) throw new HttpsError("unauthenticated", "Devi essere autenticato.");
 
   const { nome, timezone, orariApertura } = request.data ?? ({} as CreateSalonData);
-  if (!nome || !timezone) {
+  if (!nome || !nome.trim() || !timezone) {
     throw new HttpsError("invalid-argument", "Nome del salone e fuso orario sono obbligatori.");
   }
 
   const db = getFirestore();
   const userRef = db.doc(`users/${uid}`);
-  const userSnap = await userRef.get();
-  if (userSnap.exists && userSnap.data()?.salonId) {
-    throw new HttpsError("failed-precondition", "Questo utente è già legato a un salone.");
-  }
-
   const salonRef = db.collection("salons").doc();
+
   await db.runTransaction(async (tx) => {
+    const userSnap = await tx.get(userRef);
+    if (userSnap.exists) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Questo utente è già registrato e non può creare un salone."
+      );
+    }
     tx.set(salonRef, {
-      nome,
+      nome: nome.trim(),
       timezone,
       orariApertura: orariApertura ?? {},
       impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
     });
-    tx.set(
-      userRef,
-      { ruolo: "owner", salonId: salonRef.id, email: request.auth?.token.email ?? null },
-      { merge: true }
-    );
+    tx.set(userRef, {
+      ruolo: "owner",
+      salonId: salonRef.id,
+      email: request.auth?.token.email ?? null,
+    });
   });
 
   return { salonId: salonRef.id };

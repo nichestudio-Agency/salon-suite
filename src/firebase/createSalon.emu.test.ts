@@ -3,6 +3,7 @@ import { getDoc, doc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { auth, db, functions, connectEmulators } from "./app";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { registerClient } from "./auth";
 
 beforeAll(() => connectEmulators());
 afterEach(async () => { await signOut(auth); });
@@ -52,6 +53,17 @@ describe("createSalon", () => {
     await newUser();
     await expect(
       call()({ nome: "", timezone: "Europe/Rome", orariApertura: {} })
+    ).rejects.toThrow();
+  });
+
+  it("rifiuta un cliente esistente che tenta di crearsi un salone", async () => {
+    const email = `cli_${Date.now()}@ex.com`;
+    await registerClient({
+      email, password: "password123", nome: "Cliente",
+      sesso: "maschile", dataNascita: "1990-01-01",
+    });
+    await expect(
+      call()({ nome: "Salone Furbo", timezone: "Europe/Rome", orariApertura: {} })
     ).rejects.toThrow();
   });
 });

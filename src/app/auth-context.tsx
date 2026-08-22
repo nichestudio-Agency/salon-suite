@@ -48,15 +48,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       setState((s) => ({ ...s, loading: true, user }));
-      unsubProfile = onSnapshot(doc(db, "users", user.uid), (snap) => {
-        const data = snap.data();
-        setState({
-          loading: false,
-          user,
-          role: (data?.ruolo as UserRole) ?? null,
-          salonId: (data?.salonId as string) ?? null,
-        });
-      });
+      unsubProfile = onSnapshot(
+        doc(db, "users", user.uid),
+        (snap) => {
+          const data = snap.data();
+          setState({
+            loading: false,
+            user,
+            role: (data?.ruolo as UserRole) ?? null,
+            salonId: (data?.salonId as string) ?? null,
+          });
+        },
+        () => {
+          setState({ loading: false, user, role: null, salonId: null });
+        }
+      );
     });
     return () => {
       unsubAuth();
