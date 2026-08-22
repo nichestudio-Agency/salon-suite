@@ -69,7 +69,7 @@ Create `firebase.json`:
   },
   "emulators": {
     "auth": { "port": 9099 },
-    "firestore": { "port": 8080 },
+    "firestore": { "port": 8085 },
     "ui": { "enabled": false },
     "singleProjectMode": true
   }
