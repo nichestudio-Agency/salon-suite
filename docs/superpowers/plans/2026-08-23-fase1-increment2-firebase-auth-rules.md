@@ -403,7 +403,7 @@ let emulatorsConnected = false;
 export function connectEmulators(
   host = "127.0.0.1",
   authPort = 9099,
-  firestorePort = 8080
+  firestorePort = 8085
 ): void {
   if (emulatorsConnected) return;
   connectAuthEmulator(auth, `http://${host}:${authPort}`, { disableWarnings: true });
@@ -609,7 +609,7 @@ beforeAll(async () => {
     firestore: {
       rules: readFileSync("firestore.rules", "utf8"),
       host: "127.0.0.1",
-      port: 8080,
+      port: 8085,
     },
   });
 });
