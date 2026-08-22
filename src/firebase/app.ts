@@ -5,6 +5,7 @@ import {
   connectFirestoreEmulator,
   type Firestore,
 } from "firebase/firestore";
+import { getFunctions, connectFunctionsEmulator, type Functions } from "firebase/functions";
 
 const useEmulator =
   import.meta.env?.VITE_USE_EMULATOR === "true" ||
@@ -20,9 +21,10 @@ const config = {
 export const app: FirebaseApp = initializeApp(config);
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
+export const functions: Functions = getFunctions(app);
 
 let emulatorsConnected = false;
-/** Aggancia auth+firestore agli emulatori. Idempotente. */
+/** Aggancia auth+firestore+functions agli emulatori. Idempotente. */
 export function connectEmulators(
   host = "127.0.0.1",
   authPort = 9099,
@@ -31,6 +33,7 @@ export function connectEmulators(
   if (emulatorsConnected) return;
   connectAuthEmulator(auth, `http://${host}:${authPort}`, { disableWarnings: true });
   connectFirestoreEmulator(db, host, firestorePort);
+  connectFunctionsEmulator(functions, host, 5001);
   emulatorsConnected = true;
 }
 
