@@ -37,6 +37,9 @@ export async function registerClient(
     ruolo: "cliente",
     fcmTokens: [],
   };
+  // Nota: se questa setDoc fallisce dopo la creazione dell'utente auth, l'utente
+  // resta orfano (auth creato ma senza profilo). La pulizia (deleteUser) sarà
+  // gestita in un increment successivo.
   await setDoc(doc(db, "users", cred.user.uid), profile);
   return { uid: cred.user.uid };
 }

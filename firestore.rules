@@ -20,8 +20,12 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if isSelf(uid);
-      allow create: if isSelf(uid) && request.resource.data.ruolo == 'cliente';
-      allow update: if isSelf(uid);
+      allow create: if isSelf(uid)
+        && request.resource.data.ruolo == 'cliente'
+        && request.resource.data.keys().hasOnly(['nome','email','sesso','dataNascita','ruolo','fcmTokens']);
+      allow update: if isSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['nome','email','sesso','dataNascita','fcmTokens']);
       allow delete: if false;
     }
 
@@ -48,7 +52,8 @@ service cloud.firestore {
         allow update: if isStaffOf(salonId)
           || (isSignedIn()
               && resource.data.clientId == request.auth.uid
-              && request.resource.data.stato == 'annullata');
+              && request.resource.data.stato == 'annullata'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato']));
         allow delete: if false;
       }
     }

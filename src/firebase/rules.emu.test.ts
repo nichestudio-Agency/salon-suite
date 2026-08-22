@@ -80,6 +80,42 @@ describe("documento utente", () => {
       })
     );
   });
+  it("il cliente NON può auto-promuoversi a staff via update", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/cli1"), {
+        nome: "Cli Uno", email: "c1@x.it", sesso: "maschile",
+        dataNascita: "1990-01-01", ruolo: "cliente", fcmTokens: [],
+      });
+    });
+    await assertFails(
+      setDoc(doc(client("cli1"), "users/cli1"), {
+        nome: "Cli Uno", email: "c1@x.it", sesso: "maschile",
+        dataNascita: "1990-01-01", ruolo: "staff", salonId: "salonA", fcmTokens: [],
+      })
+    );
+  });
+  it("il cliente può aggiornare i propri dati anagrafici", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/cli1"), {
+        nome: "Cli Uno", email: "c1@x.it", sesso: "maschile",
+        dataNascita: "1990-01-01", ruolo: "cliente", fcmTokens: [],
+      });
+    });
+    await assertSucceeds(
+      setDoc(doc(client("cli1"), "users/cli1"), {
+        nome: "Cli Uno Aggiornato", email: "c1@x.it", sesso: "maschile",
+        dataNascita: "1990-01-01", ruolo: "cliente", fcmTokens: ["tok1"],
+      })
+    );
+  });
+  it("il cliente NON può creare il proprio doc con campi extra (es. salonId)", async () => {
+    await assertFails(
+      setDoc(doc(client("cli1"), "users/cli1"), {
+        nome: "Cli", email: "c@x.it", sesso: "altro",
+        dataNascita: "1990-01-01", ruolo: "cliente", salonId: "salonA", fcmTokens: [],
+      })
+    );
+  });
 });
 
 describe("isolamento multi-salone sui servizi", () => {
@@ -150,6 +186,22 @@ describe("prenotazioni", () => {
       setDoc(doc(client("cli1"), "salons/salonA/bookings/b1"), {
         clientId: "cli1", operatorId: "op1", serviceId: "s1",
         date: "2026-08-24", startMin: 600, endMin: 630, stato: "confermata",
+      })
+    );
+  });
+  it("il cliente può annullare la propria prenotazione (solo stato)", async () => {
+    await assertSucceeds(
+      setDoc(doc(client("cli1"), "salons/salonA/bookings/b1"), {
+        clientId: "cli1", operatorId: "op1", serviceId: "s1",
+        date: "2026-08-24", startMin: 600, endMin: 630, stato: "annullata",
+      })
+    );
+  });
+  it("il cliente NON può cambiare altri campi mentre annulla", async () => {
+    await assertFails(
+      setDoc(doc(client("cli1"), "salons/salonA/bookings/b1"), {
+        clientId: "cli1", operatorId: "op1", serviceId: "s1",
+        date: "2026-08-24", startMin: 999, endMin: 630, stato: "annullata",
       })
     );
   });
