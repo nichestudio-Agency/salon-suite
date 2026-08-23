@@ -82,6 +82,30 @@ export interface Booking {
   stato: BookingStatus;
 }
 
+export type OrderStatus = "in_attesa" | "pronto" | "ritirato" | "annullato";
+
+/** Riga d'ordine: snapshot immutabile del prodotto al momento dell'ordine. */
+export interface OrderItem {
+  productId: string;
+  titolo: string;
+  /** Prezzo unitario in centesimi, congelato al momento dell'ordine. */
+  prezzo: number;
+  qta: number;
+}
+
+/** Documento in `salons/{salonId}/orders/{id}`. */
+export interface Order {
+  clientId: string;
+  clientNome?: string;
+  clientEmail?: string;
+  items: OrderItem[];
+  /** Totale in centesimi, calcolato dal server. */
+  totale: number;
+  stato: OrderStatus;
+}
+
+export type OrderWithId = Order & { id: string };
+
 /** Un impegno che occupa l'agenda: le prenotazioni in_attesa e confermate. */
 export function bookingToInterval(b: Pick<Booking, "startMin" | "endMin">): Interval {
   return { start: b.startMin, end: b.endMin };

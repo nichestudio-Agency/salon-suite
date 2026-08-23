@@ -67,6 +67,24 @@ service cloud.firestore {
         allow write: if isStaffOf(salonId);
       }
 
+      match /orders/{orderId} {
+        allow read: if isSignedIn()
+          && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
+        // Le creazioni passano dalla Cloud Function createOrder.
+        allow create: if false;
+        allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato'])
+          && ((isStaffOf(salonId)
+               && ((resource.data.stato == 'in_attesa'
+                    && request.resource.data.stato in ['pronto', 'annullato'])
+                   || (resource.data.stato == 'pronto'
+                       && request.resource.data.stato in ['ritirato', 'annullato'])))
+              || (isSignedIn()
+                  && resource.data.clientId == request.auth.uid
+                  && resource.data.stato == 'in_attesa'
+                  && request.resource.data.stato == 'annullato'));
+        allow delete: if false;
+      }
+
       match /notifications/{notificationId} {
         allow read: if isSignedIn()
           && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
