@@ -61,6 +61,12 @@ service cloud.firestore {
              ));
         allow delete: if false;
       }
+
+      match /notifications/{notificationId} {
+        allow read: if isSignedIn()
+          && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
+        allow write: if false;
+      }
     }
   }
 }
