@@ -106,6 +106,20 @@ export interface Order {
 
 export type OrderWithId = Order & { id: string };
 
+export type CouponType = "percentuale" | "fisso";
+
+/** Documento in `salons/{salonId}/coupons/{id}`. */
+export interface Coupon {
+  /** Codice personalizzato dal salone, es. "ESTATE20". */
+  codice: string;
+  tipo: CouponType;
+  /** percentuale: 0-100; fisso: centesimi interi. */
+  valore: number;
+  /** Scadenza "YYYY-MM-DD", opzionale. */
+  scadenza?: string;
+  attivo: boolean;
+}
+
 /** Un impegno che occupa l'agenda: le prenotazioni in_attesa e confermate. */
 export function bookingToInterval(b: Pick<Booking, "startMin" | "endMin">): Interval {
   return { start: b.startMin, end: b.endMin };

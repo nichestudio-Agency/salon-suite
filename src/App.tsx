@@ -12,6 +12,7 @@ import { CatalogPage } from "./pages/CatalogPage";
 import { HoursPage } from "./pages/HoursPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MyOrdersPage } from "./pages/MyOrdersPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { OperatorsPage } from "./pages/OperatorsPage";
 import { OrdersPage } from "./pages/OrdersPage";
@@ -76,6 +77,7 @@ export default function App() {
               <Route path="orari" element={<HoursPage />} />
               <Route path="prodotti" element={<ProductsPage />} />
               <Route path="ordini" element={<OrdersPage />} />
+              <Route path="notifiche" element={<NotificationsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/area" replace />} />
           </Routes>
