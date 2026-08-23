@@ -120,6 +120,11 @@ export const birthdayNotifications = onSchedule("every day 09:00", async () => {
   const today = todayYMD();
   const salons = await db.collection("salons").get();
   for (const salon of salons.docs) {
-    await processSalon(db, salon.id, today);
+    // Isolamento per salone: l'errore su un salone non deve bloccare gli altri.
+    try {
+      await processSalon(db, salon.id, today);
+    } catch (error) {
+      console.error(`birthdayNotifications: salone ${salon.id} fallito`, error);
+    }
   }
 });
