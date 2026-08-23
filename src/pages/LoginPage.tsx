@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signIn } from "../firebase/auth";
+import "./customer.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -20,14 +21,40 @@ export function LoginPage() {
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      <h1>Accedi</h1>
-      <input aria-label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <input aria-label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-      {error && <p role="alert">{error}</p>}
-      <button type="submit">Accedi</button>
-      <p>Sei un cliente? <Link to="/registrati">Registrati</Link></p>
-      <p>Nuovo salone? <Link to="/registrati-salone">Registra il salone</Link></p>
-    </form>
+    <main className="customer-shell customer-shell--narrow">
+      <form className="booking-panel auth-panel" onSubmit={onSubmit}>
+        <span className="customer-shell__eyebrow">Barber Shop</span>
+        <h1>Accedi</h1>
+
+        <div className="booking-field">
+          <label htmlFor="login-email">Email</label>
+          <input
+            id="login-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="booking-field">
+          <label htmlFor="login-password">Password</label>
+          <input
+            id="login-password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {error && <p className="customer-error" role="alert">{error}</p>}
+        <button className="customer-button" type="submit">Accedi</button>
+
+        <p className="auth-alt">Sei un cliente? <Link to="/registrati">Registrati</Link></p>
+        <p className="auth-alt">Nuovo salone? <Link to="/registrati-salone">Registra il salone</Link></p>
+      </form>
+    </main>
   );
 }
