@@ -4,6 +4,7 @@ import { RequireOwner } from "./app/RequireOwner";
 import { DashboardLayout } from "./app/DashboardLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { ServicesPage } from "./pages/ServicesPage";
 
 function Placeholder({ nome }: { nome: string }) {
   return <h2>{nome} (in arrivo nell'Increment 3b)</h2>;
@@ -25,7 +26,7 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="servizi" replace />} />
-            <Route path="servizi" element={<Placeholder nome="Servizi" />} />
+            <Route path="servizi" element={<ServicesPage />} />
             <Route path="operatori" element={<Placeholder nome="Operatori" />} />
             <Route path="orari" element={<Placeholder nome="Orari" />} />
           </Route>
