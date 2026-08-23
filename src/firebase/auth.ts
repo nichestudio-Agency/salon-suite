@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
@@ -40,10 +41,14 @@ export async function registerClient(
     ...(input.salonId ? { salonId: input.salonId } : {}),
     fcmTokens: [],
   };
-  // Nota: se questa setDoc fallisce dopo la creazione dell'utente auth, l'utente
-  // resta orfano (auth creato ma senza profilo). La pulizia (deleteUser) sarà
-  // gestita in un increment successivo.
-  await setDoc(doc(db, "users", cred.user.uid), profile);
+  try {
+    await setDoc(doc(db, "users", cred.user.uid), profile);
+  } catch (error) {
+    // La registrazione è atomica dal punto di vista dell'app: niente account
+    // Auth privi del profilo necessario per determinare ruolo e tenant.
+    await deleteUser(cred.user).catch(() => undefined);
+    throw error;
+  }
   return { uid: cred.user.uid };
 }
 
