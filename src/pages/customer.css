@@ -155,6 +155,16 @@
   color: #a5362b;
 }
 
+.auth-alt {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.auth-alt a {
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .booking-grid {
     grid-template-columns: 1fr;

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerOwner } from "../firebase/onboarding";
 import type { WeeklyHours } from "../domain/availability";
+import "./customer.css";
 
 /** Orari di default: Lun–Sab 9:00–19:00 (rifiniti poi nella sezione Orari). */
 const DEFAULT_HOURS: WeeklyHours = {
@@ -42,14 +43,51 @@ export function OnboardingPage() {
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      <h1>Crea il tuo salone</h1>
-      <input aria-label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <input aria-label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-      <input aria-label="Nome del salone" value={nomeSalone} onChange={(e) => setNomeSalone(e.target.value)} required />
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={busy}>Crea il salone</button>
-      <p>Hai già un salone? <Link to="/accedi">Accedi</Link></p>
-    </form>
+    <main className="customer-shell customer-shell--narrow">
+      <form className="booking-panel auth-panel" onSubmit={onSubmit}>
+        <span className="customer-shell__eyebrow">Registra il salone</span>
+        <h1>Crea il tuo salone</h1>
+
+        <div className="booking-field">
+          <label htmlFor="ob-email">Email</label>
+          <input
+            id="ob-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="booking-field">
+          <label htmlFor="ob-password">Password</label>
+          <input
+            id="ob-password"
+            type="password"
+            minLength={6}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="booking-field">
+          <label htmlFor="ob-nome">Nome del salone</label>
+          <input
+            id="ob-nome"
+            value={nomeSalone}
+            onChange={(e) => setNomeSalone(e.target.value)}
+            required
+          />
+        </div>
+
+        {error && <p className="customer-error" role="alert">{error}</p>}
+        <button className="customer-button" type="submit" disabled={busy}>
+          {busy ? "Creazione in corso…" : "Crea il salone"}
+        </button>
+
+        <p className="auth-alt">Hai già un salone? <Link to="/accedi">Accedi</Link></p>
+      </form>
+    </main>
   );
 }
