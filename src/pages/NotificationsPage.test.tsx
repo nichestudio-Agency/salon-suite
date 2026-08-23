@@ -5,12 +5,14 @@ import { NotificationsPage } from "./NotificationsPage";
 import * as repo from "../firebase/coupon-repo";
 import * as authCtx from "../app/auth-context";
 import * as campaignApi from "../firebase/campaign";
+import * as salonRepo from "../firebase/salon-repo";
 
 beforeEach(() => {
   vi.restoreAllMocks();
   vi.spyOn(authCtx, "useAuth").mockReturnValue({
     loading: false, user: {} as never, role: "owner", salonId: "s1",
   });
+  vi.spyOn(salonRepo, "getSalon").mockResolvedValue(null);
 });
 
 describe("NotificationsPage — coupon", () => {
@@ -57,5 +59,24 @@ describe("NotificationsPage — coupon", () => {
       )
     );
     expect(await screen.findByText(/7 destinatari/i)).toBeInTheDocument();
+  });
+
+  it("salva la configurazione compleanno", async () => {
+    vi.spyOn(repo, "listCoupons").mockResolvedValue([]);
+    vi.spyOn(salonRepo, "getSalon").mockResolvedValue({
+      nome: "S", timezone: "Europe/Rome", orariApertura: {},
+      impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
+    });
+    const save = vi.spyOn(salonRepo, "updateBirthdayConfig").mockResolvedValue();
+    render(<NotificationsPage />);
+    await userEvent.click(await screen.findByLabelText("Auguri di compleanno attivi"));
+    await userEvent.type(screen.getByLabelText("Messaggio di compleanno"), "Tanti auguri!");
+    await userEvent.click(screen.getByRole("button", { name: /salva compleanno/i }));
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({ attivo: true, messaggio: "Tanti auguri!" })
+      )
+    );
   });
 });
