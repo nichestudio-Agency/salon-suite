@@ -1,3 +1,4 @@
+import "./dashboard.css";
 import { NavLink, Outlet } from "react-router-dom";
 import { signOutUser } from "../firebase/auth";
 
