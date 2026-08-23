@@ -1,3 +1,4 @@
+import type { Timestamp } from "firebase/firestore";
 import type { Interval } from "./time";
 import type { WeeklyHours } from "./availability";
 
@@ -118,6 +119,24 @@ export interface Coupon {
   /** Scadenza "YYYY-MM-DD", opzionale. */
   scadenza?: string;
   attivo: boolean;
+}
+
+export interface CampaignFilters {
+  sesso?: "maschile" | "femminile";
+  /** Data di nascita minima "YYYY-MM-DD" (nato da). */
+  natoDa?: string;
+  /** Data di nascita massima "YYYY-MM-DD" (nato a). */
+  natoA?: string;
+}
+
+/** Documento in `salons/{salonId}/campaigns/{id}` (audit, creato dalla Cloud Function). */
+export interface Campaign {
+  filtri: CampaignFilters;
+  titolo: string;
+  testo: string;
+  couponId?: string | null;
+  recipientCount: number;
+  sentAt?: Timestamp;
 }
 
 /** Un impegno che occupa l'agenda: le prenotazioni in_attesa e confermate. */

@@ -4,3 +4,4 @@ export { getAvailability } from "./getAvailability.js";
 export { notifyBookingStatus } from "./notifyBookingStatus.js";
 export { createOrder } from "./createOrder.js";
 export { notifyOrderStatus } from "./notifyOrderStatus.js";
+export { sendCampaign } from "./sendCampaign.js";
