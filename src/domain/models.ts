@@ -53,6 +53,19 @@ export interface Service {
   attivo: boolean;
 }
 
+/** Documento in `salons/{salonId}/products/{id}`. */
+export interface Product {
+  titolo: string;
+  descrizione: string;
+  /** Prezzo in centesimi interi. */
+  prezzo: number;
+  /** URL scaricabile della foto (assente se senza foto). */
+  fotoUrl?: string;
+  /** Path in Cloud Storage della foto (per eventuale eliminazione). */
+  fotoPath?: string;
+  attivo: boolean;
+}
+
 /** Documento in `salons/{salonId}/bookings/{id}`. */
 export interface Booking {
   clientId: string;
