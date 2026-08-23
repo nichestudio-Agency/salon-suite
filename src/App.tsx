@@ -10,6 +10,7 @@ import { HoursPage } from "./pages/HoursPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { OperatorsPage } from "./pages/OperatorsPage";
+import { ProductsPage } from "./pages/ProductsPage";
 import { RegisterClientPage } from "./pages/RegisterClientPage";
 import { ServicesPage } from "./pages/ServicesPage";
 
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="servizi" element={<ServicesPage />} />
             <Route path="operatori" element={<OperatorsPage />} />
             <Route path="orari" element={<HoursPage />} />
+            <Route path="prodotti" element={<ProductsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/area" replace />} />
         </Routes>
