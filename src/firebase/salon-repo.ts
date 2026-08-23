@@ -23,3 +23,12 @@ export async function updateOpeningHours(
 ): Promise<void> {
   await updateDoc(doc(db, "salons", salonId), { orariApertura });
 }
+
+import type { CompleannoConfig } from "../domain/models";
+
+export async function updateBirthdayConfig(
+  salonId: string,
+  compleanno: CompleannoConfig
+): Promise<void> {
+  await updateDoc(doc(db, "salons", salonId), { compleanno });
+}

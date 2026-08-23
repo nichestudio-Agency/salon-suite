@@ -4,6 +4,8 @@ import {
   listCoupons, createCoupon, deleteCoupon, type CouponWithId,
 } from "../firebase/coupon-repo";
 import { sendCampaign } from "../firebase/campaign";
+import { getSalon, updateBirthdayConfig } from "../firebase/salon-repo";
+import { runBirthdayGreetings } from "../firebase/birthday";
 import { formatEuro } from "../domain/money";
 import type { CampaignFilters, CouponType } from "../domain/models";
 
@@ -27,12 +29,27 @@ export function NotificationsPage() {
   const [campCoupon, setCampCoupon] = useState("");
   const [campResult, setCampResult] = useState<string | null>(null);
   const [campBusy, setCampBusy] = useState(false);
+  const [bdAttivo, setBdAttivo] = useState(false);
+  const [bdMessaggio, setBdMessaggio] = useState("");
+  const [bdCoupon, setBdCoupon] = useState("");
+  const [bdResult, setBdResult] = useState<string | null>(null);
 
   async function reload(id: string) {
     setCoupons(await listCoupons(id));
   }
   useEffect(() => {
     if (salonId) void reload(salonId);
+  }, [salonId]);
+
+  useEffect(() => {
+    if (!salonId) return;
+    void getSalon(salonId).then((s) => {
+      if (s?.compleanno) {
+        setBdAttivo(s.compleanno.attivo);
+        setBdMessaggio(s.compleanno.messaggio ?? "");
+        setBdCoupon(s.compleanno.couponId ?? "");
+      }
+    });
   }, [salonId]);
 
   async function onSubmit(e: FormEvent) {
@@ -91,6 +108,31 @@ export function NotificationsPage() {
     }
   }
 
+  async function onSaveBirthday(e: FormEvent) {
+    e.preventDefault();
+    if (!salonId) return;
+    setBdResult(null);
+    try {
+      await updateBirthdayConfig(salonId, {
+        attivo: bdAttivo,
+        messaggio: bdMessaggio,
+        couponId: bdCoupon || null,
+      });
+      setBdResult("Configurazione salvata.");
+    } catch {
+      setBdResult("Salvataggio non riuscito.");
+    }
+  }
+  async function onSendBirthdaysNow() {
+    setBdResult(null);
+    try {
+      const { count } = await runBirthdayGreetings();
+      setBdResult(`Auguri inviati a ${count} clienti che compiono gli anni oggi.`);
+    } catch {
+      setBdResult("Invio auguri non riuscito.");
+    }
+  }
+
   return (
     <section>
       <h2>Notifiche</h2>
@@ -146,6 +188,25 @@ export function NotificationsPage() {
           </select></div>
         {campResult && <p role="status">{campResult}</p>}
         <button className="btn" type="submit" disabled={campBusy}>Invia campagna</button>
+      </form>
+      <h3>Auguri di compleanno</h3>
+      <form className="card" onSubmit={onSaveBirthday}>
+        <label className="row" style={{ gap: 8 }}>
+          <input type="checkbox" aria-label="Auguri di compleanno attivi" checked={bdAttivo} onChange={(e) => setBdAttivo(e.target.checked)} />
+          Invia automaticamente gli auguri ogni giorno
+        </label>
+        <div className="field"><label htmlFor="bdm">Messaggio di compleanno</label>
+          <textarea id="bdm" aria-label="Messaggio di compleanno" value={bdMessaggio} onChange={(e) => setBdMessaggio(e.target.value)} /></div>
+        <div className="field"><label htmlFor="bdc">Coupon di compleanno (opzionale)</label>
+          <select id="bdc" aria-label="Coupon di compleanno" value={bdCoupon} onChange={(e) => setBdCoupon(e.target.value)}>
+            <option value="">Nessuno</option>
+            {coupons.filter((c) => c.attivo).map((c) => <option key={c.id} value={c.id}>{c.codice}</option>)}
+          </select></div>
+        {bdResult && <p role="status">{bdResult}</p>}
+        <div className="row">
+          <button className="btn" type="submit">Salva compleanno</button>
+          <button className="btn btn--ghost" type="button" onClick={onSendBirthdaysNow}>Invia auguri di oggi</button>
+        </div>
       </form>
     </section>
   );
