@@ -4,7 +4,7 @@ import { collection, doc, getDocs, query, setDoc, where } from "firebase/firesto
 import { auth, connectEmulators, db } from "./app";
 import { registerClient } from "./auth";
 import { registerOwner } from "./onboarding";
-import { createBooking } from "./booking";
+import { cancelBooking, createBooking, getAvailability, listMyBookings } from "./booking";
 
 beforeAll(() => connectEmulators());
 afterEach(async () => {
@@ -74,6 +74,17 @@ describe("createBooking", () => {
       endMin: 630,
       stato: "in_attesa",
     });
+
+    expect(await listMyBookings(salonId)).toHaveLength(1);
+    await cancelBooking(salonId, result.bookingId);
+    expect((await listMyBookings(salonId))[0].stato).toBe("annullata");
+    const availability = await getAvailability({
+      salonId,
+      operatorId: "op1",
+      serviceId: "svc1",
+      date: "2026-08-24",
+    });
+    expect(availability.starts).toContain(600);
   });
 
   it("fa vincere una sola di due richieste concorrenti sullo stesso slot", async () => {
