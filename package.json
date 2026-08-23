@@ -9,8 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "emu:start": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:start --only auth,firestore,functions --project demo-barbershop",
-    "test:emu": "npm --prefix functions run build && PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:exec --only auth,firestore,functions --project demo-barbershop \"vitest run --config vitest.emu.config.ts\""
+    "emu:start": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:start --only auth,firestore,functions,storage --project demo-barbershop",
+    "test:emu": "npm --prefix functions run build && PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:exec --only auth,firestore,functions,storage --project demo-barbershop \"vitest run --config vitest.emu.config.ts\""
   },
   "dependencies": {
     "firebase": "^12.18.0",
