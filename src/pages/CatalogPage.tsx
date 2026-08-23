@@ -27,13 +27,12 @@ export function CatalogPage() {
   }, [salonId]);
 
   return (
-    <main className="customer-shell">
+    <section className="customer-page">
       <div className="customer-shell__header">
         <div>
           <span className="customer-shell__eyebrow">Prodotti</span>
           <h1>Acquista in salone</h1>
         </div>
-        <Link className="customer-button customer-button--secondary" to="/prenota">Prenota</Link>
         <Link className="customer-button" to="/carrello">Carrello ({cart.items.length})</Link>
       </div>
 
@@ -65,6 +64,6 @@ export function CatalogPage() {
         ))}
         {products.length === 0 && <p className="customer-booking__meta">Nessun prodotto disponibile.</p>}
       </div>
-    </main>
+    </section>
   );
 }

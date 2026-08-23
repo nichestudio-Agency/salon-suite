@@ -36,7 +36,7 @@ export function MyOrdersPage() {
   }
 
   return (
-    <main className="customer-shell">
+    <section className="customer-page">
       <span className="customer-shell__eyebrow">I miei ordini</span>
       <h1>Ordini</h1>
       {error && <p className="customer-error" role="alert">{error}</p>}
@@ -59,6 +59,6 @@ export function MyOrdersPage() {
           )}
         </div>
       ))}
-    </main>
+    </section>
   );
 }

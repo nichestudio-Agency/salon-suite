@@ -1,3 +1,50 @@
+/* Customer application */
+.customer-app { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100vh; background: var(--panel); }
+.customer-nav { position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; padding: 30px 24px 22px; overflow: hidden; background: var(--dark); color: #f8f3ec; }
+.customer-nav__brand { display: flex; align-items: center; gap: 11px; margin-bottom: 58px; }
+.customer-nav__brand strong { font-size: .7rem; letter-spacing: .22em; }
+.customer-nav nav { display: flex; flex-direction: column; }
+.customer-nav nav a { display: grid; grid-template-columns: 30px 1fr; align-items: center; padding: 13px 8px; border-left: 1px solid transparent; color: #9f9991; font-size: .9rem; text-decoration: none; }
+.customer-nav nav a:hover, .customer-nav nav a.active { color: #fff; }
+.customer-nav nav a.active { border-left-color: var(--accent); }
+.customer-nav__index { color: #5f5a54; font-size: .56rem; }
+.customer-nav nav a.active .customer-nav__index { color: var(--accent); }
+.customer-nav__short { display: none; }
+.customer-nav__account { display: flex; flex-direction: column; gap: 8px; margin: 30px 8px 0; padding-top: 22px; border-top: 1px solid #34312d; }
+.customer-nav__account a { display: flex; justify-content: space-between; color: #817b73; font-size: .75rem; text-decoration: none; }
+.customer-nav__account a:hover, .customer-nav__account a.active { color: #fff; }
+.customer-nav__account a span { display: grid; min-width: 20px; height: 20px; place-items: center; border-radius: 50%; background: var(--accent); color: #fff; font-size: .65rem; }
+.customer-nav__visual { position: relative; min-height: 116px; margin-top: auto; overflow: hidden; }
+.customer-nav__visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 37%; filter: grayscale(.35) brightness(.55); }
+.customer-nav__visual::after { position: absolute; inset: 0; content: ""; background: linear-gradient(90deg, rgba(23,22,20,.2), rgba(23,22,20,.8)); }
+.customer-nav__visual p { position: absolute; right: 12px; bottom: 12px; left: 12px; z-index: 1; color: rgba(255,255,255,.8); font-family: var(--display); font-size: 1.15rem; line-height: 1.05; }
+.customer-nav > button { margin-top: 14px; padding: 8px 0; border: 0; background: transparent; color: #716c65; cursor: pointer; font-size: .66rem; text-align: left; letter-spacing: .14em; text-transform: uppercase; }
+.customer-nav > button:hover { color: #fff; }
+.customer-app__content { min-width: 0; padding: clamp(52px, 7vw, 104px) clamp(32px, 7.5vw, 120px) 90px; }
+.customer-page { width: min(100%, 1120px); }
+.customer-page--narrow { max-width: 760px; }
+.customer-page__header { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 24px; }
+.customer-page__header h1, .customer-page > h1 { margin: 12px 0 0; font-size: clamp(3.7rem, 7vw, 7.2rem); }
+.customer-page__intro { max-width: 590px; margin-bottom: 58px; color: var(--muted); font-size: 1rem; line-height: 1.7; }
+.customer-page__salon { display: flex; min-width: 210px; flex-direction: column; gap: 5px; color: var(--muted); font-size: .63rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.customer-page__salon select { min-height: 42px; border: 0; border-bottom: 1px solid var(--border-strong); background: transparent; color: var(--ink); }
+.service-list { border-bottom: 1px solid var(--border); }
+.service-row { display: grid; grid-template-columns: 42px minmax(220px, 1fr) 120px auto; align-items: center; gap: 22px; padding: 26px 0; border-top: 1px solid var(--border); }
+.service-row__index, .operator-card__number { color: var(--accent); font-size: .62rem; letter-spacing: .1em; }
+.service-row h2 { margin: 0 0 7px; font-size: 1.8rem; }
+.service-row p { max-width: 520px; color: var(--muted); font-size: .83rem; }
+.service-row__meta { display: flex; flex-direction: column; color: var(--muted); font-size: .73rem; }
+.service-row__meta strong { margin-top: 5px; color: var(--ink); font-size: 1rem; font-variant-numeric: tabular-nums; }
+.operator-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--border); }
+.operator-card { position: relative; min-height: 340px; padding: 34px; background: var(--panel); }
+.operator-card__number { position: absolute; top: 34px; right: 34px; }
+.operator-card__monogram { display: grid; width: 86px; height: 108px; margin-bottom: 38px; place-items: center; background: #e9e1d8; color: var(--ink); font-family: var(--display); font-size: 3.5rem; }
+.operator-card h2 { margin: 9px 0 12px; font-size: 2.4rem; }
+.operator-card p { color: var(--muted); font-size: .85rem; }
+.operator-card a { display: inline-block; margin-top: 34px; font-size: .78rem; font-weight: 700; text-decoration: none; }
+.customer-empty { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; min-height: 150px; padding: 30px; border-top: 1px solid var(--border); color: var(--muted); }
+.customer-empty > span { color: var(--accent); font-family: var(--display); font-size: 2rem; }
+
 /* Customer booking */
 .customer-shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 72px; color: var(--ink); text-align: left; }
 .customer-shell--narrow { width: min(620px, calc(100% - 32px)); }
@@ -38,6 +85,10 @@
 .customer-bookings > h2 { margin-top: 0; }
 .customer-booking { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 0; border-top: 1px solid var(--border); }
 .customer-booking__meta { margin-top: 5px; color: var(--muted); font-size: .85rem; }
+.customer-page > .booking-field { max-width: 340px; margin-bottom: 44px; }
+.customer-page .booking-slots > .booking-panel { display: flex; min-height: 310px; flex-direction: column; align-items: flex-start; padding: 14px; border: 1px solid var(--border); background: #fff; }
+.customer-page .booking-slots > .booking-panel img { margin: -14px -14px 18px !important; width: calc(100% + 28px) !important; border-radius: 0 !important; }
+.customer-page .booking-slots > .booking-panel .customer-button { width: 100%; margin-top: auto; }
 
 /* Authentication */
 .auth-shell { display: grid; grid-template-columns: minmax(360px, 1.02fr) minmax(460px, .98fr); min-height: 100vh; background: var(--panel); }
@@ -57,6 +108,17 @@
 .auth-alt a, .auth-panel > p a { font-weight: 650; }
 
 @media (max-width: 920px) {
+  .customer-app { grid-template-columns: 1fr; padding-bottom: 72px; }
+  .customer-nav { position: fixed; right: 0; bottom: 0; left: 0; top: auto; z-index: 5; width: 100%; height: 72px; padding: 0 8px; overflow: visible; }
+  .customer-nav__brand, .customer-nav__account, .customer-nav__visual, .customer-nav > button { display: none; }
+  .customer-nav nav { height: 100%; flex-direction: row; justify-content: space-around; }
+  .customer-nav nav a { display: flex; min-width: 72px; flex-direction: column; justify-content: center; gap: 4px; padding: 8px 7px 6px; border: 0; border-top: 2px solid transparent; font-size: .68rem; }
+  .customer-nav nav a.active { border-top-color: var(--accent); }
+  .customer-nav__index, .customer-nav__label { display: none; }
+  .customer-nav__short { display: block; }
+  .customer-app__content { padding: 52px 28px 70px; }
+  .service-row { grid-template-columns: 30px 1fr auto; }
+  .service-row__meta { display: none; }
   .customer-shell--booking { grid-template-columns: 1fr; padding-top: 0; }
   .customer-visual { min-height: 390px; }
   .customer-visual__copy h2 { font-size: 3.2rem; }
@@ -66,6 +128,15 @@
 }
 
 @media (max-width: 700px) {
+  .customer-app__content { padding: 42px 20px 60px; }
+  .customer-page__header { align-items: stretch; flex-direction: column; }
+  .customer-page__header h1, .customer-page > h1 { font-size: 3.8rem; }
+  .customer-page__intro { margin-bottom: 38px; }
+  .customer-page__salon { width: 100%; }
+  .service-row { grid-template-columns: 25px 1fr; gap: 14px; padding: 24px 0; }
+  .service-row .customer-button { grid-column: 2; justify-self: start; }
+  .operator-grid { grid-template-columns: 1fr; }
+  .operator-card { min-height: 300px; padding: 26px; }
   .customer-shell { width: 100%; padding: 0; }
   .customer-visual { min-height: 310px; }
   .customer-visual__copy { bottom: 28px; }

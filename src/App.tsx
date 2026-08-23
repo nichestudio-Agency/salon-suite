@@ -5,6 +5,7 @@ import { RequireClient } from "./app/RequireClient";
 import { RequireOwner } from "./app/RequireOwner";
 import { RoleHome } from "./app/RoleHome";
 import { DashboardLayout } from "./app/DashboardLayout";
+import { CustomerLayout } from "./app/CustomerLayout";
 import { BookingPage } from "./pages/BookingPage";
 import { BookingsPage } from "./pages/BookingsPage";
 import { CartPage } from "./pages/CartPage";
@@ -19,6 +20,8 @@ import { OrdersPage } from "./pages/OrdersPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { RegisterClientPage } from "./pages/RegisterClientPage";
 import { ServicesPage } from "./pages/ServicesPage";
+import { CustomerServicesPage } from "./pages/CustomerServicesPage";
+import { CustomerOperatorsPage } from "./pages/CustomerOperatorsPage";
 
 export default function App() {
   return (
@@ -30,38 +33,14 @@ export default function App() {
             <Route path="/registrati" element={<RegisterClientPage />} />
             <Route path="/registrati-salone" element={<OnboardingPage />} />
             <Route path="/area" element={<RoleHome />} />
-            <Route
-              path="/prenota"
-              element={
-                <RequireClient>
-                  <BookingPage />
-                </RequireClient>
-              }
-            />
-            <Route
-              path="/catalogo"
-              element={
-                <RequireClient>
-                  <CatalogPage />
-                </RequireClient>
-              }
-            />
-            <Route
-              path="/carrello"
-              element={
-                <RequireClient>
-                  <CartPage />
-                </RequireClient>
-              }
-            />
-            <Route
-              path="/i-miei-ordini"
-              element={
-                <RequireClient>
-                  <MyOrdersPage />
-                </RequireClient>
-              }
-            />
+            <Route element={<RequireClient><CustomerLayout /></RequireClient>}>
+              <Route path="/prenota" element={<BookingPage />} />
+              <Route path="/servizi" element={<CustomerServicesPage />} />
+              <Route path="/operatori" element={<CustomerOperatorsPage />} />
+              <Route path="/catalogo" element={<CatalogPage />} />
+              <Route path="/carrello" element={<CartPage />} />
+              <Route path="/i-miei-ordini" element={<MyOrdersPage />} />
+            </Route>
             <Route
               path="/dashboard"
               element={

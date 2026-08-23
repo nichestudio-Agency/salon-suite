@@ -30,7 +30,7 @@ export function CartPage() {
   }
 
   return (
-    <main className="customer-shell customer-shell--narrow">
+    <section className="customer-page customer-page--narrow">
       <span className="customer-shell__eyebrow">Carrello</span>
       <h1>Il tuo ordine</h1>
       {items.length === 0 && <p className="customer-booking__meta">Il carrello è vuoto.</p>}
@@ -57,6 +57,6 @@ export function CartPage() {
           </button>
         </>
       )}
-    </main>
+    </section>
   );
 }

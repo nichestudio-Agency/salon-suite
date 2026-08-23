@@ -9,8 +9,6 @@ import {
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listSalons, type SalonWithId } from "../firebase/salon-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
-import { signOutUser } from "../firebase/auth";
-import barberEditorial from "../assets/barber-editorial.webp";
 import "./customer.css";
 
 function formatTime(minutes: number): string {
@@ -141,29 +139,12 @@ export function BookingPage() {
   }
 
   return (
-    <main className="customer-shell customer-shell--booking">
-      <aside className="customer-visual" aria-label="Barberia">
-        <img src={barberEditorial} alt="Barbiere che rifinisce la barba di un cliente" />
-        <div className="customer-visual__scrim" />
-        <div className="customer-visual__brand">
-          <span className="brand-mark" aria-hidden="true">B</span>
-          <span>BARBERIA</span>
-        </div>
-        <div className="customer-visual__copy">
-          <span>Esperienza su misura</span>
-          <h2>Il prossimo taglio inizia da qui.</h2>
-          <p>Seleziona il servizio, scegli il tuo barber e trova l'orario perfetto.</p>
-        </div>
-      </aside>
-      <div className="customer-workspace">
+    <section className="customer-page customer-page--booking">
       <header className="customer-shell__header">
         <div>
           <span className="customer-shell__eyebrow">Prenotazione online</span>
           <h1>Scegli il tuo prossimo appuntamento</h1>
         </div>
-        <button className="customer-button" type="button" onClick={() => signOutUser()}>
-          Esci
-        </button>
       </header>
 
       <form className="booking-panel" onSubmit={searchAvailability}>
@@ -309,7 +290,6 @@ export function BookingPage() {
           )}
         </section>
       )}
-      </div>
-    </main>
+    </section>
   );
 }
