@@ -1,21 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatEuro } from "../domain/money";
-import { listSalons, type SalonWithId } from "../firebase/salon-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
+import { useSalonTenant } from "../app/salon-tenant-context";
 import "./customer.css";
 
 export function CustomerServicesPage() {
-  const [salons, setSalons] = useState<SalonWithId[]>([]);
-  const [salonId, setSalonId] = useState("");
+  const { salon } = useSalonTenant();
+  const salonId = salon?.id ?? "";
   const [services, setServices] = useState<ServiceWithId[]>([]);
-
-  useEffect(() => {
-    void listSalons().then((items) => {
-      setSalons(items);
-      if (items[0]) setSalonId(items[0].id);
-    });
-  }, []);
 
   useEffect(() => {
     if (!salonId) return;
@@ -26,7 +19,7 @@ export function CustomerServicesPage() {
     <section className="customer-page">
       <header className="customer-page__header">
         <div><span className="customer-shell__eyebrow">Menu del salone</span><h1>Servizi</h1></div>
-        <SalonSelect salons={salons} salonId={salonId} onChange={setSalonId} />
+        <span className="customer-page__tenant">{salon?.nome}</span>
       </header>
       <p className="customer-page__intro">Consulta trattamenti, durata e prezzo prima di scegliere il tuo appuntamento.</p>
       <div className="service-list">
@@ -42,10 +35,6 @@ export function CustomerServicesPage() {
       </div>
     </section>
   );
-}
-
-function SalonSelect({ salons, salonId, onChange }: { salons: SalonWithId[]; salonId: string; onChange: (id: string) => void }) {
-  return <label className="customer-page__salon"><span>Salone</span><select value={salonId} onChange={(event) => onChange(event.target.value)}>{salons.map((salon) => <option key={salon.id} value={salon.id}>{salon.nome}</option>)}</select></label>;
 }
 
 function EmptyState({ text }: { text: string }) { return <div className="customer-empty"><span>—</span><p>{text}</p></div>; }

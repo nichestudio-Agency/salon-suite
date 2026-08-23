@@ -14,6 +14,8 @@ export interface RegisterClientInput {
   sesso: Gender;
   /** "YYYY-MM-DD" */
   dataNascita: string;
+  /** Tenant white-label da cui il cliente si registra. */
+  salonId?: string;
 }
 
 export interface AuthResult {
@@ -35,6 +37,7 @@ export async function registerClient(
     sesso: input.sesso,
     dataNascita: input.dataNascita,
     ruolo: "cliente",
+    ...(input.salonId ? { salonId: input.salonId } : {}),
     fcmTokens: [],
   };
   // Nota: se questa setDoc fallisce dopo la creazione dell'utente auth, l'utente

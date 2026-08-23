@@ -22,7 +22,7 @@ service cloud.firestore {
       allow read: if isSelf(uid);
       allow create: if isSelf(uid)
         && request.resource.data.ruolo == 'cliente'
-        && request.resource.data.keys().hasOnly(['nome','email','sesso','dataNascita','ruolo','fcmTokens']);
+        && request.resource.data.keys().hasOnly(['nome','email','sesso','dataNascita','ruolo','salonId','fcmTokens']);
       allow update: if isSelf(uid)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['nome','email','sesso','dataNascita','fcmTokens']);
@@ -30,7 +30,10 @@ service cloud.firestore {
     }
 
     match /salons/{salonId} {
-      allow read: if isSignedIn();
+      // Il documento identità del tenant è pubblico e viene risolto dal dominio.
+      // La lista completa dei saloni non è mai esposta al client white-label.
+      allow get: if true;
+      allow list: if false;
       allow write: if isStaffOf(salonId);
 
       match /operators/{operatorId} {

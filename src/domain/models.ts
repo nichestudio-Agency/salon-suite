@@ -18,7 +18,7 @@ export interface UserProfile {
   /** Data di nascita come "YYYY-MM-DD" (nessun fuso: è una data anagrafica). */
   dataNascita: string;
   ruolo: UserRole;
-  /** Presente solo per staff/owner: il salone di appartenenza. */
+  /** Salone di appartenenza o tenant white-label di registrazione. */
   salonId?: string;
   /** Token FCM dei dispositivi registrati per le notifiche push. */
   fcmTokens: string[];

@@ -1,22 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
-import { listSalons, type SalonWithId } from "../firebase/salon-repo";
+import { useSalonTenant } from "../app/salon-tenant-context";
 import "./customer.css";
 
 export function CustomerOperatorsPage() {
-  const [salons, setSalons] = useState<SalonWithId[]>([]);
-  const [salonId, setSalonId] = useState("");
+  const { salon } = useSalonTenant();
+  const salonId = salon?.id ?? "";
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
 
-  useEffect(() => { void listSalons().then((items) => { setSalons(items); if (items[0]) setSalonId(items[0].id); }); }, []);
   useEffect(() => { if (salonId) void listOperators(salonId).then((items) => setOperators(items.filter((item) => item.attivo))); }, [salonId]);
 
   return (
     <section className="customer-page">
       <header className="customer-page__header">
         <div><span className="customer-shell__eyebrow">Il team</span><h1>I tuoi barber</h1></div>
-        <label className="customer-page__salon"><span>Salone</span><select value={salonId} onChange={(event) => setSalonId(event.target.value)}>{salons.map((salon) => <option key={salon.id} value={salon.id}>{salon.nome}</option>)}</select></label>
+        <span className="customer-page__tenant">{salon?.nome}</span>
       </header>
       <p className="customer-page__intro">Conosci i professionisti del salone e scegli chi si prenderà cura del tuo prossimo look.</p>
       <div className="operator-grid">

@@ -6,18 +6,18 @@ import * as bookingApi from "../firebase/booking";
 import * as operatorRepo from "../firebase/operator-repo";
 import * as salonRepo from "../firebase/salon-repo";
 import * as serviceRepo from "../firebase/service-repo";
+import { SalonTenantProvider } from "../app/salon-tenant-context";
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  vi.spyOn(salonRepo, "listSalons").mockResolvedValue([
+  vi.spyOn(salonRepo, "getSalon").mockResolvedValue(
     {
-      id: "s1",
       nome: "Barberia X",
       timezone: "Europe/Rome",
       orariApertura: {},
       impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
     },
-  ]);
+  );
   vi.spyOn(serviceRepo, "listServices").mockResolvedValue([
     {
       id: "svc1",
@@ -48,17 +48,17 @@ describe("BookingPage", () => {
       stato: "in_attesa",
     });
 
-    render(<BookingPage />);
+    render(<SalonTenantProvider><BookingPage /></SalonTenantProvider>);
 
-    await userEvent.selectOptions(await screen.findByLabelText("Salone"), "s1");
-    await userEvent.selectOptions(await screen.findByLabelText("Servizio"), "svc1");
+    await screen.findByRole("option", { name: /Taglio/ });
+    await userEvent.selectOptions(screen.getByLabelText("Servizio"), "svc1");
     await userEvent.selectOptions(await screen.findByLabelText("Operatore"), "op1");
     await userEvent.type(screen.getByLabelText("Data"), "2026-08-24");
     await userEvent.click(screen.getByRole("button", { name: /cerca orari/i }));
 
     expect(await screen.findByRole("button", { name: "09:00" })).toBeInTheDocument();
     expect(availability).toHaveBeenCalledWith({
-      salonId: "s1",
+      salonId: "salone-x",
       serviceId: "svc1",
       operatorId: "op1",
       date: "2026-08-24",
@@ -69,7 +69,7 @@ describe("BookingPage", () => {
 
     await waitFor(() =>
       expect(create).toHaveBeenCalledWith({
-        salonId: "s1",
+        salonId: "salone-x",
         serviceId: "svc1",
         operatorId: "op1",
         date: "2026-08-24",

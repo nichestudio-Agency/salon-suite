@@ -1,23 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { listSalons, type SalonWithId } from "../firebase/salon-repo";
 import { listProducts, type ProductWithId } from "../firebase/product-repo";
 import { formatEuro } from "../domain/money";
 import { useCart } from "../app/cart-context";
+import { useSalonTenant } from "../app/salon-tenant-context";
 import "./customer.css";
 
 export function CatalogPage() {
   const cart = useCart();
-  const [salons, setSalons] = useState<SalonWithId[]>([]);
-  const [salonId, setSalonId] = useState<string>("");
+  const { salon } = useSalonTenant();
+  const salonId = salon?.id ?? "";
   const [products, setProducts] = useState<ProductWithId[]>([]);
-
-  useEffect(() => {
-    void listSalons().then((s) => {
-      setSalons(s);
-      if (s.length > 0) setSalonId((cur) => cur || s[0].id);
-    });
-  }, []);
 
   useEffect(() => {
     if (!salonId) return;
@@ -34,15 +27,6 @@ export function CatalogPage() {
           <h1>Acquista in salone</h1>
         </div>
         <Link className="customer-button" to="/carrello">Carrello ({cart.items.length})</Link>
-      </div>
-
-      <div className="booking-field">
-        <label htmlFor="cat-salon">Salone</label>
-        <select id="cat-salon" value={salonId} onChange={(e) => setSalonId(e.target.value)}>
-          {salons.map((s) => (
-            <option key={s.id} value={s.id}>{s.nome}</option>
-          ))}
-        </select>
       </div>
 
       <div className="booking-slots" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>

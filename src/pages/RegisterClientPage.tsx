@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import type { Gender } from "../domain/models";
 import { registerClient } from "../firebase/auth";
 import { AuthLayout } from "../app/AuthLayout";
+import { useSalonTenant } from "../app/salon-tenant-context";
 import "./customer.css";
 
 export function RegisterClientPage() {
   const navigate = useNavigate();
+  const { salon } = useSalonTenant();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +22,7 @@ export function RegisterClientPage() {
     setLoading(true);
     setError(null);
     try {
-      await registerClient({ email, password, nome, sesso, dataNascita });
+      await registerClient({ email, password, nome, sesso, dataNascita, salonId: salon?.id });
       navigate("/prenota");
     } catch {
       setError("Registrazione non riuscita. Controlla i dati o prova un'altra email.");

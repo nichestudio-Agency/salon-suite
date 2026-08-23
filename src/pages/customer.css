@@ -28,6 +28,8 @@
 .customer-page__intro { max-width: 590px; margin-bottom: 58px; color: var(--muted); font-size: 1rem; line-height: 1.7; }
 .customer-page__salon { display: flex; min-width: 210px; flex-direction: column; gap: 5px; color: var(--muted); font-size: .63rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .customer-page__salon select { min-height: 42px; border: 0; border-bottom: 1px solid var(--border-strong); background: transparent; color: var(--ink); }
+.customer-page__tenant { padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: .67rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.customer-tenant-state { display: grid; min-height: 100vh; place-items: center; background: var(--panel); color: var(--muted); font-family: var(--display); font-size: 1.8rem; }
 .service-list { border-bottom: 1px solid var(--border); }
 .service-row { display: grid; grid-template-columns: 42px minmax(220px, 1fr) 120px auto; align-items: center; gap: 22px; padding: 26px 0; border-top: 1px solid var(--border); }
 .service-row__index, .operator-card__number { color: var(--accent); font-size: .62rem; letter-spacing: .1em; }

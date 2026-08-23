@@ -6,6 +6,7 @@ import { RequireOwner } from "./app/RequireOwner";
 import { RoleHome } from "./app/RoleHome";
 import { DashboardLayout } from "./app/DashboardLayout";
 import { CustomerLayout } from "./app/CustomerLayout";
+import { SalonTenantProvider } from "./app/salon-tenant-context";
 import { BookingPage } from "./pages/BookingPage";
 import { BookingsPage } from "./pages/BookingsPage";
 import { CartPage } from "./pages/CartPage";
@@ -27,7 +28,8 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <BrowserRouter>
+        <SalonTenantProvider>
+          <BrowserRouter>
           <Routes>
             <Route path="/accedi" element={<LoginPage />} />
             <Route path="/registrati" element={<RegisterClientPage />} />
@@ -60,7 +62,8 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to="/area" replace />} />
           </Routes>
-        </BrowserRouter>
+          </BrowserRouter>
+        </SalonTenantProvider>
       </CartProvider>
     </AuthProvider>
   );

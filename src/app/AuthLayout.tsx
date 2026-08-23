@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import barberEditorial from "../assets/barber-editorial.webp";
+import { useOptionalSalonTenant } from "./salon-tenant-context";
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -7,6 +8,8 @@ type AuthLayoutProps = {
 };
 
 export function AuthLayout({ children, variant = "client" }: AuthLayoutProps) {
+  const salon = useOptionalSalonTenant()?.salon;
+  const brandName = variant === "client" && salon ? salon.nome : "BARBERIA";
   return (
     <main className="auth-shell">
       <section className="auth-showcase" aria-label="Barberia">
@@ -14,7 +17,7 @@ export function AuthLayout({ children, variant = "client" }: AuthLayoutProps) {
         <div className="auth-showcase__scrim" />
         <div className="auth-showcase__topline">
           <span className="brand-mark" aria-hidden="true">B</span>
-          <span>BARBERIA</span>
+          <span>{brandName}</span>
         </div>
         <div className="auth-showcase__copy">
           <span className="auth-showcase__eyebrow">Taglio · Barba · Stile</span>
@@ -30,7 +33,7 @@ export function AuthLayout({ children, variant = "client" }: AuthLayoutProps) {
       <section className="auth-main">
         <div className="auth-main__brand" aria-hidden="true">
           <span className="brand-mark">B</span>
-          <span>BARBERIA</span>
+          <span>{brandName}</span>
         </div>
         {children}
       </section>

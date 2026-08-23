@@ -6,7 +6,7 @@ import {
   assertFails,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 
 let testEnv: RulesTestEnvironment;
 
@@ -61,8 +61,9 @@ function anon() {
 }
 
 describe("lettura salone", () => {
-  it("nega la lettura ai non autenticati", async () => {
-    await assertFails(getDoc(doc(anon(), "salons/salonA")));
+  it("rende pubblica l'identità del singolo salone ma non l'elenco dei tenant", async () => {
+    await assertSucceeds(getDoc(doc(anon(), "salons/salonA")));
+    await assertFails(getDocs(collection(anon(), "salons")));
   });
   it("consente la lettura del salone e dei servizi agli autenticati", async () => {
     await assertSucceeds(getDoc(doc(client("cli1"), "salons/salonA")));
@@ -115,11 +116,17 @@ describe("documento utente", () => {
       })
     );
   });
-  it("il cliente NON può creare il proprio doc con campi extra (es. salonId)", async () => {
-    await assertFails(
+  it("il cliente può legarsi al tenant ma non aggiungere campi arbitrari", async () => {
+    await assertSucceeds(
       setDoc(doc(client("cli1"), "users/cli1"), {
         nome: "Cli", email: "c@x.it", sesso: "altro",
         dataNascita: "1990-01-01", ruolo: "cliente", salonId: "salonA", fcmTokens: [],
+      })
+    );
+    await assertFails(
+      setDoc(doc(client("cli2"), "users/cli2"), {
+        nome: "Cli", email: "c2@x.it", sesso: "altro",
+        dataNascita: "1990-01-01", ruolo: "cliente", salonId: "salonA", admin: true, fcmTokens: [],
       })
     );
   });

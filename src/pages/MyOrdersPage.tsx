@@ -1,21 +1,14 @@
 import { useEffect, useState } from "react";
-import { listSalons, type SalonWithId } from "../firebase/salon-repo";
 import { listMyOrders, cancelOrder, type OrderWithId } from "../firebase/order";
 import { formatEuro } from "../domain/money";
 import "./customer.css";
+import { useSalonTenant } from "../app/salon-tenant-context";
 
 export function MyOrdersPage() {
-  const [salons, setSalons] = useState<SalonWithId[]>([]);
-  const [salonId, setSalonId] = useState("");
+  const { salon } = useSalonTenant();
+  const salonId = salon?.id ?? "";
   const [orders, setOrders] = useState<OrderWithId[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void listSalons().then((s) => {
-      setSalons(s);
-      if (s.length > 0) setSalonId((cur) => cur || s[0].id);
-    });
-  }, []);
 
   async function reload(id: string) {
     setOrders(await listMyOrders(id));
@@ -40,12 +33,6 @@ export function MyOrdersPage() {
       <span className="customer-shell__eyebrow">I miei ordini</span>
       <h1>Ordini</h1>
       {error && <p className="customer-error" role="alert">{error}</p>}
-      <div className="booking-field">
-        <label htmlFor="mo-salon">Salone</label>
-        <select id="mo-salon" value={salonId} onChange={(e) => setSalonId(e.target.value)}>
-          {salons.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
-        </select>
-      </div>
       {orders.length === 0 && <p className="customer-booking__meta">Nessun ordine.</p>}
       {orders.map((o) => (
         <div className="customer-booking" key={o.id}>

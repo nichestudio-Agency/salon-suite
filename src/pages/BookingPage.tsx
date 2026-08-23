@@ -7,8 +7,8 @@ import {
   type BookingWithId,
 } from "../firebase/booking";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
-import { listSalons, type SalonWithId } from "../firebase/salon-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
+import { useSalonTenant } from "../app/salon-tenant-context";
 import "./customer.css";
 
 function formatTime(minutes: number): string {
@@ -18,11 +18,11 @@ function formatTime(minutes: number): string {
 }
 
 export function BookingPage() {
-  const [salons, setSalons] = useState<SalonWithId[]>([]);
+  const { salon } = useSalonTenant();
   const [services, setServices] = useState<ServiceWithId[]>([]);
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
   const [bookings, setBookings] = useState<BookingWithId[]>([]);
-  const [salonId, setSalonId] = useState("");
+  const salonId = salon?.id ?? "";
   const [serviceId, setServiceId] = useState("");
   const [operatorId, setOperatorId] = useState("");
   const [date, setDate] = useState("");
@@ -34,44 +34,19 @@ export function BookingPage() {
 
   useEffect(() => {
     let active = true;
-    void listSalons()
-      .then((items) => {
-        if (active) setSalons(items);
+    if (!salonId) return () => { active = false; };
+    void Promise.all([listServices(salonId), listOperators(salonId), listMyBookings(salonId)])
+      .then(([nextServices, nextOperators, nextBookings]) => {
+        if (!active) return;
+        setServices(nextServices.filter((service) => service.attivo));
+        setOperators(nextOperators.filter((operator) => operator.attivo));
+        setBookings(nextBookings);
       })
-      .catch(() => {
-        if (active) setError("Non è stato possibile caricare i saloni.");
-      });
+      .catch(() => { if (active) setError("Non è stato possibile caricare il salone."); });
     return () => {
       active = false;
     };
-  }, []);
-
-  async function changeSalon(nextSalonId: string) {
-    setSalonId(nextSalonId);
-    setServiceId("");
-    setOperatorId("");
-    setServices([]);
-    setOperators([]);
-    setBookings([]);
-    setStarts(null);
-    setSelectedStart(null);
-    setMessage(null);
-    setError(null);
-    if (!nextSalonId) return;
-
-    try {
-      const [nextServices, nextOperators, nextBookings] = await Promise.all([
-        listServices(nextSalonId),
-        listOperators(nextSalonId),
-        listMyBookings(nextSalonId),
-      ]);
-      setServices(nextServices.filter((service) => service.attivo));
-      setOperators(nextOperators.filter((operator) => operator.attivo));
-      setBookings(nextBookings);
-    } catch {
-      setError("Non è stato possibile caricare servizi e operatori.");
-    }
-  }
+  }, [salonId]);
 
   async function searchAvailability(event?: FormEvent) {
     event?.preventDefault();
@@ -149,21 +124,6 @@ export function BookingPage() {
 
       <form className="booking-panel" onSubmit={searchAvailability}>
         <div className="booking-grid">
-          <div className="booking-field">
-            <label htmlFor="booking-salon">Salone</label>
-            <select
-              id="booking-salon"
-              value={salonId}
-              onChange={(event) => void changeSalon(event.target.value)}
-              required
-            >
-              <option value="">Seleziona un salone</option>
-              {salons.map((salon) => (
-                <option key={salon.id} value={salon.id}>{salon.nome}</option>
-              ))}
-            </select>
-          </div>
-
           <div className="booking-field">
             <label htmlFor="booking-service">Servizio</label>
             <select
