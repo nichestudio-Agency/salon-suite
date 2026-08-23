@@ -1,7 +1,8 @@
 import {
   collection, doc, addDoc, updateDoc, deleteDoc, getDocs,
 } from "firebase/firestore";
-import { db } from "./app";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "./app";
 import type { Product } from "../domain/models";
 
 export type ProductWithId = Product & { id: string };
@@ -27,4 +28,23 @@ export async function updateProduct(
 
 export async function deleteProduct(salonId: string, id: string): Promise<void> {
   await deleteDoc(doc(db, "salons", salonId, "products", id));
+}
+
+export interface ProductPhoto {
+  fotoUrl: string;
+  fotoPath: string;
+}
+
+/** Carica la foto del prodotto su Cloud Storage e ne restituisce URL e path. */
+export async function uploadProductPhoto(
+  salonId: string,
+  productId: string,
+  file: Blob,
+  filename: string
+): Promise<ProductPhoto> {
+  const fotoPath = `salons/${salonId}/products/${productId}/${filename}`;
+  const storageRef = ref(storage, fotoPath);
+  await uploadBytes(storageRef, file);
+  const fotoUrl = await getDownloadURL(storageRef);
+  return { fotoUrl, fotoPath };
 }
