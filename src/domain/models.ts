@@ -56,6 +56,9 @@ export interface Service {
 /** Documento in `salons/{salonId}/bookings/{id}`. */
 export interface Booking {
   clientId: string;
+  /** Snapshot per la dashboard: il profilo completo resta privato. */
+  clientNome?: string;
+  clientEmail?: string;
   operatorId: string;
   serviceId: string;
   /** Data locale del salone, "YYYY-MM-DD". */

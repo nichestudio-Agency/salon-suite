@@ -43,6 +43,11 @@ beforeEach(async () => {
       clientId: "cli1", operatorId: "op1", serviceId: "s1",
       date: "2026-08-24", startMin: 600, endMin: 630, stato: "in_attesa",
     });
+    // prenotazione del cliente "cli3" in salonB (per i test di isolamento cross-tenant).
+    await setDoc(doc(d, "salons/salonB/bookings/b2"), {
+      clientId: "cli3", operatorId: "opB", serviceId: "sB",
+      date: "2026-08-24", startMin: 600, endMin: 630, stato: "in_attesa",
+    });
   });
 });
 
@@ -143,8 +148,8 @@ describe("isolamento multi-salone sui servizi", () => {
 });
 
 describe("prenotazioni", () => {
-  it("il cliente può creare una prenotazione per sé stesso, stato in_attesa", async () => {
-    await assertSucceeds(
+  it("il cliente NON può bypassare la function creando direttamente una prenotazione", async () => {
+    await assertFails(
       setDoc(doc(client("cli1"), "salons/salonA/bookings/newb"), {
         clientId: "cli1", operatorId: "op1", serviceId: "s1",
         date: "2026-08-25", startMin: 660, endMin: 690, stato: "in_attesa",
@@ -202,6 +207,20 @@ describe("prenotazioni", () => {
       setDoc(doc(client("cli1"), "salons/salonA/bookings/b1"), {
         clientId: "cli1", operatorId: "op1", serviceId: "s1",
         date: "2026-08-24", startMin: 999, endMin: 630, stato: "annullata",
+      })
+    );
+  });
+});
+
+describe("isolamento multi-salone sulle prenotazioni", () => {
+  it("lo staff di un ALTRO salone NON può leggere una prenotazione", async () => {
+    await assertFails(getDoc(doc(client("staffA"), "salons/salonB/bookings/b2")));
+  });
+  it("lo staff di un ALTRO salone NON può aggiornare una prenotazione", async () => {
+    await assertFails(
+      setDoc(doc(client("staffA"), "salons/salonB/bookings/b2"), {
+        clientId: "cli3", operatorId: "opB", serviceId: "sB",
+        date: "2026-08-24", startMin: 600, endMin: 630, stato: "confermata",
       })
     );
   });

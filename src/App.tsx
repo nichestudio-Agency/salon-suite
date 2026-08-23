@@ -1,13 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./app/auth-context";
+import { RequireClient } from "./app/RequireClient";
 import { RequireOwner } from "./app/RequireOwner";
+import { RoleHome } from "./app/RoleHome";
 import { DashboardLayout } from "./app/DashboardLayout";
+import { BookingPage } from "./pages/BookingPage";
+import { BookingsPage } from "./pages/BookingsPage";
+import { HoursPage } from "./pages/HoursPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
-
-function Placeholder({ nome }: { nome: string }) {
-  return <h2>{nome} (in arrivo nell'Increment 3b)</h2>;
-}
+import { OperatorsPage } from "./pages/OperatorsPage";
+import { RegisterClientPage } from "./pages/RegisterClientPage";
+import { ServicesPage } from "./pages/ServicesPage";
 
 export default function App() {
   return (
@@ -15,7 +19,17 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/accedi" element={<LoginPage />} />
+          <Route path="/registrati" element={<RegisterClientPage />} />
           <Route path="/registrati-salone" element={<OnboardingPage />} />
+          <Route path="/area" element={<RoleHome />} />
+          <Route
+            path="/prenota"
+            element={
+              <RequireClient>
+                <BookingPage />
+              </RequireClient>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -25,11 +39,12 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="servizi" replace />} />
-            <Route path="servizi" element={<Placeholder nome="Servizi" />} />
-            <Route path="operatori" element={<Placeholder nome="Operatori" />} />
-            <Route path="orari" element={<Placeholder nome="Orari" />} />
+            <Route path="prenotazioni" element={<BookingsPage />} />
+            <Route path="servizi" element={<ServicesPage />} />
+            <Route path="operatori" element={<OperatorsPage />} />
+            <Route path="orari" element={<HoursPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/accedi" replace />} />
+          <Route path="*" element={<Navigate to="/area" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

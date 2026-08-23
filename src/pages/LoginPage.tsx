@@ -13,7 +13,7 @@ export function LoginPage() {
     setError(null);
     try {
       await signIn(email, password);
-      navigate("/dashboard/servizi");
+      navigate("/area");
     } catch {
       setError("Email o password non validi.");
     }
@@ -26,7 +26,8 @@ export function LoginPage() {
       <input aria-label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       {error && <p role="alert">{error}</p>}
       <button type="submit">Accedi</button>
-      <p>Nuovo salone? <Link to="/registrati-salone">Registrati</Link></p>
+      <p>Sei un cliente? <Link to="/registrati">Registrati</Link></p>
+      <p>Nuovo salone? <Link to="/registrati-salone">Registra il salone</Link></p>
     </form>
   );
 }

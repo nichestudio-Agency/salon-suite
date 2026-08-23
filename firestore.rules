@@ -46,15 +46,26 @@ service cloud.firestore {
       match /bookings/{bookingId} {
         allow read: if isSignedIn()
           && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
-        allow create: if isSignedIn()
-          && request.resource.data.clientId == request.auth.uid
-          && request.resource.data.stato == 'in_attesa';
-        allow update: if isStaffOf(salonId)
-          || (isSignedIn()
+        // Le creazioni passano dalla Cloud Function transazionale anti-concorrenza.
+        allow create: if false;
+        allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato'])
+          && ((isStaffOf(salonId)
+               && ((resource.data.stato == 'in_attesa'
+                    && request.resource.data.stato in ['confermata', 'rifiutata', 'annullata'])
+                   || (resource.data.stato == 'confermata'
+                       && request.resource.data.stato == 'annullata')))
+              || (isSignedIn()
               && resource.data.clientId == request.auth.uid
+              && resource.data.stato in ['in_attesa', 'confermata']
               && request.resource.data.stato == 'annullata'
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato']));
+             ));
         allow delete: if false;
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if isSignedIn()
+          && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
+        allow write: if false;
       }
     }
   }
