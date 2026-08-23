@@ -6,6 +6,7 @@ import { RoleHome } from "./app/RoleHome";
 import { DashboardLayout } from "./app/DashboardLayout";
 import { BookingPage } from "./pages/BookingPage";
 import { BookingsPage } from "./pages/BookingsPage";
+import { CatalogPage } from "./pages/CatalogPage";
 import { HoursPage } from "./pages/HoursPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
@@ -28,6 +29,14 @@ export default function App() {
             element={
               <RequireClient>
                 <BookingPage />
+              </RequireClient>
+            }
+          />
+          <Route
+            path="/catalogo"
+            element={
+              <RequireClient>
+                <CatalogPage />
               </RequireClient>
             }
           />
