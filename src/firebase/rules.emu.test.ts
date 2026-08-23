@@ -212,6 +212,46 @@ describe("prenotazioni", () => {
   });
 });
 
+describe("prodotti", () => {
+  it("un utente autenticato può leggere i prodotti del salone", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "salons/salonA/products/p1"), {
+        titolo: "Cera", descrizione: "", prezzo: 1500, attivo: true,
+      });
+    });
+    await assertSucceeds(getDoc(doc(client("cli1"), "salons/salonA/products/p1")));
+  });
+  it("un utente anonimo NON può leggere i prodotti del salone", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "salons/salonA/products/pX"), {
+        titolo: "Cera", descrizione: "", prezzo: 1500, attivo: true,
+      });
+    });
+    await assertFails(getDoc(doc(anon(), "salons/salonA/products/pX")));
+  });
+  it("un cliente NON può scrivere i prodotti del salone", async () => {
+    await assertFails(
+      setDoc(doc(client("cli1"), "salons/salonA/products/p2"), {
+        titolo: "X", descrizione: "", prezzo: 0, attivo: true,
+      })
+    );
+  });
+  it("lo staff del salone può scrivere i propri prodotti", async () => {
+    await assertSucceeds(
+      setDoc(doc(client("staffA"), "salons/salonA/products/p3"), {
+        titolo: "Balsamo", descrizione: "", prezzo: 1200, attivo: true,
+      })
+    );
+  });
+  it("lo staff NON può scrivere i prodotti di un altro salone", async () => {
+    await assertFails(
+      setDoc(doc(client("staffA"), "salons/salonB/products/p4"), {
+        titolo: "X", descrizione: "", prezzo: 0, attivo: true,
+      })
+    );
+  });
+});
+
 describe("isolamento multi-salone sulle prenotazioni", () => {
   it("lo staff di un ALTRO salone NON può leggere una prenotazione", async () => {
     await assertFails(getDoc(doc(client("staffA"), "salons/salonB/bookings/b2")));

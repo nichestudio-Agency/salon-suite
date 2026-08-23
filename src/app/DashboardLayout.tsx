@@ -7,6 +7,7 @@ const SECTIONS = [
   { to: "/dashboard/servizi", label: "Servizi" },
   { to: "/dashboard/operatori", label: "Operatori" },
   { to: "/dashboard/orari", label: "Orari" },
+  { to: "/dashboard/prodotti", label: "Prodotti" },
 ];
 
 export function DashboardLayout() {

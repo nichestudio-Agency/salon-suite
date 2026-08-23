@@ -62,6 +62,11 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      match /products/{productId} {
+        allow read: if isSignedIn();
+        allow write: if isStaffOf(salonId);
+      }
+
       match /notifications/{notificationId} {
         allow read: if isSignedIn()
           && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
