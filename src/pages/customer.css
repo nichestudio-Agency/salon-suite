@@ -95,6 +95,40 @@
 .operator-card--filler img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; filter: grayscale(.3) brightness(.5); }
 .operator-card__filler-copy { position: absolute; right: 34px; bottom: 32px; left: 34px; z-index: 1; }
 .operator-card__filler-copy p { margin-top: 10px; max-width: 260px; color: #fff; font-family: var(--display); font-size: 1.7rem; line-height: 1.05; }
+
+/* --- Elevazione grafica: profondità, calore, hover --- */
+/* Hero della prenotazione */
+.booking-hero { position: relative; display: flex; align-items: flex-end; min-height: 320px; margin-bottom: 52px; overflow: hidden; border-radius: 18px; background: var(--dark); box-shadow: var(--shadow); }
+.booking-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; filter: grayscale(.18) brightness(.6); }
+.booking-hero::after { position: absolute; inset: 0; content: ""; background: linear-gradient(180deg, rgba(11,10,9,.15), rgba(11,10,9,.82)); }
+.booking-hero__copy { position: relative; z-index: 1; padding: 42px clamp(28px, 5vw, 60px); }
+.booking-hero__copy h1 { margin: 12px 0 10px; color: #fff; }
+.booking-hero__copy p { max-width: 460px; color: rgba(255,255,255,.74); font-size: .95rem; }
+
+/* Righe servizio: badge numero accentato + hover caldo */
+.service-row { border-radius: 14px; padding-inline: 18px; transition: background-color .16s ease; }
+.service-row:hover { background: var(--accent-soft); }
+.service-row__index { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border-strong); border-radius: 50%; background: var(--panel); color: var(--accent); font-weight: 700; }
+.service-row h2 { transition: color .16s ease; }
+.service-row:hover h2 { color: var(--accent); }
+
+/* Card prodotto: arrotondamento, ombra, sollevamento all'hover */
+.customer-page .booking-slots > .booking-panel { overflow: hidden; border-radius: 16px; box-shadow: var(--shadow); transition: transform .18s ease, box-shadow .18s ease; }
+.customer-page .booking-slots > .booking-panel:hover { transform: translateY(-5px); box-shadow: 0 26px 64px rgba(38, 27, 18, .16); }
+
+/* Chip orari e bottoni con più materia */
+.booking-slot { transition: transform .14s ease, border-color .14s ease, background-color .14s ease, color .14s ease; }
+.booking-slot:hover { transform: translateY(-2px); }
+.customer-button { box-shadow: 0 12px 26px rgba(240, 90, 36, .24); }
+.customer-button:hover { box-shadow: 0 16px 32px rgba(240, 90, 36, .32); }
+.customer-button:disabled { box-shadow: none; }
+.customer-button--secondary { box-shadow: none; }
+
+/* Card operatore: leggero calore all'hover del monogramma */
+.operator-card { transition: background-color .18s ease; }
+.operator-card:not(.operator-card--filler):hover { background: #fcf8f3; }
+.operator-card__monogram { transition: transform .2s ease; }
+.operator-card:hover .operator-card__monogram { transform: scale(1.04) rotate(-1deg); }
 .customer-page .booking-slots > .booking-panel .customer-button { width: 100%; margin-top: auto; }
 
 /* Authentication */
