@@ -3,6 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { signOutUser } from "../firebase/auth";
 
 const SECTIONS = [
+  { to: "/dashboard/prenotazioni", label: "Prenotazioni" },
   { to: "/dashboard/servizi", label: "Servizi" },
   { to: "/dashboard/operatori", label: "Operatori" },
   { to: "/dashboard/orari", label: "Orari" },

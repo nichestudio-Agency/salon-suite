@@ -90,6 +90,7 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
       throw new HttpsError("failed-precondition", "Servizio non disponibile.");
     }
 
+    const user = userSnap.data() as { nome?: string; email?: string };
     const salon = salonSnap.data() as SalonData;
     const operator = operatorSnap.data() as OperatorData;
     const service = serviceSnap.data() as ServiceData;
@@ -144,6 +145,8 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
     );
     transaction.create(bookingRef, {
       clientId: uid,
+      clientNome: user.nome?.trim() || "Cliente",
+      clientEmail: user.email ?? null,
       operatorId,
       serviceId,
       date,

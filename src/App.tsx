@@ -5,6 +5,7 @@ import { RequireOwner } from "./app/RequireOwner";
 import { RoleHome } from "./app/RoleHome";
 import { DashboardLayout } from "./app/DashboardLayout";
 import { BookingPage } from "./pages/BookingPage";
+import { BookingsPage } from "./pages/BookingsPage";
 import { HoursPage } from "./pages/HoursPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
@@ -38,6 +39,7 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="servizi" replace />} />
+            <Route path="prenotazioni" element={<BookingsPage />} />
             <Route path="servizi" element={<ServicesPage />} />
             <Route path="operatori" element={<OperatorsPage />} />
             <Route path="orari" element={<HoursPage />} />
