@@ -12,7 +12,14 @@ await Promise.all([
   db.doc("salons/salone-x").set({
     nome: "Salone X",
     timezone: "Europe/Rome",
-    orariApertura: {},
+    orariApertura: {
+      lun: [{ start: 540, end: 1140 }],
+      mar: [{ start: 540, end: 1140 }],
+      mer: [{ start: 540, end: 1140 }],
+      gio: [{ start: 540, end: 1140 }],
+      ven: [{ start: 540, end: 1140 }],
+      sab: [{ start: 540, end: 1140 }],
+    },
     impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
   }),
   db.doc("salons/salone-x/services/taglio-sartoriale").set({
