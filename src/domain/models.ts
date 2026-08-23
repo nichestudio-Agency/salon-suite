@@ -24,6 +24,12 @@ export interface UserProfile {
   fcmTokens: string[];
 }
 
+export interface CompleannoConfig {
+  attivo: boolean;
+  messaggio: string;
+  couponId?: string | null;
+}
+
 /** Documento in `salons/{salonId}`. */
 export interface Salon {
   nome: string;
@@ -34,6 +40,7 @@ export interface Salon {
     passoMinuti: number;
     modalitaConferma: "manuale" | "auto";
   };
+  compleanno?: CompleannoConfig;
 }
 
 /** Documento in `salons/{salonId}/operators/{id}`. */
