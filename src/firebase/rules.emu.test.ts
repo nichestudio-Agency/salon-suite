@@ -344,6 +344,26 @@ describe("coupon", () => {
   });
 });
 
+describe("campagne", () => {
+  it("creazione diretta vietata (solo via Cloud Function)", async () => {
+    await assertFails(
+      setDoc(doc(client("staffA"), "salons/salonA/campaigns/x1"), {
+        filtri: {}, titolo: "T", testo: "B", recipientCount: 0,
+      })
+    );
+  });
+  it("lo staff del salone può leggere le campagne", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "salons/salonA/campaigns/x2"), {
+        filtri: {}, titolo: "T", testo: "B", recipientCount: 3,
+      });
+    });
+    await assertSucceeds(getDoc(doc(client("staffA"), "salons/salonA/campaigns/x2")));
+    await assertFails(getDoc(doc(client("cli1"), "salons/salonA/campaigns/x2")));
+    await assertFails(getDoc(doc(client("staffB"), "salons/salonA/campaigns/x2")));
+  });
+});
+
 describe("isolamento multi-salone sulle prenotazioni", () => {
   it("lo staff di un ALTRO salone NON può leggere una prenotazione", async () => {
     await assertFails(getDoc(doc(client("staffA"), "salons/salonB/bookings/b2")));
