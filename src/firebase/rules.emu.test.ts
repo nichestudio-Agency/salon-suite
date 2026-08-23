@@ -313,6 +313,37 @@ describe("ordini", () => {
   });
 });
 
+describe("coupon", () => {
+  it("lo staff del salone gestisce i coupon del proprio salone", async () => {
+    await assertSucceeds(
+      setDoc(doc(client("staffA"), "salons/salonA/coupons/c1"), {
+        codice: "ESTATE20", tipo: "percentuale", valore: 20, attivo: true,
+      })
+    );
+    await assertSucceeds(getDoc(doc(client("staffA"), "salons/salonA/coupons/c1")));
+  });
+  it("un cliente NON può leggere né scrivere i coupon", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "salons/salonA/coupons/c2"), {
+        codice: "X", tipo: "fisso", valore: 500, attivo: true,
+      });
+    });
+    await assertFails(getDoc(doc(client("cli1"), "salons/salonA/coupons/c2")));
+    await assertFails(
+      setDoc(doc(client("cli1"), "salons/salonA/coupons/c3"), {
+        codice: "Y", tipo: "fisso", valore: 100, attivo: true,
+      })
+    );
+  });
+  it("lo staff di un altro salone NON accede ai coupon di salonA", async () => {
+    await assertFails(
+      setDoc(doc(client("staffB"), "salons/salonA/coupons/c4"), {
+        codice: "Z", tipo: "fisso", valore: 100, attivo: true,
+      })
+    );
+  });
+});
+
 describe("isolamento multi-salone sulle prenotazioni", () => {
   it("lo staff di un ALTRO salone NON può leggere una prenotazione", async () => {
     await assertFails(getDoc(doc(client("staffA"), "salons/salonB/bookings/b2")));
