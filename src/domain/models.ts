@@ -1,3 +1,4 @@
+import type { Timestamp } from "firebase/firestore";
 import type { Interval } from "./time";
 import type { WeeklyHours } from "./availability";
 
@@ -135,6 +136,7 @@ export interface Campaign {
   testo: string;
   couponId?: string | null;
   recipientCount: number;
+  sentAt?: Timestamp;
 }
 
 /** Un impegno che occupa l'agenda: le prenotazioni in_attesa e confermate. */

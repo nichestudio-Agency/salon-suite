@@ -80,7 +80,9 @@ export function NotificationsPage() {
         testo: campTesto,
         ...(campCoupon ? { couponId: campCoupon } : {}),
       });
-      setCampResult(`Campagna inviata a ${res.recipientCount} destinatari.`);
+      setCampResult(res.recipientCount === 0
+        ? "Nessun destinatario per questi filtri."
+        : `Campagna inviata a ${res.recipientCount} destinatari.`);
       setCampTitolo(""); setCampTesto("");
     } catch {
       setCampResult("Invio della campagna non riuscito.");
@@ -138,7 +140,9 @@ export function NotificationsPage() {
         <div className="field"><label htmlFor="ccp">Coupon (opzionale)</label>
           <select id="ccp" aria-label="Coupon" value={campCoupon} onChange={(e) => setCampCoupon(e.target.value)}>
             <option value="">Nessuno</option>
-            {coupons.map((c) => <option key={c.id} value={c.id}>{c.codice}</option>)}
+            {coupons
+              .filter((c) => c.attivo && (!c.scadenza || c.scadenza >= new Date().toISOString().slice(0, 10)))
+              .map((c) => <option key={c.id} value={c.id}>{c.codice}</option>)}
           </select></div>
         {campResult && <p role="status">{campResult}</p>}
         <button className="btn" type="submit" disabled={campBusy}>Invia campagna</button>

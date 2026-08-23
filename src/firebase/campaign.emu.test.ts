@@ -6,6 +6,7 @@ import { registerOwner } from "./onboarding";
 import { registerClient } from "./auth";
 import { createProduct } from "./product-repo";
 import { createOrder } from "./order";
+import { createCoupon } from "./coupon-repo";
 import type { Gender } from "../domain/models";
 
 beforeAll(() => connectEmulators());
@@ -60,5 +61,69 @@ describe("sendCampaign", () => {
     await signOut(auth);
     await registerClient({ email: `intruso_${Date.now()}@ex.com`, password: "password123", nome: "X", sesso: "altro", dataNascita: "1990-01-01" });
     await expect(send()({ salonId, filtri: {}, titolo: "T", testo: "B" })).rejects.toThrow();
+  });
+
+  it("rifiuta lo staff di un ALTRO salone", async () => {
+    const ownerAEmail = `own3a_${Date.now()}@ex.com`;
+    const { salonId: salonAId } = await registerOwner({
+      email: ownerAEmail, password: "password123", nomeSalone: "S3A",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    await signOut(auth);
+
+    const ownerBEmail = `own3b_${Date.now()}@ex.com`;
+    await registerOwner({
+      email: ownerBEmail, password: "password123", nomeSalone: "S3B",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    // già autenticato come owner B dopo la registrazione: prova a colpire il salone A.
+    await expect(
+      send()({ salonId: salonAId, filtri: {}, titolo: "T", testo: "B" })
+    ).rejects.toThrow();
+  });
+
+  it("esclude la clientela di un altro salone dal conteggio (cross-tenant)", async () => {
+    const ownerAEmail = `own4a_${Date.now()}@ex.com`;
+    const { salonId: salonAId } = await registerOwner({
+      email: ownerAEmail, password: "password123", nomeSalone: "S4A",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    const pA = await createProduct(salonAId, { titolo: "Cera", descrizione: "", prezzo: 1000, attivo: true });
+    await signOut(auth);
+
+    const ownerBEmail = `own4b_${Date.now()}@ex.com`;
+    const { salonId: salonBId } = await registerOwner({
+      email: ownerBEmail, password: "password123", nomeSalone: "S4B",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    const pB = await createProduct(salonBId, { titolo: "Cera", descrizione: "", prezzo: 1000, attivo: true });
+    await signOut(auth);
+
+    await clientWithOrder(salonAId, pA, "maschile", "1990-01-01");
+    await clientWithOrder(salonBId, pB, "femminile", "1990-01-01");
+
+    await signInWithEmailAndPassword(auth, ownerAEmail, "password123");
+    const res = await send()({ salonId: salonAId, filtri: {}, titolo: "Promo", testo: "Sconti!" });
+    expect(res.data.recipientCount).toBe(1);
+  });
+
+  it("rifiuta un coupon non attivo", async () => {
+    const ownerEmail = `own5_${Date.now()}@ex.com`;
+    const { salonId } = await registerOwner({
+      email: ownerEmail, password: "password123", nomeSalone: "S5",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    const p = await createProduct(salonId, { titolo: "Cera", descrizione: "", prezzo: 1000, attivo: true });
+    const couponId = await createCoupon(salonId, {
+      codice: "SCADUTO", tipo: "percentuale", valore: 10, attivo: false,
+    });
+    await signOut(auth);
+
+    await clientWithOrder(salonId, p, "maschile", "1990-01-01");
+
+    await signInWithEmailAndPassword(auth, ownerEmail, "password123");
+    await expect(
+      send()({ salonId, filtri: {}, titolo: "Promo", testo: "Sconti!", couponId })
+    ).rejects.toThrow();
   });
 });

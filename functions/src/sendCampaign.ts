@@ -5,6 +5,12 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 if (getApps().length === 0) initializeApp();
 
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
 interface CampaignFilters {
   sesso?: "maschile" | "femminile";
   natoDa?: string;
@@ -63,28 +69,38 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
     if (typeof c === "string") clientIds.add(c);
   }
 
-  // Coupon opzionale → suffisso nel messaggio.
+  // Coupon opzionale → suffisso nel messaggio (rifiuta coupon non valido/scaduto).
   let couponSuffix = "";
   const couponId = request.data?.couponId;
-  if (typeof couponId === "string" && couponId) {
+  if (couponId !== undefined && couponId !== null && couponId !== "") {
+    requireId(couponId, "couponId");
     const couponSnap = await db.doc(`salons/${salonId}/coupons/${couponId}`).get();
     const coupon = couponSnap.data();
-    if (couponSnap.exists && coupon) {
-      const sconto =
-        coupon.tipo === "percentuale"
-          ? `-${coupon.valore}%`
-          : `-€${(Number(coupon.valore) / 100).toFixed(2)}`;
-      couponSuffix = ` Usa il codice ${coupon.codice} (${sconto}).`;
+    const today = new Date().toISOString().slice(0, 10);
+    const valido = couponSnap.exists && coupon && coupon.attivo === true
+      && (typeof coupon.scadenza !== "string" || coupon.scadenza >= today);
+    if (!valido) {
+      throw new HttpsError("failed-precondition", "Coupon non valido o scaduto.");
     }
+    const sconto = coupon!.tipo === "percentuale"
+      ? `-${coupon!.valore}%`
+      : `-€${(Number(coupon!.valore) / 100).toFixed(2)}`;
+    couponSuffix = ` Usa il codice ${coupon!.codice} (${sconto}).`;
   }
   const body = testo + couponSuffix;
 
-  // Filtra i profili lato server e raccogli token/email.
+  const campaignRef = db.collection(`salons/${salonId}/campaigns`).doc();
+
+  // Filtra i profili lato server (lettura in blocco) e raccogli token/email.
+  const idArr = [...clientIds];
+  const profileSnaps = idArr.length > 0
+    ? await db.getAll(...idArr.map((id) => db.doc(`users/${id}`)))
+    : [];
   const tokens: string[] = [];
   const emails: string[] = [];
   let recipientCount = 0;
-  for (const clientId of clientIds) {
-    const profile = (await db.doc(`users/${clientId}`).get()).data();
+  for (const snap of profileSnaps) {
+    const profile = snap.data();
     if (!profile) continue;
     if (filtri.sesso && profile.sesso !== filtri.sesso) continue;
     const nascita = typeof profile.dataNascita === "string" ? profile.dataNascita : null;
@@ -99,7 +115,36 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
     if (typeof profile.email === "string" && profile.email) emails.push(profile.email);
   }
 
-  const campaignRef = db.collection(`salons/${salonId}/campaigns`).doc();
+  // Email via estensione mail, in lotti (limite 500 scritture per batch Firestore).
+  let mailIndex = 0;
+  for (const group of chunk(emails, 450)) {
+    const batch = db.batch();
+    for (const email of group) {
+      batch.set(db.doc(`mail/${campaignRef.id}_${mailIndex++}`), {
+        to: email,
+        message: { subject: titolo, text: body },
+        salonId,
+        campaignId: campaignRef.id,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  // Push (best effort), in lotti (limite 500 token per multicast FCM).
+  for (const group of chunk(tokens, 450)) {
+    try {
+      await getMessaging().sendEachForMulticast({
+        tokens: group,
+        notification: { title: titolo, body },
+        data: { salonId, campaignId: campaignRef.id },
+      });
+    } catch {
+      // best effort: l'email resta il canale di riserva
+    }
+  }
+
+  // Audit scritto DOPO gli invii, così riflette che l'invio è realmente avvenuto.
   await campaignRef.set({
     filtri,
     titolo,
@@ -108,34 +153,6 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
     recipientCount,
     sentAt: FieldValue.serverTimestamp(),
   });
-
-  // Email via estensione mail (batch; per lotti oltre 500 servirà chunking, non necessario ora).
-  if (emails.length > 0) {
-    const batch = db.batch();
-    emails.forEach((email, i) => {
-      batch.set(db.doc(`mail/${campaignRef.id}_${i}`), {
-        to: email,
-        message: { subject: titolo, text: body },
-        salonId,
-        campaignId: campaignRef.id,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-    });
-    await batch.commit();
-  }
-
-  // Push (best effort).
-  if (tokens.length > 0) {
-    try {
-      await getMessaging().sendEachForMulticast({
-        tokens,
-        notification: { title: titolo, body },
-        data: { salonId, campaignId: campaignRef.id },
-      });
-    } catch {
-      // best effort: l'email resta il canale di riserva
-    }
-  }
 
   return { campaignId: campaignRef.id, recipientCount };
 });
