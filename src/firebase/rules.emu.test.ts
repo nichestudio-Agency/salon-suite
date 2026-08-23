@@ -34,6 +34,8 @@ beforeEach(async () => {
     await setDoc(doc(d, "salons/salonB"), { nome: "Salone B", timezone: "Europe/Rome" });
     // staffA appartiene a salonA.
     await setDoc(doc(d, "users/staffA"), { ruolo: "staff", salonId: "salonA" });
+    // staffB appartiene a salonB (per i test di isolamento cross-tenant).
+    await setDoc(doc(d, "users/staffB"), { ruolo: "staff", salonId: "salonB" });
     // un servizio di salonA.
     await setDoc(doc(d, "salons/salonA/services/s1"), {
       titolo: "Taglio", descrizione: "", prezzo: 2000, durataMin: 30, attivo: true,
@@ -249,6 +251,50 @@ describe("prodotti", () => {
         titolo: "X", descrizione: "", prezzo: 0, attivo: true,
       })
     );
+  });
+});
+
+describe("ordini", () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "salons/salonA/orders/o1"), {
+        clientId: "cli1", items: [], totale: 0, stato: "in_attesa",
+      });
+    });
+  });
+  it("creazione diretta vietata (solo via Cloud Function)", async () => {
+    await assertFails(
+      setDoc(doc(client("cli1"), "salons/salonA/orders/o2"), {
+        clientId: "cli1", items: [], totale: 0, stato: "in_attesa",
+      })
+    );
+  });
+  it("il cliente legge il proprio ordine, non quello altrui", async () => {
+    await assertSucceeds(getDoc(doc(client("cli1"), "salons/salonA/orders/o1")));
+    await assertFails(getDoc(doc(client("cli2"), "salons/salonA/orders/o1")));
+  });
+  it("lo staff marca 'pronto'; il cliente non può", async () => {
+    await assertSucceeds(
+      setDoc(doc(client("staffA"), "salons/salonA/orders/o1"),
+        { clientId: "cli1", items: [], totale: 0, stato: "pronto" })
+    );
+    await assertFails(
+      setDoc(doc(client("cli1"), "salons/salonA/orders/o1"),
+        { clientId: "cli1", items: [], totale: 0, stato: "pronto" })
+    );
+  });
+  it("il cliente può annullare il proprio ordine in_attesa (solo stato)", async () => {
+    await assertSucceeds(
+      setDoc(doc(client("cli1"), "salons/salonA/orders/o1"),
+        { clientId: "cli1", items: [], totale: 0, stato: "annullato" })
+    );
+    await assertFails(
+      setDoc(doc(client("cli1"), "salons/salonA/orders/o1"),
+        { clientId: "cli1", items: [], totale: 999, stato: "annullato" })
+    );
+  });
+  it("staff di un altro salone non legge gli ordini di salonA", async () => {
+    await assertFails(getDoc(doc(client("staffB"), "salons/salonA/orders/o1")));
   });
 });
 
