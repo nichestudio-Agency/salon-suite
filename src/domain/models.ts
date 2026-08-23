@@ -120,6 +120,23 @@ export interface Coupon {
   attivo: boolean;
 }
 
+export interface CampaignFilters {
+  sesso?: "maschile" | "femminile";
+  /** Data di nascita minima "YYYY-MM-DD" (nato da). */
+  natoDa?: string;
+  /** Data di nascita massima "YYYY-MM-DD" (nato a). */
+  natoA?: string;
+}
+
+/** Documento in `salons/{salonId}/campaigns/{id}` (audit, creato dalla Cloud Function). */
+export interface Campaign {
+  filtri: CampaignFilters;
+  titolo: string;
+  testo: string;
+  couponId?: string | null;
+  recipientCount: number;
+}
+
 /** Un impegno che occupa l'agenda: le prenotazioni in_attesa e confermate. */
 export function bookingToInterval(b: Pick<Booking, "startMin" | "endMin">): Interval {
   return { start: b.startMin, end: b.endMin };
