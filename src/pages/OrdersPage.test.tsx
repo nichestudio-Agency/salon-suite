@@ -23,4 +23,15 @@ describe("OrdersPage", () => {
     await userEvent.click(screen.getByRole("button", { name: /pronto/i }));
     await waitFor(() => expect(upd).toHaveBeenCalledWith("s1", "o1", "pronto"));
   });
+
+  it("mostra un alert se il cambio stato fallisce", async () => {
+    vi.spyOn(repo, "listSalonOrders").mockResolvedValue([
+      { id: "o1", clientId: "c", clientNome: "Mario", items: [{ productId: "p1", titolo: "Cera", prezzo: 1500, qta: 2 }], totale: 3000, stato: "in_attesa" },
+    ]);
+    vi.spyOn(repo, "updateOrderStatus").mockRejectedValue(new Error("boom"));
+    render(<OrdersPage />);
+    expect(await screen.findByText(/Mario/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /pronto/i }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+  });
 });

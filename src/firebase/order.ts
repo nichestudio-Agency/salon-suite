@@ -1,9 +1,9 @@
 import { httpsCallable } from "firebase/functions";
 import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { auth, db, functions } from "./app";
-import type { Order } from "../domain/models";
+import type { Order, OrderWithId } from "../domain/models";
 
-export type OrderWithId = Order & { id: string };
+export type { OrderWithId } from "../domain/models";
 
 export interface CreateOrderInput {
   salonId: string;

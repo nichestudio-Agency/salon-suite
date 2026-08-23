@@ -104,6 +104,8 @@ export interface Order {
   stato: OrderStatus;
 }
 
+export type OrderWithId = Order & { id: string };
+
 /** Un impegno che occupa l'agenda: le prenotazioni in_attesa e confermate. */
 export function bookingToInterval(b: Pick<Booking, "startMin" | "endMin">): Interval {
   return { start: b.startMin, end: b.endMin };

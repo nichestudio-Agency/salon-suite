@@ -8,6 +8,7 @@ export function MyOrdersPage() {
   const [salons, setSalons] = useState<SalonWithId[]>([]);
   const [salonId, setSalonId] = useState("");
   const [orders, setOrders] = useState<OrderWithId[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void listSalons().then((s) => {
@@ -25,14 +26,20 @@ export function MyOrdersPage() {
 
   async function onCancel(id: string) {
     if (!salonId) return;
-    await cancelOrder(salonId, id);
-    await reload(salonId);
+    setError(null);
+    try {
+      await cancelOrder(salonId, id);
+      await reload(salonId);
+    } catch {
+      setError("Operazione non riuscita. Aggiorna la pagina e riprova.");
+    }
   }
 
   return (
     <main className="customer-shell">
       <span className="customer-shell__eyebrow">I miei ordini</span>
       <h1>Ordini</h1>
+      {error && <p className="customer-error" role="alert">{error}</p>}
       <div className="booking-field">
         <label htmlFor="mo-salon">Salone</label>
         <select id="mo-salon" value={salonId} onChange={(e) => setSalonId(e.target.value)}>

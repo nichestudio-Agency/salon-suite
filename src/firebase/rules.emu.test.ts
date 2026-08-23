@@ -260,6 +260,12 @@ describe("ordini", () => {
       await setDoc(doc(ctx.firestore(), "salons/salonA/orders/o1"), {
         clientId: "cli1", items: [], totale: 0, stato: "in_attesa",
       });
+      // Ordine "fresco" e distinto da o1 (id "o2" già usato dal test di
+      // creazione diretta), per i test che devono partire da uno stato
+      // in_attesa non ancora toccato da un'altra asserzione.
+      await setDoc(doc(ctx.firestore(), "salons/salonA/orders/o3"), {
+        clientId: "cli1", items: [], totale: 0, stato: "in_attesa",
+      });
     });
   });
   it("creazione diretta vietata (solo via Cloud Function)", async () => {
@@ -288,13 +294,22 @@ describe("ordini", () => {
       setDoc(doc(client("cli1"), "salons/salonA/orders/o1"),
         { clientId: "cli1", items: [], totale: 0, stato: "annullato" })
     );
+    // Asserzione su un ordine ancora "in_attesa" (o3), non su o1 che sopra è
+    // già stato portato ad "annullato": così la negazione isola davvero la
+    // mutazione di un campo extra, non un tentativo su un ordine terminale.
     await assertFails(
-      setDoc(doc(client("cli1"), "salons/salonA/orders/o1"),
+      setDoc(doc(client("cli1"), "salons/salonA/orders/o3"),
         { clientId: "cli1", items: [], totale: 999, stato: "annullato" })
     );
   });
   it("staff di un altro salone non legge gli ordini di salonA", async () => {
     await assertFails(getDoc(doc(client("staffB"), "salons/salonA/orders/o1")));
+  });
+  it("staff di un altro salone non può aggiornare gli ordini di salonA", async () => {
+    await assertFails(
+      setDoc(doc(client("staffB"), "salons/salonA/orders/o1"),
+        { clientId: "cli1", items: [], totale: 0, stato: "pronto" })
+    );
   });
 });
 

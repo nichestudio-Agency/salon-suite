@@ -6,23 +6,33 @@ import { formatEuro } from "../domain/money";
 export function OrdersPage() {
   const { salonId } = useAuth();
   const [orders, setOrders] = useState<OrderWithId[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   async function reload(id: string) {
     setOrders(await listSalonOrders(id));
   }
   useEffect(() => {
-    if (salonId) void reload(salonId);
+    if (!salonId) return;
+    void reload(salonId).catch(() => {
+      setError("Non è stato possibile caricare gli ordini.");
+    });
   }, [salonId]);
 
   async function setStatus(id: string, stato: "pronto" | "ritirato" | "annullato") {
     if (!salonId) return;
-    await updateOrderStatus(salonId, id, stato);
-    await reload(salonId);
+    setError(null);
+    try {
+      await updateOrderStatus(salonId, id, stato);
+      await reload(salonId);
+    } catch {
+      setError("Operazione non riuscita. Aggiorna la pagina e riprova.");
+    }
   }
 
   return (
     <section>
       <h2>Ordini</h2>
+      {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
       {orders.length === 0 && <p style={{ color: "var(--muted)" }}>Nessun ordine.</p>}
       {orders.map((o) => (
         <div className="card" key={o.id}>

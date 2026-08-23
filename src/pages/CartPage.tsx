@@ -41,7 +41,7 @@ export function CartPage() {
             <input
               aria-label={`Quantità ${l.product.titolo}`}
               type="number" min="1" value={l.qta}
-              onChange={(e) => setQta(l.product.id, parseInt(e.target.value || "1", 10))}
+              onChange={(e) => setQta(l.product.id, Math.max(1, parseInt(e.target.value, 10) || 1))}
               style={{ width: 64 }}
             />
             <button className="customer-button customer-button--secondary" onClick={() => remove(l.product.id)}>Rimuovi</button>

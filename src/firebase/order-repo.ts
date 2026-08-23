@@ -1,8 +1,8 @@
 import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "./app";
-import type { Order, OrderStatus } from "../domain/models";
+import type { Order, OrderStatus, OrderWithId } from "../domain/models";
 
-export type OrderWithId = Order & { id: string };
+export type { OrderWithId } from "../domain/models";
 
 const statusOrder: Record<OrderStatus, number> = {
   in_attesa: 0, pronto: 1, ritirato: 2, annullato: 3,
