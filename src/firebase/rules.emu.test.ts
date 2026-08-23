@@ -143,8 +143,8 @@ describe("isolamento multi-salone sui servizi", () => {
 });
 
 describe("prenotazioni", () => {
-  it("il cliente può creare una prenotazione per sé stesso, stato in_attesa", async () => {
-    await assertSucceeds(
+  it("il cliente NON può bypassare la function creando direttamente una prenotazione", async () => {
+    await assertFails(
       setDoc(doc(client("cli1"), "salons/salonA/bookings/newb"), {
         clientId: "cli1", operatorId: "op1", serviceId: "s1",
         date: "2026-08-25", startMin: 660, endMin: 690, stato: "in_attesa",
