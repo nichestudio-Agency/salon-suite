@@ -28,9 +28,10 @@
 
 .booking-panel {
   padding: 24px;
-  border: 1px solid #e5e1dc;
-  border-radius: 16px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
 }
 
 .auth-panel {
@@ -97,8 +98,8 @@
 }
 
 .booking-slot[aria-pressed="true"] {
-  border-color: #d96d25;
-  background: #d96d25;
+  border-color: var(--accent);
+  background: var(--accent);
   color: #fff;
 }
 
@@ -107,7 +108,7 @@
   padding: 9px 16px;
   border: 0;
   border-radius: 9px;
-  background: #d96d25;
+  background: var(--accent);
   color: #fff;
   cursor: pointer;
   font: inherit;
