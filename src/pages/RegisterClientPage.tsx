@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Gender } from "../domain/models";
 import { registerClient } from "../firebase/auth";
+import { AuthLayout } from "../app/AuthLayout";
 import "./customer.css";
 
 export function RegisterClientPage() {
@@ -29,7 +30,7 @@ export function RegisterClientPage() {
   }
 
   return (
-    <main className="customer-shell customer-shell--narrow">
+    <AuthLayout>
       <form className="booking-panel auth-panel" onSubmit={onSubmit}>
         <span className="customer-shell__eyebrow">Area clienti</span>
         <h1>Crea il tuo account</h1>
@@ -96,6 +97,6 @@ export function RegisterClientPage() {
         </button>
         <p>Hai già un account? <Link to="/accedi">Accedi</Link></p>
       </form>
-    </main>
+    </AuthLayout>
   );
 }

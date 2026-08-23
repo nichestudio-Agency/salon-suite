@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerOwner } from "../firebase/onboarding";
 import type { WeeklyHours } from "../domain/availability";
+import { AuthLayout } from "../app/AuthLayout";
 import "./customer.css";
 
 /** Orari di default: Lun–Sab 9:00–19:00 (rifiniti poi nella sezione Orari). */
@@ -43,7 +44,7 @@ export function OnboardingPage() {
   }
 
   return (
-    <main className="customer-shell customer-shell--narrow">
+    <AuthLayout variant="owner">
       <form className="booking-panel auth-panel" onSubmit={onSubmit}>
         <span className="customer-shell__eyebrow">Registra il salone</span>
         <h1>Crea il tuo salone</h1>
@@ -88,6 +89,6 @@ export function OnboardingPage() {
 
         <p className="auth-alt">Hai già un salone? <Link to="/accedi">Accedi</Link></p>
       </form>
-    </main>
+    </AuthLayout>
   );
 }

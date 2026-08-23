@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signIn } from "../firebase/auth";
+import { AuthLayout } from "../app/AuthLayout";
 import "./customer.css";
 
 export function LoginPage() {
@@ -21,7 +22,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className="customer-shell customer-shell--narrow">
+    <AuthLayout>
       <form className="booking-panel auth-panel" onSubmit={onSubmit}>
         <span className="customer-shell__eyebrow">Barber Shop</span>
         <h1>Accedi</h1>
@@ -55,6 +56,6 @@ export function LoginPage() {
         <p className="auth-alt">Sei un cliente? <Link to="/registrati">Registrati</Link></p>
         <p className="auth-alt">Nuovo salone? <Link to="/registrati-salone">Registra il salone</Link></p>
       </form>
-    </main>
+    </AuthLayout>
   );
 }
