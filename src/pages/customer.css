@@ -129,6 +129,50 @@
 .operator-card:not(.operator-card--filler):hover { background: #fcf8f3; }
 .operator-card__monogram { transition: transform .2s ease; }
 .operator-card:hover .operator-card__monogram { transform: scale(1.04) rotate(-1deg); }
+
+/* ===== "Molto di più": movimento, materia, drama ===== */
+@keyframes riseIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes heroZoom { from { transform: scale(1.14); } to { transform: scale(1); } }
+@keyframes glowPulse { 0%,100% { opacity: .55; } 50% { opacity: .9; } }
+
+/* Glow ambientale caldo dietro i contenuti */
+.customer-app__content { position: relative; }
+.customer-app__content::before { position: absolute; z-index: 0; content: ""; top: -6%; right: -4%; width: 46vw; height: 52vh; background: radial-gradient(circle at 70% 30%, var(--accent-soft), transparent 66%); pointer-events: none; }
+.customer-page { position: relative; z-index: 1; animation: riseIn .6s cubic-bezier(.2,.7,.2,1) both; }
+
+/* Occhielli con tick accentato */
+.customer-shell__eyebrow { display: inline-flex; align-items: center; gap: 11px; }
+.customer-shell__eyebrow::before { width: 26px; height: 1px; background: var(--accent); content: ""; }
+
+/* Hero prenotazione: più grande, zoom lento, bagliore, ingresso a cascata */
+.booking-hero { min-height: 400px; }
+.booking-hero img { z-index: 0; filter: grayscale(.14) brightness(.55) contrast(1.05); animation: heroZoom 16s ease-out both; }
+.booking-hero::after { z-index: 1; }
+.booking-hero::before { position: absolute; z-index: 2; right: -8%; top: -34%; width: 58%; height: 128%; background: radial-gradient(circle, rgba(240,90,36,.5), transparent 60%); mix-blend-mode: screen; content: ""; animation: glowPulse 7s ease-in-out infinite; pointer-events: none; }
+.booking-hero__copy { z-index: 3; }
+.booking-hero__copy h1 { font-size: clamp(3.3rem, 6.2vw, 6.2rem); }
+.booking-hero__copy > * { animation: riseIn .7s cubic-bezier(.2,.7,.2,1) both; }
+.booking-hero__copy > :nth-child(2) { animation-delay: .1s; }
+.booking-hero__copy > :nth-child(3) { animation-delay: .2s; }
+
+/* Navigazione: etichetta che scorre, indice che si accende */
+.customer-nav nav a .customer-nav__label { transition: transform .18s ease; }
+.customer-nav nav a:hover .customer-nav__label { transform: translateX(4px); }
+.customer-nav nav a .customer-nav__index { transition: color .18s ease; }
+.customer-nav nav a:hover .customer-nav__index { color: var(--accent); }
+
+/* Bottoni: passaggio di luce all'hover */
+.customer-button { position: relative; overflow: hidden; }
+.customer-button::after { position: absolute; inset: 0; content: ""; background: linear-gradient(120deg, transparent 32%, rgba(255,255,255,.38), transparent 68%); transform: translateX(-130%); transition: transform .55s ease; }
+.customer-button:hover::after { transform: translateX(130%); }
+.customer-button--secondary::after { display: none; }
+
+/* Chip orari: sollevamento con ombra accentata */
+.booking-slot:hover { border-color: var(--accent); box-shadow: 0 8px 18px rgba(240,90,36,.18); }
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-page, .booking-hero img, .booking-hero::before, .booking-hero__copy > * { animation: none !important; }
+}
 .customer-page .booking-slots > .booking-panel .customer-button { width: 100%; margin-top: auto; }
 
 /* Authentication */
