@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { useSalonTenant } from "../app/salon-tenant-context";
+import barberEditorial from "../assets/barber-editorial.webp";
 import "./customer.css";
 
 export function CustomerOperatorsPage() {
@@ -29,6 +30,15 @@ export function CustomerOperatorsPage() {
             <Link to="/prenota">Scegli questo barber →</Link>
           </article>
         ))}
+        {operators.length > 0 && operators.length % 2 === 1 && (
+          <div className="operator-card operator-card--filler" aria-hidden="true">
+            <img src={barberEditorial} alt="" />
+            <div className="operator-card__filler-copy">
+              <span className="customer-shell__eyebrow">{salon?.nome}</span>
+              <p>Il tuo prossimo taglio ti aspetta.</p>
+            </div>
+          </div>
+        )}
         {operators.length === 0 && <div className="customer-empty"><span>—</span><p>Nessun operatore disponibile per questo salone.</p></div>}
       </div>
     </section>

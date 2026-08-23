@@ -29,11 +29,13 @@ export function CatalogPage() {
         <Link className="customer-button" to="/carrello">Carrello ({cart.items.length})</Link>
       </div>
 
-      <div className="booking-slots" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
+      <div className="booking-slots" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
         {products.map((p) => (
           <div className="booking-panel" key={p.id}>
-            {p.fotoUrl && (
-              <img src={p.fotoUrl} alt="" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
+            {p.fotoUrl ? (
+              <img src={p.fotoUrl} alt="" />
+            ) : (
+              <div className="product-card__ph" aria-hidden="true">{p.titolo.slice(0, 1).toUpperCase()}</div>
             )}
             <strong>{p.titolo}</strong>
             <p className="customer-booking__meta">{p.descrizione}</p>
