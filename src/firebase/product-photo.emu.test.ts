@@ -1,10 +1,11 @@
 // @vitest-environment node
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { signOut } from "firebase/auth";
-import { auth, connectEmulators } from "./app";
+import { ref, getDownloadURL } from "firebase/storage";
+import { auth, storage, connectEmulators } from "./app";
 import { registerOwner } from "./onboarding";
 import { registerClient } from "./auth";
-import { createProduct, uploadProductPhoto } from "./product-repo";
+import { createProduct, updateProduct, uploadProductPhoto, deleteProduct } from "./product-repo";
 
 beforeAll(() => connectEmulators());
 afterEach(async () => { await signOut(auth); });
@@ -36,5 +37,38 @@ describe("uploadProductPhoto", () => {
     await expect(
       uploadProductPhoto("salonX", "prodX", file, "foto.png")
     ).rejects.toThrow();
+  });
+
+  it("lo staff di un ALTRO salone NON può caricare foto prodotto", async () => {
+    const { salonId: salonBId } = await registerOwner({
+      email: `ownB_${Date.now()}@ex.com`, password: "password123", nomeSalone: "B",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    await signOut(auth);
+    await registerOwner({
+      email: `ownA_${Date.now()}@ex.com`, password: "password123", nomeSalone: "A",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    const file = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "image/png" });
+    await expect(
+      uploadProductPhoto(salonBId, "prodX", file, "f.png")
+    ).rejects.toThrow();
+  });
+
+  it("deleteProduct elimina anche la foto su Storage", async () => {
+    const { salonId } = await registerOwner({
+      email: `owndel_${Date.now()}@ex.com`, password: "password123", nomeSalone: "S",
+      timezone: "Europe/Rome", orariApertura: {},
+    });
+    const productId = await createProduct(salonId, {
+      titolo: "Shampoo", descrizione: "", prezzo: 900, attivo: true,
+    });
+    const file = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "image/png" });
+    const { fotoUrl, fotoPath } = await uploadProductPhoto(salonId, productId, file, "foto.png");
+    await updateProduct(salonId, productId, { fotoUrl, fotoPath });
+
+    await deleteProduct(salonId, productId);
+
+    await expect(getDownloadURL(ref(storage, fotoPath))).rejects.toThrow();
   });
 });

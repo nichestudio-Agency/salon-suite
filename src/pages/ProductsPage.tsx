@@ -4,10 +4,7 @@ import {
   listProducts, createProduct, updateProduct, deleteProduct, uploadProductPhoto,
   type ProductWithId,
 } from "../firebase/product-repo";
-
-function euro(centesimi: number): string {
-  return (centesimi / 100).toLocaleString("it-IT", { minimumFractionDigits: 2 });
-}
+import { formatEuro } from "../domain/money";
 
 export function ProductsPage() {
   const { salonId } = useAuth();
@@ -17,6 +14,7 @@ export function ProductsPage() {
   const [prezzoEuro, setPrezzoEuro] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [photoWarning, setPhotoWarning] = useState<string | null>(null);
 
   async function reload(id: string) {
     setItems(await listProducts(id));
@@ -29,6 +27,7 @@ export function ProductsPage() {
     e.preventDefault();
     if (!salonId) return;
     setBusy(true);
+    setPhotoWarning(null);
     try {
       const id = await createProduct(salonId, {
         titolo,
@@ -37,8 +36,12 @@ export function ProductsPage() {
         attivo: true,
       });
       if (file) {
-        const { fotoUrl, fotoPath } = await uploadProductPhoto(salonId, id, file, file.name);
-        await updateProduct(salonId, id, { fotoUrl, fotoPath });
+        try {
+          const { fotoUrl, fotoPath } = await uploadProductPhoto(salonId, id, file, file.name);
+          await updateProduct(salonId, id, { fotoUrl, fotoPath });
+        } catch {
+          setPhotoWarning("Prodotto salvato, ma la foto non è stata caricata. Riprova più tardi.");
+        }
       }
       setTitolo(""); setDescrizione(""); setPrezzoEuro(""); setFile(null);
       await reload(salonId);
@@ -62,7 +65,7 @@ export function ProductsPage() {
             {p.fotoUrl && (
               <img src={p.fotoUrl} alt="" width={44} height={44} style={{ borderRadius: 8, objectFit: "cover" }} />
             )}
-            <span><strong>{p.titolo}</strong> · € {euro(p.prezzo)}{!p.attivo && " (non attivo)"}</span>
+            <span><strong>{p.titolo}</strong> · € {formatEuro(p.prezzo)}{!p.attivo && " (non attivo)"}</span>
           </span>
           <button className="btn btn--danger" onClick={() => onDelete(p.id)}>Elimina</button>
         </div>
@@ -77,6 +80,7 @@ export function ProductsPage() {
           <input id="pp" aria-label="Prezzo (€)" type="number" min="0" step="0.01" value={prezzoEuro} onChange={(e) => setPrezzoEuro(e.target.value)} required /></div>
         <div className="field"><label htmlFor="pf">Foto (opzionale)</label>
           <input id="pf" aria-label="Foto (opzionale)" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
+        {photoWarning && <p role="alert">{photoWarning}</p>}
         <button className="btn" type="submit" disabled={busy}>Aggiungi prodotto</button>
       </form>
     </section>

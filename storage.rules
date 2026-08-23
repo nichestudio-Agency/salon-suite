@@ -13,9 +13,10 @@ service firebase.storage {
 
     match /salons/{salonId}/products/{allPaths=**} {
       allow read: if isSignedIn();
-      allow write: if isStaffOf(salonId)
+      allow create, update: if isStaffOf(salonId)
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
+      allow delete: if isStaffOf(salonId);
     }
 
     match /{allPaths=**} {

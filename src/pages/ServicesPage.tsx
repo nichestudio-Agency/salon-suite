@@ -6,12 +6,7 @@ import {
   listServices,
   type ServiceWithId,
 } from "../firebase/service-repo";
-
-function euro(centesimi: number): string {
-  return (centesimi / 100).toLocaleString("it-IT", {
-    minimumFractionDigits: 2,
-  });
-}
+import { formatEuro } from "../domain/money";
 
 export function ServicesPage() {
   const { salonId } = useAuth();
@@ -63,7 +58,7 @@ export function ServicesPage() {
           style={{ justifyContent: "space-between" }}
         >
           <span>
-            <strong>{service.titolo}</strong> · {service.durataMin}′ · € {euro(service.prezzo)}
+            <strong>{service.titolo}</strong> · {service.durataMin}′ · € {formatEuro(service.prezzo)}
             {!service.attivo && " (non attivo)"}
           </span>
           <button

@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { listSalons, type SalonWithId } from "../firebase/salon-repo";
 import { listProducts, type ProductWithId } from "../firebase/product-repo";
+import { formatEuro } from "../domain/money";
 import "./customer.css";
-
-function euro(centesimi: number): string {
-  return (centesimi / 100).toLocaleString("it-IT", { minimumFractionDigits: 2 });
-}
 
 export function CatalogPage() {
   const [salons, setSalons] = useState<SalonWithId[]>([]);
@@ -54,7 +51,7 @@ export function CatalogPage() {
             )}
             <strong>{p.titolo}</strong>
             <p className="customer-booking__meta">{p.descrizione}</p>
-            <p><strong>€ {euro(p.prezzo)}</strong></p>
+            <p><strong>€ {formatEuro(p.prezzo)}</strong></p>
           </div>
         ))}
         {products.length === 0 && <p className="customer-booking__meta">Nessun prodotto disponibile.</p>}

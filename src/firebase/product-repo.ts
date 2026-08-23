@@ -1,7 +1,7 @@
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc, getDocs,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "./app";
 import type { Product } from "../domain/models";
 
@@ -27,7 +27,13 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(salonId: string, id: string): Promise<void> {
-  await deleteDoc(doc(db, "salons", salonId, "products", id));
+  const productRef = doc(db, "salons", salonId, "products", id);
+  const snap = await getDoc(productRef);
+  const fotoPath = snap.data()?.fotoPath as string | undefined;
+  if (fotoPath) {
+    try { await deleteObject(ref(storage, fotoPath)); } catch { /* best effort */ }
+  }
+  await deleteDoc(productRef);
 }
 
 export interface ProductPhoto {

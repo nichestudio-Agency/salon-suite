@@ -221,6 +221,14 @@ describe("prodotti", () => {
     });
     await assertSucceeds(getDoc(doc(client("cli1"), "salons/salonA/products/p1")));
   });
+  it("un utente anonimo NON può leggere i prodotti del salone", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "salons/salonA/products/pX"), {
+        titolo: "Cera", descrizione: "", prezzo: 1500, attivo: true,
+      });
+    });
+    await assertFails(getDoc(doc(anon(), "salons/salonA/products/pX")));
+  });
   it("un cliente NON può scrivere i prodotti del salone", async () => {
     await assertFails(
       setDoc(doc(client("cli1"), "salons/salonA/products/p2"), {
