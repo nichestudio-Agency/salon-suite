@@ -1,12 +1,31 @@
 import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
-if (!process.env.FIRESTORE_EMULATOR_HOST) {
-  throw new Error("Questo seed può essere eseguito solo contro Firestore Emulator.");
+if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+  throw new Error("Questo seed può essere eseguito solo contro gli emulatori Firebase.");
 }
 
 initializeApp({ projectId: "demo-barbershop" });
 const db = getFirestore();
+const auth = getAuth();
+
+async function ensureUser(email, password, displayName) {
+  try {
+    const user = await auth.getUserByEmail(email);
+    await auth.updateUser(user.uid, { password, displayName });
+    return user.uid;
+  } catch (error) {
+    if (error?.code !== "auth/user-not-found") throw error;
+    const user = await auth.createUser({ email, password, displayName });
+    return user.uid;
+  }
+}
+
+const [clientUid, ownerUid] = await Promise.all([
+  ensureUser("cliente.test@barberia.local", "TestBarber26!", "Cliente Test"),
+  ensureUser("titolare.test@barberia.local", "OwnerBarber26!", "Titolare Test"),
+]);
 
 await Promise.all([
   db.doc("salons/salone-x").set({
@@ -46,6 +65,24 @@ await Promise.all([
     prezzo: 1800,
     attivo: true,
   }),
+  db.doc(`users/${clientUid}`).set({
+    nome: "Cliente Test",
+    email: "cliente.test@barberia.local",
+    sesso: "maschile",
+    dataNascita: "1990-01-15",
+    ruolo: "cliente",
+    salonId: "salone-x",
+    fcmTokens: [],
+  }),
+  db.doc(`users/${ownerUid}`).set({
+    nome: "Titolare Test",
+    email: "titolare.test@barberia.local",
+    sesso: "altro",
+    dataNascita: "1990-01-01",
+    ruolo: "owner",
+    salonId: "salone-x",
+    fcmTokens: [],
+  }),
 ]);
 
-console.log("Tenant demo Salone X ripristinato.");
+console.log("Demo Salone X, cliente e titolare ripristinati.");

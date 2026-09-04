@@ -219,7 +219,14 @@ VITE_USE_EMULATOR=true npm run dev -- --host 127.0.0.1
 
 L'app è disponibile normalmente su `http://127.0.0.1:5173`.
 
-Il seed crea **Salone X** con orari, servizi, operatore e prodotto dimostrativi. I test dell'emulatore possono ripulire Firestore; in quel caso è sufficiente rieseguire `npm run emu:seed`.
+Il seed crea **Salone X** con orari, servizi, operatore e prodotto dimostrativi. Crea inoltre due account locali:
+
+| Ruolo | Email | Password |
+| --- | --- | --- |
+| Cliente | `cliente.test@barberia.local` | `TestBarber26!` |
+| Titolare | `titolare.test@barberia.local` | `OwnerBarber26!` |
+
+I test dell'emulatore possono ripulire Firestore e Authentication; in quel caso è sufficiente rieseguire `npm run emu:seed`.
 
 ## Variabili d'ambiente
 

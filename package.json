@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "emu:start": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:start --only auth,firestore,functions,storage --project demo-barbershop",
-    "emu:seed": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 node functions/scripts/seed-demo.mjs",
+    "emu:seed": "FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 node functions/scripts/seed-demo.mjs",
     "test:emu": "npm --prefix functions run build && PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:exec --only auth,firestore,functions,storage --project demo-barbershop \"vitest run --config vitest.emu.config.ts\""
   },
   "dependencies": {
