@@ -251,8 +251,8 @@
 
 /* Industrial home */
 .industrial-hero { border-top: 1px solid var(--border); }
-.industrial-wordline { display: grid; grid-template-columns: minmax(0,1fr) minmax(78px,.72fr) minmax(0,1fr); align-items: stretch; border-bottom: 1px solid var(--border); }
-.industrial-wordline span { display: flex; align-items: center; color: #f2efe8; font-family: var(--industrial); font-size: clamp(3rem,15vw,5.4rem); font-weight: 800; letter-spacing: -.055em; line-height: .82; text-transform: uppercase; }
+.industrial-wordline { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(54px,.45fr) minmax(0,.8fr); align-items: stretch; border-bottom: 1px solid var(--border); }
+.industrial-wordline span { display: flex; min-width: 0; align-items: center; color: #f2efe8; font-family: var(--industrial); font-size: clamp(2.35rem,11.5vw,4.7rem); font-weight: 800; letter-spacing: -.055em; line-height: .82; text-transform: uppercase; white-space: nowrap; }
 .industrial-wordline span:last-child { justify-content: flex-end; }
 .industrial-wordline img { width: 100%; height: 100%; min-height: 106px; object-fit: cover; filter: grayscale(1) contrast(1.15); }
 .industrial-mosaic { display: grid; grid-template-columns: .82fr 1.18fr; border-bottom: 1px solid var(--border); }
