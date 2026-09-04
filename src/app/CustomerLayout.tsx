@@ -38,12 +38,12 @@ export function CustomerLayout() {
         <div className="customer-nav__account">
           <NavLink to="/i-miei-ordini"><AppIcon name="orders" size={18} /> I miei ordini</NavLink>
           <NavLink to="/carrello"><AppIcon name="cart" size={18} /> Carrello <span>{cart.items.length}</span></NavLink>
+          <button type="button" onClick={() => signOutUser()}>Esci</button>
         </div>
         <div className="customer-nav__visual" aria-hidden="true">
           <img src={barberEditorial} alt="" />
           <p>Il tuo stile,<br />senza attese.</p>
         </div>
-        <button type="button" onClick={() => signOutUser()}>Esci dall’account</button>
       </aside>
       <main className="customer-app__content" id="contenuto">
         <Outlet />

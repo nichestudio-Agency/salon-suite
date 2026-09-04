@@ -9,7 +9,7 @@ import {
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
 import { useSalonTenant } from "../app/salon-tenant-context";
-import barberEditorial from "../assets/barber-editorial.webp";
+import beardTreatment from "../assets/beard-treatment.webp";
 import "./customer.css";
 
 function formatTime(minutes: number): string {
@@ -117,10 +117,10 @@ export function BookingPage() {
   return (
     <section className="customer-page customer-page--booking">
       <div className="booking-hero">
-        <img src={barberEditorial} alt="" />
+        <img src={beardTreatment} alt="Trattamento professionale della barba" />
         <div className="booking-hero__copy">
           <span className="customer-shell__eyebrow">Prenotazione online</span>
-          <h1>Scegli il tuo prossimo appuntamento</h1>
+          <h1>Prenota / ora</h1>
           <p>{salon?.nome ? `${salon.nome} · ` : ""}Taglio, barba e styling su misura, quando vuoi tu.</p>
         </div>
       </div>

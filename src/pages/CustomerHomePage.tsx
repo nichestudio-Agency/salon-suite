@@ -7,8 +7,9 @@ import { formatEuro } from "../domain/money";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listProducts, type ProductWithId } from "../firebase/product-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
-import { listMyBookings, type BookingWithId } from "../firebase/booking";
 import barberEditorial from "../assets/barber-editorial.webp";
+import barberTools from "../assets/barber-tools.webp";
+import beardTreatment from "../assets/beard-treatment.webp";
 import "./customer.css";
 
 export function CustomerHomePage() {
@@ -18,24 +19,17 @@ export function CustomerHomePage() {
   const [services, setServices] = useState<ServiceWithId[]>([]);
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
   const [products, setProducts] = useState<ProductWithId[]>([]);
-  const [bookings, setBookings] = useState<BookingWithId[]>([]);
 
   useEffect(() => {
     if (!salonId) return;
-    void Promise.all([listServices(salonId), listOperators(salonId), listProducts(salonId), listMyBookings(salonId)]).then(([nextServices, nextOperators, nextProducts, nextBookings]) => {
+    void Promise.all([listServices(salonId), listOperators(salonId), listProducts(salonId)]).then(([nextServices, nextOperators, nextProducts]) => {
       setServices(nextServices.filter((item) => item.attivo).slice(0, 3));
       setOperators(nextOperators.filter((item) => item.attivo).slice(0, 4));
       setProducts(nextProducts.filter((item) => item.attivo).slice(0, 2));
-      setBookings(nextBookings.filter((item) => ["in_attesa", "confermata"].includes(item.stato)).slice(0, 1));
     });
   }, [salonId]);
 
   const firstName = user?.displayName?.split(" ")[0];
-  const nextBooking = bookings[0];
-  const nextService = services.find((service) => service.id === nextBooking?.serviceId);
-  const nextOperator = operators.find((operator) => operator.id === nextBooking?.operatorId);
-  const bookingTime = nextBooking ? `${String(Math.floor(nextBooking.startMin / 60)).padStart(2, "0")}:${String(nextBooking.startMin % 60).padStart(2, "0")}` : "";
-
   return (
     <section className="customer-page customer-home">
       <header className="app-page-topbar">
@@ -46,61 +40,34 @@ export function CustomerHomePage() {
         <Link className="round-action" to="/i-miei-ordini" aria-label="I miei ordini"><AppIcon name="bell" /></Link>
       </header>
 
-      <article className="home-hero">
-        <img src={barberEditorial} alt="Barbiere al lavoro" />
-        <div className="home-hero__scrim" />
-        <div className="home-hero__copy">
-          <span>Il tuo salone</span>
-          <h1>Il tuo stile,<br />senza attese.</h1>
-          <p>Taglio, barba e cura personale nel momento giusto per te.</p>
-          <Link className="customer-button" to="/prenota">Prenota ora <AppIcon name="arrow" size={18} /></Link>
+      <article className="industrial-hero">
+        <div className="industrial-wordline"><span>Barber</span><img src={barberTools} alt="Strumenti professionali da barbiere" /><span>Shop</span></div>
+        <div className="industrial-mosaic">
+          <div className="industrial-mosaic__portrait"><img src={barberEditorial} alt="Barbiere durante un trattamento" /></div>
+          <div className="industrial-mosaic__detail"><img src={beardTreatment} alt="Trattamento tradizionale della barba" /></div>
+          <div className="industrial-mosaic__copy"><span>{salon?.nome}</span><p>Un solo salone. Tecniche contemporanee e rituali su misura per il tuo stile.</p></div>
+          <Link className="industrial-mosaic__cta" to="/prenota"><span>Prenota ora</span><AppIcon name="arrow" size={34} /></Link>
         </div>
+        <div className="industrial-promo"><b>ON</b><strong>Prenota senza attese</strong><span>Scegli servizio, barber e orario in autonomia.</span></div>
       </article>
 
-      <aside className="home-next-appointment">
-        <div className="home-next-appointment__top"><span>Prossimo appuntamento</span><AppIcon name="calendar" size={20} /></div>
-        {nextBooking ? <>
-          <div className="home-next-appointment__date"><strong>{bookingTime}</strong><span>{nextBooking.date}</span></div>
-          <div className="home-next-appointment__details"><span className="team-avatar">{nextOperator?.nome.slice(0, 1) ?? "B"}</span><div><strong>{nextService?.titolo ?? "Servizio"}</strong><span>con {nextOperator?.nome ?? "il tuo barber"}</span></div></div>
-          <span className={`home-next-appointment__status home-next-appointment__status--${nextBooking.stato}`}>{nextBooking.stato === "confermata" ? "Confermato" : "In attesa"}</span>
-        </> : <>
-          <div className="home-next-appointment__empty"><AppIcon name="spark" size={26} /><strong>Il prossimo look parte da qui.</strong><p>Scegli servizio, barber e orario in pochi passaggi.</p></div>
-          <Link className="customer-button customer-button--secondary" to="/prenota">Trova un orario <AppIcon name="arrow" size={16} /></Link>
-        </>}
-      </aside>
-
-      <div className="home-quick-actions" aria-label="Azioni rapide">
-        <Link to="/servizi"><AppIcon name="scissors" /><span>Servizi</span></Link>
-        <Link to="/operatori"><AppIcon name="users" /><span>Il team</span></Link>
-        <Link to="/prenota"><AppIcon name="calendar" /><span>Disponibilità</span></Link>
-        <Link to="/catalogo"><AppIcon name="bag" /><span>Prodotti</span></Link>
-      </div>
-
-      <section className="home-section">
-        <div className="home-section__heading"><div><span>Scelti dai clienti</span><h2>Servizi più richiesti</h2></div><Link to="/servizi">Vedi tutti</Link></div>
-        <div className="service-card-grid">
-          {services.map((service, index) => (
-            <Link className="service-card" to="/prenota" key={service.id}>
-              <div className={`service-card__visual service-card__visual--${index + 1}`}><img src={barberEditorial} alt="" /></div>
-              <div className="service-card__body"><strong>{service.titolo}</strong><span><AppIcon name="clock" size={15} /> {service.durataMin} min</span><b>€ {formatEuro(service.prezzo)}</b></div>
-            </Link>
-          ))}
+      <section className="industrial-section industrial-services-preview">
+        <header><span>01 / Listino</span><h2>Servizi <i>&</i> prezzi</h2><Link to="/servizi">Listino completo →</Link></header>
+        <div className="industrial-service-list">
+          {services.map((service, index) => <Link to="/prenota" key={service.id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{service.titolo}</strong><p>{service.descrizione || "Servizio su misura, eseguito con precisione."}</p><data>{service.durataMin} min</data><b>€ {formatEuro(service.prezzo)}</b></Link>)}
         </div>
       </section>
 
-      <section className="home-section home-team">
-        <div className="home-team__content">
-          <div className="home-section__heading"><div><span>Le mani giuste</span><h2>Il team</h2></div><Link to="/operatori">Conosci tutti</Link></div>
-          <div className="team-preview">
-            {operators.map((operator, index) => (
-              <Link to="/operatori" key={operator.id}><span className={`team-avatar team-avatar--${index + 1}`}>{operator.nome.slice(0, 1)}</span><strong>{operator.nome.split(" ")[0]}</strong></Link>
-            ))}
-          </div>
+      <section className="industrial-section industrial-team">
+        <header><span>02 / Il team</span><h2>Le mani<br />giuste.</h2><Link to="/operatori">Conosci i barber →</Link></header>
+        <div className="industrial-team__gallery">
+          <img src={barberEditorial} alt="Il team del salone al lavoro" />
+          <img src={beardTreatment} alt="Dettaglio di un trattamento barba" />
+          <Link to="/operatori"><strong>{operators.length || "01"}</strong><span>Barber.<br />Un solo standard.</span></Link>
         </div>
-        <div className="home-team__art" aria-hidden="true"><img src={barberEditorial} alt="" /><span>Craft<br />& cura.</span></div>
       </section>
 
-      {products.length > 0 && <section className="home-product-banner"><div><span>Hair care</span><h2>Continua la cura anche a casa.</h2><Link to="/catalogo">Scopri i prodotti <AppIcon name="arrow" size={17} /></Link></div><AppIcon name="spark" size={42} /></section>}
+      {products.length > 0 && <section className="industrial-products"><img src={barberTools} alt="Strumenti e prodotti professionali" /><div><span>03 / Shop</span><h2>La cura<br />continua.</h2><p>Prodotti scelti dal salone per mantenere il risultato anche a casa.</p><Link to="/catalogo">Scopri i prodotti <AppIcon name="arrow" size={20} /></Link></div></section>}
     </section>
   );
 }

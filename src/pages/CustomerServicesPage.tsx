@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { formatEuro } from "../domain/money";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
 import { useSalonTenant } from "../app/salon-tenant-context";
+import beardTreatment from "../assets/beard-treatment.webp";
 import "./customer.css";
 
 export function CustomerServicesPage() {
@@ -18,7 +19,7 @@ export function CustomerServicesPage() {
   return (
     <section className="customer-page">
       <header className="customer-page__header">
-        <div><span className="customer-shell__eyebrow">Menu del salone</span><h1>Servizi</h1></div>
+        <div><span className="customer-shell__eyebrow">Listino del salone</span><h1>Servizi / Prezzi</h1></div>
         <span className="customer-page__tenant">{salon?.nome}</span>
       </header>
       <p className="customer-page__intro">Consulta trattamenti, durata e prezzo prima di scegliere il tuo appuntamento.</p>
@@ -33,6 +34,10 @@ export function CustomerServicesPage() {
         ))}
         {services.length === 0 && <EmptyState text="Nessun servizio disponibile per questo salone." />}
       </div>
+      <aside className="service-editorial-feature">
+        <img src={beardTreatment} alt="Rituale tradizionale della barba" />
+        <div><span>Rituali precisi.<br />Risultati che restano.</span><Link to="/prenota">Scegli e prenota →</Link></div>
+      </aside>
     </section>
   );
 }
