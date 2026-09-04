@@ -1,24 +1,25 @@
 :root {
-  --bg: #eee9e2;
-  --panel: #fbfaf7;
-  --panel-strong: #ffffff;
-  --ink: #1d1b18;
-  --muted: #746f68;
-  --accent: #f05a24;
-  --accent-hover: #d94a16;
+  --bg: #efebe5;
+  --panel: #f8f5f0;
+  --panel-strong: #fffdfa;
+  --surface: #f0ebe4;
+  --ink: #191816;
+  --muted: #716c66;
+  --accent: #ff6427;
+  --accent-hover: #e95319;
   --accent-ink: #ffffff;
-  --accent-soft: rgba(240, 90, 36, 0.1);
-  --border: #dcd5cd;
-  --border-strong: #c8c0b7;
+  --accent-soft: rgba(255, 100, 39, 0.1);
+  --border: #e2dcd5;
+  --border-strong: #cec5bc;
   --danger: #a53b2f;
   --ok: #2f7350;
   --dark: #171614;
   --dark-muted: #aaa39a;
-  --radius: 3px;
-  --radius-sm: 2px;
-  --shadow: 0 18px 60px rgba(38, 27, 18, 0.08);
-  --sans: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
-  --display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Baskerville, Georgia, serif;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 18px 50px rgba(38, 27, 18, 0.08);
+  --sans: "Avenir Next", Avenir, Inter, "Segoe UI", system-ui, sans-serif;
+  --display: var(--sans);
   color-scheme: light;
   font-family: var(--sans);
   font-size: 16px;
@@ -40,12 +41,12 @@ button:active { transform: translateY(1px); }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 #root { min-height: 100vh; }
 h1, h2, h3, p { margin-top: 0; }
-h1, h2 { color: var(--ink); font-family: var(--display); font-weight: 400; letter-spacing: -0.035em; line-height: 0.98; }
+h1, h2 { color: var(--ink); font-family: var(--display); font-weight: 760; letter-spacing: -0.045em; line-height: 1.02; }
 h1 { font-size: clamp(2.55rem, 5vw, 5rem); }
 h2 { font-size: clamp(1.75rem, 3vw, 3rem); }
 h3 { color: var(--ink); font-size: 1rem; line-height: 1.25; }
 p { margin-bottom: 0; }
 a { color: var(--accent); text-underline-offset: 3px; }
 ::selection { color: #fff; background: var(--accent); }
-.brand-mark { display: inline-grid; width: 30px; height: 30px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-family: var(--display); font-size: 1.1rem; font-style: italic; }
+.brand-mark { display: inline-grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; font-family: Georgia, serif; font-size: 1.2rem; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }

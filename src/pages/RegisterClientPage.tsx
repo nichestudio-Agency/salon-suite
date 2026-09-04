@@ -23,7 +23,7 @@ export function RegisterClientPage() {
     setError(null);
     try {
       await registerClient({ email, password, nome, sesso, dataNascita, salonId: salon?.id });
-      navigate("/prenota");
+      navigate("/home");
     } catch {
       setError("Registrazione non riuscita. Controlla i dati o prova un'altra email.");
     } finally {

@@ -125,7 +125,14 @@ export function BookingPage() {
         </div>
       </div>
 
+      <div className="booking-progress" aria-label="Avanzamento prenotazione">
+        <span className={serviceId ? "is-complete" : "is-active"}><b>1</b> Servizio</span>
+        <span className={operatorId ? "is-complete" : serviceId ? "is-active" : ""}><b>2</b> Barber</span>
+        <span className={date ? "is-active" : ""}><b>3</b> Orario</span>
+      </div>
+
       <form className="booking-panel" onSubmit={searchAvailability}>
+        <div className="booking-section-heading"><span>Configura</span><h2>Scegli il tuo appuntamento</h2></div>
         <div className="booking-grid">
           <div className="booking-field">
             <label htmlFor="booking-service">Servizio</label>

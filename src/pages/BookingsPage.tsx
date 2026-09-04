@@ -24,6 +24,22 @@ function statusLabel(status: BookingWithId["stato"]): string {
   return labels[status];
 }
 
+function currentWeek() {
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    return {
+      key: date.toISOString(),
+      day: new Intl.DateTimeFormat("it-IT", { weekday: "short" }).format(date).replace(".", ""),
+      number: date.getDate(),
+      isToday: date.toDateString() === today.toDateString(),
+    };
+  });
+}
+
 export function BookingsPage() {
   const { salonId } = useAuth();
   const [bookings, setBookings] = useState<BookingWithId[]>([]);
@@ -71,25 +87,38 @@ export function BookingsPage() {
     return operators.find((operator) => operator.id === id)?.nome ?? "Operatore";
   }
 
+  const todayLabel = new Intl.DateTimeFormat("it-IT", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+  const pendingCount = bookings.filter((booking) => booking.stato === "in_attesa").length;
+  const confirmedCount = bookings.filter((booking) => booking.stato === "confermata").length;
+  const week = currentWeek();
+
   return (
     <section>
-      <h2>Prenotazioni</h2>
-      <p style={{ color: "var(--muted)", marginBottom: 18 }}>
-        Le richieste in attesa bloccano già lo slot fino alla tua decisione.
-      </p>
+      <header className="dashboard-page-header">
+        <div><span>Agenda</span><h2>Agenda di oggi</h2><p>{todayLabel}</p></div>
+        <div className="dashboard-alert" aria-label={`${pendingCount} richieste in attesa`}>{pendingCount}</div>
+      </header>
+      <div className="agenda-week" aria-label="Settimana corrente">
+        {week.map((date) => <span className={date.isToday ? "is-today" : ""} key={date.key}><small>{date.day}</small><b>{date.number}</b></span>)}
+      </div>
+      <div className="agenda-metrics">
+        <div><span>Appuntamenti</span><strong>{bookings.length}</strong></div>
+        <div><span>Confermati</span><strong>{confirmedCount}</strong></div>
+        <div><span>In attesa</span><strong>{pendingCount}</strong></div>
+      </div>
+      <p className="dashboard-helper">Le richieste in attesa bloccano già lo slot fino alla tua decisione.</p>
       {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
       {bookings.length === 0 ? (
         <div className="card">Nessuna prenotazione da mostrare.</div>
       ) : (
         bookings.map((booking) => (
-          <article className="card" key={booking.id}>
+          <article className={`card appointment-card appointment-card--${booking.stato}`} key={booking.id}>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
+                <span className="appointment-card__time">{formatTime(booking.startMin)}</span>
                 <strong>{booking.clientNome ?? booking.clientId}</strong>
                 <div>{serviceName(booking.serviceId)} con {operatorName(booking.operatorId)}</div>
-                <div style={{ color: "var(--muted)" }}>
-                  {booking.date} · {formatTime(booking.startMin)}–{formatTime(booking.endMin)} · {statusLabel(booking.stato)}
-                </div>
+                <div className="appointment-card__meta">{booking.date} · {formatTime(booking.startMin)}–{formatTime(booking.endMin)} <span>{statusLabel(booking.stato)}</span></div>
               </div>
               {booking.stato === "in_attesa" && (
                 <div className="row">

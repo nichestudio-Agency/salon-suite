@@ -8,7 +8,7 @@ export function RoleHome() {
     return <Navigate to="/dashboard/servizi" replace />;
   }
   if (role === "cliente") {
-    return <Navigate to="/prenota" replace />;
+    return <Navigate to="/home" replace />;
   }
   return <Navigate to="/accedi" replace />;
 }

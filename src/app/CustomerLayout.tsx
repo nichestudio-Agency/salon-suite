@@ -3,12 +3,14 @@ import { signOutUser } from "../firebase/auth";
 import { useCart } from "./cart-context";
 import barberEditorial from "../assets/barber-editorial.webp";
 import { useSalonTenant } from "./salon-tenant-context";
+import { AppIcon } from "../components/AppIcon";
 
 const CUSTOMER_SECTIONS = [
-  { to: "/prenota", label: "Prenota", short: "Prenota" },
-  { to: "/servizi", label: "Servizi", short: "Servizi" },
-  { to: "/operatori", label: "Operatori", short: "Barber" },
-  { to: "/catalogo", label: "Prodotti", short: "Prodotti" },
+  { to: "/home", label: "Home", icon: "home" as const },
+  { to: "/servizi", label: "Servizi", icon: "scissors" as const },
+  { to: "/prenota", label: "Prenota", icon: "calendar" as const, primary: true },
+  { to: "/operatori", label: "Barber", icon: "users" as const },
+  { to: "/catalogo", label: "Prodotti", icon: "bag" as const },
 ];
 
 export function CustomerLayout() {
@@ -23,26 +25,25 @@ export function CustomerLayout() {
       <aside className="customer-nav">
         <div className="customer-nav__brand">
           <span className="brand-mark" aria-hidden="true">B</span>
-          <strong>{salon.nome}</strong>
+          <span><strong>{salon.nome}</strong><small>Il tuo salone</small></span>
         </div>
         <nav aria-label="Area cliente">
-          {CUSTOMER_SECTIONS.map((section, index) => (
-            <NavLink key={section.to} to={section.to}>
-              <span className="customer-nav__index">0{index + 1}</span>
-              <span className="customer-nav__label">{section.label}</span>
-              <span className="customer-nav__short">{section.short}</span>
+          {CUSTOMER_SECTIONS.map((section) => (
+            <NavLink key={section.to} to={section.to} className={section.primary ? "customer-nav__primary" : undefined}>
+              <span className="customer-nav__icon"><AppIcon name={section.icon} /></span>
+              <span>{section.label}</span>
             </NavLink>
           ))}
         </nav>
         <div className="customer-nav__account">
-          <NavLink to="/i-miei-ordini">I miei ordini</NavLink>
-          <NavLink to="/carrello">Carrello <span>{cart.items.length}</span></NavLink>
+          <NavLink to="/i-miei-ordini"><AppIcon name="orders" size={18} /> I miei ordini</NavLink>
+          <NavLink to="/carrello"><AppIcon name="cart" size={18} /> Carrello <span>{cart.items.length}</span></NavLink>
         </div>
         <div className="customer-nav__visual" aria-hidden="true">
           <img src={barberEditorial} alt="" />
           <p>Il tuo stile,<br />senza attese.</p>
         </div>
-        <button type="button" onClick={() => signOutUser()}>Esci</button>
+        <button type="button" onClick={() => signOutUser()}>Esci dall’account</button>
       </aside>
       <main className="customer-app__content" id="contenuto">
         <Outlet />

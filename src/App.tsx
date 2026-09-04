@@ -23,6 +23,7 @@ import { RegisterClientPage } from "./pages/RegisterClientPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { CustomerServicesPage } from "./pages/CustomerServicesPage";
 import { CustomerOperatorsPage } from "./pages/CustomerOperatorsPage";
+import { CustomerHomePage } from "./pages/CustomerHomePage";
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/registrati-salone" element={<OnboardingPage />} />
             <Route path="/area" element={<RoleHome />} />
             <Route element={<RequireClient><CustomerLayout /></RequireClient>}>
+              <Route path="/home" element={<CustomerHomePage />} />
               <Route path="/prenota" element={<BookingPage />} />
               <Route path="/servizi" element={<CustomerServicesPage />} />
               <Route path="/operatori" element={<CustomerOperatorsPage />} />
