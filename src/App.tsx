@@ -25,6 +25,7 @@ import { CustomerServicesPage } from "./pages/CustomerServicesPage";
 import { CustomerOperatorsPage } from "./pages/CustomerOperatorsPage";
 import { CustomerHomePage } from "./pages/CustomerHomePage";
 import { DashboardHomePage } from "./pages/DashboardHomePage";
+import { ClientsPage } from "./pages/ClientsPage";
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
             >
               <Route index element={<DashboardHomePage />} />
               <Route path="prenotazioni" element={<BookingsPage />} />
+              <Route path="clienti" element={<ClientsPage />} />
               <Route path="servizi" element={<ServicesPage />} />
               <Route path="operatori" element={<OperatorsPage />} />
               <Route path="orari" element={<HoursPage />} />

@@ -23,7 +23,7 @@ export function CustomerOperatorsPage() {
         {operators.map((operator, index) => (
           <article className="operator-card" key={operator.id}>
             <span className="operator-card__number">0{index + 1}</span>
-            <div className="operator-card__monogram" aria-hidden="true">{operator.nome.slice(0, 1).toUpperCase()}</div>
+            {operator.fotoUrl ? <img className="operator-card__photo" src={operator.fotoUrl} alt={`Foto di ${operator.nome}`} /> : <div className="operator-card__monogram" aria-hidden="true">{operator.nome.slice(0, 1).toUpperCase()}</div>}
             <span className="customer-shell__eyebrow">Barber</span>
             <h2>{operator.nome}</h2>
             <p>Taglio, barba e consulenza di stile.</p>

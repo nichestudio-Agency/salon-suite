@@ -47,6 +47,7 @@ describe("NotificationsPage — coupon", () => {
     await userEvent.type(screen.getByLabelText("Titolo campagna"), "Promo estate");
     await userEvent.type(screen.getByLabelText("Testo campagna"), "Sconti su tutto");
     await userEvent.selectOptions(screen.getByLabelText("Sesso destinatari"), "maschile");
+    await userEvent.type(screen.getByLabelText("Giorni senza prenotazioni"), "90");
     await userEvent.click(screen.getByRole("button", { name: /invia campagna/i }));
     await waitFor(() =>
       expect(send).toHaveBeenCalledWith(
@@ -54,7 +55,7 @@ describe("NotificationsPage — coupon", () => {
           salonId: "s1",
           titolo: "Promo estate",
           testo: "Sconti su tutto",
-          filtri: expect.objectContaining({ sesso: "maschile" }),
+          filtri: expect.objectContaining({ sesso: "maschile", bookingInactiveDays: 90 }),
         })
       )
     );

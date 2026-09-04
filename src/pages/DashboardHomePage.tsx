@@ -138,7 +138,7 @@ export function DashboardHomePage() {
         <aside className="owner-team-panel">
           <header><span>Team</span><h2>Carico di lavoro</h2></header>
           <div>
-            {dashboard.team.slice(0, 5).map(({ operator, percentage }) => <article key={operator.id}><span>{operator.nome.slice(0, 1)}</span><div><strong>{operator.nome}</strong><small>{percentage}% della giornata</small><i><b style={{ width: `${percentage}%` }} /></i></div></article>)}
+            {dashboard.team.slice(0, 5).map(({ operator, percentage }) => <article key={operator.id}>{operator.fotoUrl ? <img src={operator.fotoUrl} alt="" /> : <span>{operator.nome.slice(0, 1)}</span>}<div><strong>{operator.nome}</strong><small>{percentage}% della giornata</small><i><b style={{ width: `${percentage}%` }} /></i></div></article>)}
             {dashboard.team.length === 0 && <div className="owner-panel-empty"><AppIcon name="users" /><strong>Nessun operatore attivo</strong></div>}
           </div>
           <Link to="/dashboard/operatori">Gestisci team →</Link>

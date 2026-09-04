@@ -14,13 +14,13 @@ afterEach(async () => { await signOut(auth); });
 
 const send = () =>
   httpsCallable<
-    { salonId: string; filtri: { sesso?: string; natoDa?: string; natoA?: string }; titolo: string; testo: string; couponId?: string },
+    { salonId: string; filtri: { sesso?: string; natoDa?: string; natoA?: string; bookingInactiveDays?: number; productInactiveDays?: number }; titolo: string; testo: string; couponId?: string },
     { campaignId: string; recipientCount: number }
   >(functions, "sendCampaign");
 
 async function clientWithOrder(salonId: string, productId: string, sesso: Gender, dataNascita: string) {
   const email = `cli_${Date.now()}_${Math.random().toString(36).slice(2)}@ex.com`;
-  await registerClient({ email, password: "password123", nome: "Cli", sesso, dataNascita });
+  await registerClient({ email, password: "password123", nome: "Cli", sesso, dataNascita, salonId });
   await createOrder({ salonId, items: [{ productId, qta: 1 }] });
   await signOut(auth);
 }
@@ -39,17 +39,22 @@ describe("sendCampaign", () => {
     await clientWithOrder(salonId, p, "maschile", "2000-05-10");
     await clientWithOrder(salonId, p, "maschile", "1980-03-01");
     await clientWithOrder(salonId, p, "femminile", "1995-07-20");
+    await registerClient({ email: `cli_inattivo_${Date.now()}@ex.com`, password: "password123", nome: "Cliente inattivo", sesso: "altro", dataNascita: "1970-01-01", salonId });
+    await signOut(auth);
 
     await signInWithEmailAndPassword(auth, ownerEmail, "password123");
 
     const tutti = await send()({ salonId, filtri: {}, titolo: "Promo", testo: "Sconti!" });
-    expect(tutti.data.recipientCount).toBe(3);
+    expect(tutti.data.recipientCount).toBe(4);
 
     const soloUomini = await send()({ salonId, filtri: { sesso: "maschile" }, titolo: "Promo", testo: "Sconti!" });
     expect(soloUomini.data.recipientCount).toBe(2);
 
     const giovani = await send()({ salonId, filtri: { natoDa: "1990-01-01" }, titolo: "Promo", testo: "Sconti!" });
     expect(giovani.data.recipientCount).toBe(2); // nati nel 2000 e 1995
+
+    const senzaAcquisti = await send()({ salonId, filtri: { productInactiveDays: 90 }, titolo: "Ritorna", testo: "Scopri i prodotti" });
+    expect(senzaAcquisti.data.recipientCount).toBe(1);
   });
 
   it("rifiuta un chiamante che non è staff del salone", async () => {

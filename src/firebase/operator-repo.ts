@@ -1,7 +1,8 @@
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc, getDocs,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, deleteField,
 } from "firebase/firestore";
-import { db } from "./app";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "./app";
 import type { Operator } from "../domain/models";
 
 export type OperatorWithId = Operator & { id: string };
@@ -26,5 +27,22 @@ export async function updateOperator(
 }
 
 export async function deleteOperator(salonId: string, id: string): Promise<void> {
-  await deleteDoc(doc(db, "salons", salonId, "operators", id));
+  const operatorRef = doc(db, "salons", salonId, "operators", id);
+  const snap = await getDoc(operatorRef);
+  const fotoPath = snap.data()?.fotoPath as string | undefined;
+  if (fotoPath) {
+    try { await deleteObject(ref(storage, fotoPath)); } catch { /* best effort */ }
+  }
+  await deleteDoc(operatorRef);
+}
+
+export async function resetOperatorHours(salonId: string, id: string): Promise<void> {
+  await updateDoc(doc(db, "salons", salonId, "operators", id), { orariPersonalizzati: deleteField() });
+}
+
+export async function uploadOperatorPhoto(salonId: string, operatorId: string, file: Blob, filename: string) {
+  const fotoPath = `salons/${salonId}/operators/${operatorId}/${filename}`;
+  const storageRef = ref(storage, fotoPath);
+  await uploadBytes(storageRef, file);
+  return { fotoUrl: await getDownloadURL(storageRef), fotoPath };
 }

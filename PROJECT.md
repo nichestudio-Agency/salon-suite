@@ -49,11 +49,13 @@ La dashboard del salone permette di:
 - confermare, rifiutare e annullare prenotazioni;
 - creare e modificare servizi;
 - gestire operatori e disponibilità;
+- consultare l’anagrafica clienti con storico sintetico di prenotazioni e acquisti;
 - configurare gli orari settimanali;
 - gestire prodotti e relative fotografie;
 - gestire lo stato degli ordini;
 - consultare notifiche;
-- configurare campagne, coupon e comunicazioni di compleanno tramite le funzioni backend disponibili.
+- configurare campagne, coupon e comunicazioni automatiche di compleanno;
+- segmentare le campagne per dati anagrafici, inattività di prenotazione e inattività di acquisto.
 
 ## Area cliente
 
@@ -72,13 +74,15 @@ L'area cliente utilizza una navigazione persistente laterale su desktop e una ba
 
 | Percorso | Funzione |
 | --- | --- |
+| `/dashboard` | Riepilogo operativo con KPI, agenda, incassi e team |
 | `/dashboard/prenotazioni` | Gestione dell'agenda |
+| `/dashboard/clienti` | Anagrafica e attività dei clienti registrati |
 | `/dashboard/servizi` | Gestione dei servizi |
 | `/dashboard/operatori` | Gestione del team |
 | `/dashboard/orari` | Orari di apertura e disponibilità |
 | `/dashboard/prodotti` | Gestione prodotti e immagini |
 | `/dashboard/ordini` | Gestione degli ordini |
-| `/dashboard/notifiche` | Centro notifiche |
+| `/dashboard/notifiche` | Coupon, campagne segmentate e automazioni |
 
 ## Autenticazione
 
@@ -133,6 +137,7 @@ Le funzioni esportate da `functions/src/index.ts` sono:
 - `sendCampaign`
 - `runBirthdayGreetings`
 - `birthdayNotifications`
+- `listSalonClients`
 
 ## Struttura dati principale
 
@@ -219,7 +224,7 @@ VITE_USE_EMULATOR=true npm run dev -- --host 127.0.0.1
 
 L'app è disponibile normalmente su `http://127.0.0.1:5173`.
 
-Il seed crea **Salone X** con orari, servizi, operatore e prodotto dimostrativi. Crea inoltre due account locali:
+Il seed crea **Salone X** con orari, servizi, prodotti, più operatori, clienti, appuntamenti e ordini dimostrativi distribuiti nella settimana corrente. Crea inoltre gli account locali principali:
 
 | Ruolo | Email | Password |
 | --- | --- | --- |

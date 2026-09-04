@@ -16,6 +16,7 @@ type DashboardSection = {
 const SECTIONS: DashboardSection[] = [
   { to: "/dashboard", label: "Dashboard", icon: "home" as const, end: true },
   { to: "/dashboard/prenotazioni", label: "Agenda", icon: "calendar" as const },
+  { to: "/dashboard/clienti", label: "Clienti", icon: "users" as const },
   { to: "/dashboard/servizi", label: "Servizi", icon: "scissors" as const },
   { to: "/dashboard/operatori", label: "Team", icon: "users" as const },
   { to: "/dashboard/orari", label: "Orari", icon: "clock" as const },
@@ -68,7 +69,7 @@ export function DashboardLayout() {
       <main className="dashboard__content">
         <header className="dashboard__topbar">
           <nav aria-label="Navigazione rapida">
-            {SECTIONS.slice(0, 4).map((section) => <NavLink to={section.to} end={section.end} key={section.to}><AppIcon name={section.icon} size={19} />{section.label}</NavLink>)}
+            {SECTIONS.slice(0, 5).map((section) => <NavLink to={section.to} end={section.end} key={section.to}><AppIcon name={section.icon} size={19} />{section.label}</NavLink>)}
           </nav>
           <NavLink className="dashboard__topbar-alert" to="/dashboard/notifiche" aria-label="Notifiche"><AppIcon name="bell" size={20} /></NavLink>
         </header>

@@ -27,6 +27,8 @@ export function NotificationsPage() {
   const [campNatoDa, setCampNatoDa] = useState("");
   const [campNatoA, setCampNatoA] = useState("");
   const [campCoupon, setCampCoupon] = useState("");
+  const [campBookingInactive, setCampBookingInactive] = useState("");
+  const [campProductInactive, setCampProductInactive] = useState("");
   const [campResult, setCampResult] = useState<string | null>(null);
   const [campBusy, setCampBusy] = useState(false);
   const [bdAttivo, setBdAttivo] = useState(false);
@@ -90,6 +92,8 @@ export function NotificationsPage() {
       if (campSesso) filtri.sesso = campSesso;
       if (campNatoDa) filtri.natoDa = campNatoDa;
       if (campNatoA) filtri.natoA = campNatoA;
+      if (campBookingInactive) filtri.bookingInactiveDays = parseInt(campBookingInactive, 10);
+      if (campProductInactive) filtri.productInactiveDays = parseInt(campProductInactive, 10);
       const res = await sendCampaign({
         salonId,
         filtri,
@@ -135,7 +139,8 @@ export function NotificationsPage() {
 
   return (
     <section>
-      <h2>Notifiche</h2>
+      <div className="dashboard-page-header"><div><span>Comunicazione</span><h2>Notifiche</h2><p>Coupon, segmenti comportamentali e automazioni.</p></div></div>
+      <div className="notification-overview"><article><strong>Compleanni</strong><span>Invio automatico giornaliero</span><b className={bdAttivo ? "is-active" : ""}>{bdAttivo ? "Attivo" : "Da configurare"}</b></article><article><strong>Clienti inattivi</strong><span>Segmenta per ultima prenotazione</span><b>Su richiesta</b></article><article><strong>Prodotti</strong><span>Segmenta per ultimo acquisto</span><b>Su richiesta</b></article></div>
       <h3>Coupon</h3>
       {coupons.map((c) => (
         <div className="card row" key={c.id} style={{ justifyContent: "space-between" }}>
@@ -179,6 +184,10 @@ export function NotificationsPage() {
           <input id="cnd" aria-label="Nato da" type="date" value={campNatoDa} onChange={(e) => setCampNatoDa(e.target.value)} /></div>
         <div className="field"><label htmlFor="cna">Nato a (opzionale)</label>
           <input id="cna" aria-label="Nato a" type="date" value={campNatoA} onChange={(e) => setCampNatoA(e.target.value)} /></div>
+        <div className="field"><label htmlFor="cbi">Nessuna prenotazione da almeno (giorni)</label>
+          <input id="cbi" aria-label="Giorni senza prenotazioni" type="number" min="1" max="3650" placeholder="es. 90" value={campBookingInactive} onChange={(e) => setCampBookingInactive(e.target.value)} /></div>
+        <div className="field"><label htmlFor="cpi">Nessun acquisto da almeno (giorni)</label>
+          <input id="cpi" aria-label="Giorni senza acquisti" type="number" min="1" max="3650" placeholder="es. 120" value={campProductInactive} onChange={(e) => setCampProductInactive(e.target.value)} /></div>
         <div className="field"><label htmlFor="ccp">Coupon (opzionale)</label>
           <select id="ccp" aria-label="Coupon" value={campCoupon} onChange={(e) => setCampCoupon(e.target.value)}>
             <option value="">Nessuno</option>

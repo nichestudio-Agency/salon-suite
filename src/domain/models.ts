@@ -47,6 +47,9 @@ export interface Salon {
 export interface Operator {
   nome: string;
   attivo: boolean;
+  /** Foto profilo mostrata nelle esperienze cliente e titolare. */
+  fotoUrl?: string;
+  fotoPath?: string;
   /** Override degli orari; se assente valgono quelli del salone. */
   orariPersonalizzati?: WeeklyHours;
 }
@@ -134,6 +137,10 @@ export interface CampaignFilters {
   natoDa?: string;
   /** Data di nascita massima "YYYY-MM-DD" (nato a). */
   natoA?: string;
+  /** Include chi non prenota da almeno questo numero di giorni. */
+  bookingInactiveDays?: number;
+  /** Include chi non acquista prodotti da almeno questo numero di giorni. */
+  productInactiveDays?: number;
 }
 
 /** Documento in `salons/{salonId}/campaigns/{id}` (audit, creato dalla Cloud Function). */
