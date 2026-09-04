@@ -7,6 +7,7 @@ import { formatEuro } from "../domain/money";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listProducts, type ProductWithId } from "../firebase/product-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
+import { listMyBookings, type BookingWithId } from "../firebase/booking";
 import barberEditorial from "../assets/barber-editorial.webp";
 import "./customer.css";
 
@@ -17,17 +18,23 @@ export function CustomerHomePage() {
   const [services, setServices] = useState<ServiceWithId[]>([]);
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
   const [products, setProducts] = useState<ProductWithId[]>([]);
+  const [bookings, setBookings] = useState<BookingWithId[]>([]);
 
   useEffect(() => {
     if (!salonId) return;
-    void Promise.all([listServices(salonId), listOperators(salonId), listProducts(salonId)]).then(([nextServices, nextOperators, nextProducts]) => {
+    void Promise.all([listServices(salonId), listOperators(salonId), listProducts(salonId), listMyBookings(salonId)]).then(([nextServices, nextOperators, nextProducts, nextBookings]) => {
       setServices(nextServices.filter((item) => item.attivo).slice(0, 3));
       setOperators(nextOperators.filter((item) => item.attivo).slice(0, 4));
       setProducts(nextProducts.filter((item) => item.attivo).slice(0, 2));
+      setBookings(nextBookings.filter((item) => ["in_attesa", "confermata"].includes(item.stato)).slice(0, 1));
     });
   }, [salonId]);
 
   const firstName = user?.displayName?.split(" ")[0];
+  const nextBooking = bookings[0];
+  const nextService = services.find((service) => service.id === nextBooking?.serviceId);
+  const nextOperator = operators.find((operator) => operator.id === nextBooking?.operatorId);
+  const bookingTime = nextBooking ? `${String(Math.floor(nextBooking.startMin / 60)).padStart(2, "0")}:${String(nextBooking.startMin % 60).padStart(2, "0")}` : "";
 
   return (
     <section className="customer-page customer-home">
@@ -50,6 +57,18 @@ export function CustomerHomePage() {
         </div>
       </article>
 
+      <aside className="home-next-appointment">
+        <div className="home-next-appointment__top"><span>Prossimo appuntamento</span><AppIcon name="calendar" size={20} /></div>
+        {nextBooking ? <>
+          <div className="home-next-appointment__date"><strong>{bookingTime}</strong><span>{nextBooking.date}</span></div>
+          <div className="home-next-appointment__details"><span className="team-avatar">{nextOperator?.nome.slice(0, 1) ?? "B"}</span><div><strong>{nextService?.titolo ?? "Servizio"}</strong><span>con {nextOperator?.nome ?? "il tuo barber"}</span></div></div>
+          <span className={`home-next-appointment__status home-next-appointment__status--${nextBooking.stato}`}>{nextBooking.stato === "confermata" ? "Confermato" : "In attesa"}</span>
+        </> : <>
+          <div className="home-next-appointment__empty"><AppIcon name="spark" size={26} /><strong>Il prossimo look parte da qui.</strong><p>Scegli servizio, barber e orario in pochi passaggi.</p></div>
+          <Link className="customer-button customer-button--secondary" to="/prenota">Trova un orario <AppIcon name="arrow" size={16} /></Link>
+        </>}
+      </aside>
+
       <div className="home-quick-actions" aria-label="Azioni rapide">
         <Link to="/servizi"><AppIcon name="scissors" /><span>Servizi</span></Link>
         <Link to="/operatori"><AppIcon name="users" /><span>Il team</span></Link>
@@ -70,12 +89,15 @@ export function CustomerHomePage() {
       </section>
 
       <section className="home-section home-team">
-        <div className="home-section__heading"><div><span>Le mani giuste</span><h2>Il team</h2></div><Link to="/operatori">Conosci tutti</Link></div>
-        <div className="team-preview">
-          {operators.map((operator, index) => (
-            <Link to="/operatori" key={operator.id}><span className={`team-avatar team-avatar--${index + 1}`}>{operator.nome.slice(0, 1)}</span><strong>{operator.nome.split(" ")[0]}</strong></Link>
-          ))}
+        <div className="home-team__content">
+          <div className="home-section__heading"><div><span>Le mani giuste</span><h2>Il team</h2></div><Link to="/operatori">Conosci tutti</Link></div>
+          <div className="team-preview">
+            {operators.map((operator, index) => (
+              <Link to="/operatori" key={operator.id}><span className={`team-avatar team-avatar--${index + 1}`}>{operator.nome.slice(0, 1)}</span><strong>{operator.nome.split(" ")[0]}</strong></Link>
+            ))}
+          </div>
         </div>
+        <div className="home-team__art" aria-hidden="true"><img src={barberEditorial} alt="" /><span>Craft<br />& cura.</span></div>
       </section>
 
       {products.length > 0 && <section className="home-product-banner"><div><span>Hair care</span><h2>Continua la cura anche a casa.</h2><Link to="/catalogo">Scopri i prodotti <AppIcon name="arrow" size={17} /></Link></div><AppIcon name="spark" size={42} /></section>}
