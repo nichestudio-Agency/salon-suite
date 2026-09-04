@@ -29,9 +29,17 @@ La gerarchia nasce dal telefono e si espande sul desktop senza cambiare linguagg
 - Servizi: listino tipografico con righe, prezzo, durata e immagine editoriale.
 - Operatori e prodotti: moduli netti e scansionabili, senza pannelli annidati.
 
-## Separazione dall’area titolare
+## Area titolare
 
-Il redesign industriale è applicato esclusivamente a `.customer-app`. Dashboard, agenda e gestionali del titolare mantengono il sistema operativo chiaro già esistente.
+Il redesign industriale resta applicato esclusivamente a `.customer-app`. L’area titolare usa un sistema operativo distinto e più calmo:
+
+- canvas verde salvia `#DCE8E1` e superfici avorio `#FCFCF8`;
+- verde `#35A865` per navigazione e stati positivi;
+- giallo senape `#F4B817` per il riepilogo della giornata;
+- sidebar con identità, calendario e navigazione completa;
+- topbar desktop per le destinazioni operative più frequenti;
+- home con KPI reali, appuntamenti, incasso settimanale e carico del team;
+- stati vuoti espliciti, senza dati dimostrativi inventati.
 
 ## Accessibilità e comportamento
 
@@ -47,6 +55,7 @@ Il redesign industriale è applicato esclusivamente a `.customer-app`. Dashboard
 - `customer-industrial-home-concept.png`
 - `customer-industrial-services-concept.png`
 - `customer-industrial-booking-mobile-concept.png`
+- `owner-dashboard-sage-concept.png`
 - `owner-agenda-concept.png`
 
 I concept definiscono direzione e gerarchia; l’interfaccia reale usa dati e funzionalità esistenti del progetto.
