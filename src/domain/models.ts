@@ -52,6 +52,16 @@ export interface Operator {
   fotoPath?: string;
   /** Override degli orari; se assente valgono quelli del salone. */
   orariPersonalizzati?: WeeklyHours;
+  /** Periodi programmati nei quali l'operatore non può ricevere prenotazioni. */
+  indisponibilita?: OperatorUnavailability[];
+}
+
+export interface OperatorUnavailability {
+  id: string;
+  /** Estremi inclusivi, nel formato "YYYY-MM-DD". */
+  dal: string;
+  al: string;
+  motivo?: string;
 }
 
 /** Documento in `salons/{salonId}/services/{id}`. */
@@ -91,6 +101,12 @@ export interface Booking {
   startMin: number;
   endMin: number;
   stato: BookingStatus;
+  couponId?: string;
+  couponCode?: string;
+  /** Importi in centesimi, calcolati e congelati dal server. */
+  prezzoOriginale?: number;
+  sconto?: number;
+  prezzoFinale?: number;
 }
 
 export type OrderStatus = "in_attesa" | "pronto" | "ritirato" | "annullato";
@@ -128,6 +144,8 @@ export interface Coupon {
   valore: number;
   /** Scadenza "YYYY-MM-DD", opzionale. */
   scadenza?: string;
+  /** Se valorizzata il coupon vale solo per appuntamenti in questa data. */
+  dataAppuntamento?: string;
   attivo: boolean;
 }
 
@@ -150,6 +168,8 @@ export interface Campaign {
   testo: string;
   couponId?: string | null;
   recipientCount: number;
+  /** Destinatari unici, usati per misurare il funnel del coupon. */
+  recipientIds?: string[];
   sentAt?: Timestamp;
 }
 

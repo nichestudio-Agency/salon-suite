@@ -13,6 +13,7 @@ beforeEach(() => {
     loading: false, user: {} as never, role: "owner", salonId: "s1",
   });
   vi.spyOn(salonRepo, "getSalon").mockResolvedValue(null);
+  vi.spyOn(repo, "getCouponAnalytics").mockResolvedValue([]);
 });
 
 describe("NotificationsPage — coupon", () => {
@@ -21,7 +22,7 @@ describe("NotificationsPage — coupon", () => {
       { id: "a", codice: "ESTATE20", tipo: "percentuale", valore: 20, attivo: true },
     ]);
     render(<NotificationsPage />);
-    expect(await screen.findByText("ESTATE20", { selector: "strong" })).toBeInTheDocument();
+    expect(await screen.findByText("ESTATE20", { selector: ".coupon-code" })).toBeInTheDocument();
     expect(screen.getByText(/20%/)).toBeInTheDocument();
   });
 

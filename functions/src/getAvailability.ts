@@ -3,6 +3,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import {
   computeAvailableStartTimes,
+  isUnavailableOn,
   isValidDateKey,
   weekdayOf,
   type Interval,
@@ -61,6 +62,7 @@ export const getAvailability = onCall<GetAvailabilityData>(async (request) => {
   };
   const operator = operatorSnap.data() as {
     orariPersonalizzati?: WeeklyHours;
+    indisponibilita?: Array<{ dal?: string; al?: string }>;
   };
   const service = serviceSnap.data() as { durataMin?: number };
   const durationMin = service.durataMin;
@@ -70,6 +72,9 @@ export const getAvailability = onCall<GetAvailabilityData>(async (request) => {
   }
   if (!Number.isInteger(stepMin) || stepMin <= 0) {
     throw new HttpsError("failed-precondition", "Passo del calendario non valido.");
+  }
+  if (isUnavailableOn(date, operator.indisponibilita)) {
+    return { date, durationMin, stepMin, starts: [] };
   }
 
   const bookingsSnap = await db

@@ -11,12 +11,16 @@ export interface CreateBookingInput {
   serviceId: string;
   date: string;
   startMin: number;
+  couponCode?: string;
 }
 
 export interface CreateBookingResult {
   bookingId: string;
   endMin: number;
   stato: "in_attesa";
+  prezzoOriginale: number;
+  sconto: number;
+  prezzoFinale: number;
 }
 
 export interface GetAvailabilityInput {

@@ -6,6 +6,23 @@ export interface Interval {
 export type Weekday = "lun" | "mar" | "mer" | "gio" | "ven" | "sab" | "dom";
 export type WeeklyHours = Partial<Record<Weekday, Interval[]>>;
 
+export interface UnavailabilityPeriod {
+  dal?: string;
+  al?: string;
+}
+
+export function isUnavailableOn(
+  date: string,
+  periods: UnavailabilityPeriod[] | undefined,
+): boolean {
+  return Array.isArray(periods) && periods.some(
+    (period) => typeof period.dal === "string"
+      && typeof period.al === "string"
+      && period.dal <= date
+      && date <= period.al,
+  );
+}
+
 const WEEKDAYS: Weekday[] = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
 export function isValidDateKey(value: string): boolean {

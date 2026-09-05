@@ -79,7 +79,7 @@ await Promise.all([
     fotoUrl: "/demo/team-marco.webp",
   }),
   db.doc("salons/salone-x/operators/lorenzo-bassi").set({ nome: "Lorenzo Bassi", attivo: true, fotoUrl: "/demo/team-luca.webp" }),
-  db.doc("salons/salone-x/operators/giuseppe-moretti").set({ nome: "Giuseppe Moretti", attivo: true }),
+  db.doc("salons/salone-x/operators/giuseppe-moretti").set({ nome: "Giuseppe Moretti", attivo: true, indisponibilita: [{ id: "demo-ferie", dal: dateOffset(8), al: dateOffset(12), motivo: "Ferie programmate" }] }),
   db.doc("salons/salone-x/operators/antonio-piras").set({ nome: "Antonio Piras", attivo: false }),
   db.doc("salons/salone-x/products/cera-opaca").set({
     titolo: "Cera opaca",
@@ -91,6 +91,13 @@ await Promise.all([
   db.doc("salons/salone-x/products/shampoo-daily").set({ titolo: "Shampoo daily", descrizione: "Detersione delicata per uso quotidiano.", prezzo: 1600, attivo: true }),
   db.doc("salons/salone-x/products/pomata-lucida").set({ titolo: "Pomata lucida", descrizione: "Tenuta media e brillantezza controllata.", prezzo: 1950, attivo: true }),
   db.doc("salons/salone-x/coupons/birthday-15").set({ codice: "AUGURI15", tipo: "percentuale", valore: 15, attivo: true }),
+  db.doc("salons/salone-x/coupons/ritorna-20").set({ codice: "RITORNA20", tipo: "percentuale", valore: 20, scadenza: dateOffset(30), attivo: true }),
+  db.doc("salons/salone-x/coupons/estate-scaduto").set({ codice: "ESTATE15", tipo: "percentuale", valore: 15, scadenza: dateOffset(-10), attivo: false }),
+  db.doc("salons/salone-x/campaigns/demo-ritorna").set({ filtri: { bookingInactiveDays: 60 }, titolo: "Ci manchi", testo: "Torna a trovarci.", couponId: "ritorna-20", recipientCount: 5, recipientIds: clientUids.slice(0, 5), sentAt: Timestamp.fromDate(new Date(Date.now() - 3 * 86_400_000)) }),
+  db.doc("salons/salone-x/campaigns/demo-estate").set({ filtri: {}, titolo: "Estate", testo: "Un nuovo look per l'estate.", couponId: "estate-scaduto", recipientCount: 6, recipientIds: clientUids, sentAt: Timestamp.fromDate(new Date(Date.now() - 20 * 86_400_000)) }),
+  db.doc(`salons/salone-x/couponRedemptions/ritorna-20_${clientUids[0]}`).set({ couponId: "ritorna-20", couponCode: "RITORNA20", clientId: clientUids[0], bookingId: "demo-week-1", appointmentDate: dateOffset(-1), discountAmount: 640, redeemedAt: Timestamp.fromDate(new Date(Date.now() - 2 * 86_400_000)) }),
+  db.doc(`salons/salone-x/couponRedemptions/ritorna-20_${clientUids[1]}`).set({ couponId: "ritorna-20", couponCode: "RITORNA20", clientId: clientUids[1], bookingId: "demo-today-01", appointmentDate: dateOffset(0), discountAmount: 640, redeemedAt: Timestamp.now() }),
+  db.doc(`salons/salone-x/couponRedemptions/estate-scaduto_${clientUids[2]}`).set({ couponId: "estate-scaduto", couponCode: "ESTATE15", clientId: clientUids[2], bookingId: "demo-week-4", appointmentDate: dateOffset(-16), discountAmount: 480, redeemedAt: Timestamp.fromDate(new Date(Date.now() - 16 * 86_400_000)) }),
   ...demoClients.map((client, index) => db.doc(`users/${clientUids[index]}`).set({ nome: client.nome, email: client.email, sesso: client.sesso, dataNascita: client.dataNascita, ruolo: "cliente", salonId: "salone-x", fcmTokens: [] })),
   db.doc(`users/${ownerUid}`).set({
     nome: "Titolare Test",

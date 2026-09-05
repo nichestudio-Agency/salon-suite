@@ -97,6 +97,11 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      match /couponRedemptions/{redemptionId} {
+        allow read: if isStaffOf(salonId);
+        allow write: if false;
+      }
+
       match /notifications/{notificationId} {
         allow read: if isSignedIn()
           && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));

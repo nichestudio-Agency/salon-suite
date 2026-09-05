@@ -11,7 +11,10 @@ afterEach(async () => {
   await signOut(auth);
 });
 
-async function setupBookableSalon() {
+async function setupBookableSalon(options: {
+  indisponibilita?: Array<{ id: string; dal: string; al: string }>;
+  coupon?: { codice: string; tipo: "percentuale" | "fisso"; valore: number; scadenza?: string; dataAppuntamento?: string; attivo: boolean };
+} = {}) {
   const suffix = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const { salonId } = await registerOwner({
     email: `owner_${suffix}@ex.com`,
@@ -24,6 +27,7 @@ async function setupBookableSalon() {
   await setDoc(doc(db, `salons/${salonId}/operators/op1`), {
     nome: "Marco",
     attivo: true,
+    ...(options.indisponibilita ? { indisponibilita: options.indisponibilita } : {}),
   });
   await setDoc(doc(db, `salons/${salonId}/services/svc1`), {
     titolo: "Taglio",
@@ -32,6 +36,9 @@ async function setupBookableSalon() {
     durataMin: 30,
     attivo: true,
   });
+  if (options.coupon) {
+    await setDoc(doc(db, `salons/${salonId}/coupons/test-coupon`), options.coupon);
+  }
 
   await signOut(auth);
   await registerClient({
@@ -259,5 +266,43 @@ describe("createBooking", () => {
     ).rejects.toMatchObject({
       code: expect.stringMatching(/already-exists|failed-precondition/),
     });
+  });
+
+  it("blocca disponibilità e prenotazione durante un periodo programmato", async () => {
+    const salonId = await setupBookableSalon({
+      indisponibilita: [{ id: "ferie", dal: "2026-08-24", al: "2026-08-26" }],
+    });
+    const availability = await getAvailability({
+      salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24",
+    });
+    expect(availability.starts).toEqual([]);
+    await expect(createBooking({
+      salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600,
+    })).rejects.toMatchObject({ code: expect.stringMatching(/failed-precondition/) });
+  });
+
+  it("applica il coupon una sola volta e registra lo sconto nella prenotazione", async () => {
+    const salonId = await setupBookableSalon({
+      coupon: { codice: "TEST20", tipo: "percentuale", valore: 20, scadenza: "2026-08-31", attivo: true },
+    });
+    const result = await createBooking({
+      salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600, couponCode: "test20",
+    });
+    expect(result).toMatchObject({ prezzoOriginale: 2000, sconto: 400, prezzoFinale: 1600 });
+    expect((await listMyBookings(salonId))[0]).toMatchObject({
+      couponCode: "TEST20", prezzoOriginale: 2000, sconto: 400, prezzoFinale: 1600,
+    });
+    await expect(createBooking({
+      salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 660, couponCode: "TEST20",
+    })).rejects.toMatchObject({ code: expect.stringMatching(/already-exists/) });
+  });
+
+  it("rifiuta un coupon lampo su una data diversa", async () => {
+    const salonId = await setupBookableSalon({
+      coupon: { codice: "OGGI25", tipo: "percentuale", valore: 25, scadenza: "2026-08-25", dataAppuntamento: "2026-08-25", attivo: true },
+    });
+    await expect(createBooking({
+      salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600, couponCode: "OGGI25",
+    })).rejects.toMatchObject({ code: expect.stringMatching(/failed-precondition/) });
   });
 });

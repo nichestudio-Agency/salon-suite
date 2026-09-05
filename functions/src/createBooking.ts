@@ -3,6 +3,7 @@ import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import {
   computeAvailableStartTimes,
+  isUnavailableOn,
   isValidDateKey,
   weekdayOf,
   type Interval,
@@ -17,6 +18,7 @@ interface CreateBookingData {
   serviceId: string;
   date: string;
   startMin: number;
+  couponCode?: string;
 }
 
 interface SalonData {
@@ -27,11 +29,13 @@ interface SalonData {
 interface OperatorData {
   attivo?: boolean;
   orariPersonalizzati?: WeeklyHours;
+  indisponibilita?: Array<{ dal?: string; al?: string }>;
 }
 
 interface ServiceData {
   attivo?: boolean;
   durataMin?: number;
+  prezzo?: number;
 }
 
 function requireId(value: unknown, field: string): string {
@@ -54,6 +58,9 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
   const serviceId = requireId(request.data?.serviceId, "serviceId");
   const date = request.data?.date;
   const startMin = request.data?.startMin;
+  const couponCode = typeof request.data?.couponCode === "string"
+    ? request.data.couponCode.trim().toUpperCase()
+    : "";
 
   if (typeof date !== "string" || !isValidDateKey(date)) {
     throw new HttpsError("invalid-argument", "Data non valida.");
@@ -69,6 +76,16 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
   const serviceRef = db.doc(`salons/${salonId}/services/${serviceId}`);
   const bookingRef = db.collection(`salons/${salonId}/bookings`).doc();
   const dayMutexRef = db.doc(`salons/${salonId}/_bookingDays/${operatorId}_${date}`);
+  const couponMatch = couponCode
+    ? await db.collection(`salons/${salonId}/coupons`).where("codice", "==", couponCode).limit(1).get()
+    : null;
+  if (couponCode && couponMatch?.empty) {
+    throw new HttpsError("failed-precondition", "Coupon non valido.");
+  }
+  const couponRef = couponMatch?.docs[0]?.ref;
+  const redemptionRef = couponRef
+    ? db.doc(`salons/${salonId}/couponRedemptions/${couponRef.id}_${uid}`)
+    : null;
 
   const result = await db.runTransaction(async (transaction) => {
     const userSnap = await transaction.get(userRef);
@@ -76,6 +93,8 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
     const operatorSnap = await transaction.get(operatorRef);
     const serviceSnap = await transaction.get(serviceRef);
     await transaction.get(dayMutexRef);
+    const couponSnap = couponRef ? await transaction.get(couponRef) : null;
+    const redemptionSnap = redemptionRef ? await transaction.get(redemptionRef) : null;
 
     if (!userSnap.exists || userSnap.data()?.ruolo !== "cliente") {
       throw new HttpsError("permission-denied", "Solo un cliente può prenotare.");
@@ -101,6 +120,29 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
     }
     if (!Number.isInteger(stepMin) || stepMin <= 0) {
       throw new HttpsError("failed-precondition", "Passo del calendario non valido.");
+    }
+    if (isUnavailableOn(date, operator.indisponibilita)) {
+      throw new HttpsError("failed-precondition", "Operatore non disponibile nel periodo scelto.");
+    }
+
+    let discountAmount = 0;
+    const originalPrice = Number.isInteger(service.prezzo) ? Number(service.prezzo) : 0;
+    if (couponSnap) {
+      const coupon = couponSnap.data() ?? {};
+      const expiry = coupon.scadenza;
+      const appointmentDate = coupon.dataAppuntamento;
+      if (coupon.attivo !== true
+        || (typeof expiry === "string" && expiry < date)
+        || (typeof appointmentDate === "string" && appointmentDate !== date)) {
+        throw new HttpsError("failed-precondition", "Coupon non valido per questa prenotazione.");
+      }
+      if (redemptionSnap?.exists) {
+        throw new HttpsError("already-exists", "Hai già utilizzato questo coupon.");
+      }
+      const value = Number(coupon.valore);
+      discountAmount = coupon.tipo === "percentuale"
+        ? Math.round(originalPrice * Math.min(Math.max(value, 0), 100) / 100)
+        : Math.min(Math.max(Math.round(value), 0), originalPrice);
     }
 
     const bookingsQuery = db
@@ -153,10 +195,33 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
       startMin,
       endMin,
       stato: "in_attesa",
+      prezzoOriginale: originalPrice,
+      sconto: discountAmount,
+      prezzoFinale: Math.max(originalPrice - discountAmount, 0),
+      ...(couponRef ? { couponId: couponRef.id, couponCode } : {}),
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    return { bookingId: bookingRef.id, endMin, stato: "in_attesa" as const };
+    if (couponRef && redemptionRef) {
+      transaction.create(redemptionRef, {
+        couponId: couponRef.id,
+        couponCode,
+        clientId: uid,
+        bookingId: bookingRef.id,
+        appointmentDate: date,
+        discountAmount,
+        redeemedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    return {
+      bookingId: bookingRef.id,
+      endMin,
+      stato: "in_attesa" as const,
+      prezzoOriginale: originalPrice,
+      sconto: discountAmount,
+      prezzoFinale: Math.max(originalPrice - discountAmount, 0),
+    };
   });
 
   return result;

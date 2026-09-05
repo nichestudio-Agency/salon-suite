@@ -46,6 +46,9 @@ describe("BookingPage", () => {
       bookingId: "b1",
       endMin: 570,
       stato: "in_attesa",
+      prezzoOriginale: 2000,
+      sconto: 0,
+      prezzoFinale: 2000,
     });
 
     render(<SalonTenantProvider><BookingPage /></SalonTenantProvider>);

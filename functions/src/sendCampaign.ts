@@ -111,6 +111,7 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
   const profileSnaps = clientProfiles.docs.filter((snap) => snap.data().ruolo === "cliente");
   const tokens: string[] = [];
   const emails: string[] = [];
+  const recipientIds: string[] = [];
   let recipientCount = 0;
   for (const snap of profileSnaps) {
     const profile = snap.data();
@@ -134,6 +135,7 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
       if (last && last > cutoffDate) continue;
     }
     recipientCount++;
+    recipientIds.push(snap.id);
     if (Array.isArray(profile.fcmTokens)) {
       for (const t of profile.fcmTokens) {
         if (typeof t === "string" && t.length > 0) tokens.push(t);
@@ -178,6 +180,7 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
     testo,
     couponId: couponId ?? null,
     recipientCount,
+    recipientIds,
     sentAt: FieldValue.serverTimestamp(),
   });
 

@@ -29,6 +29,7 @@ export function BookingPage() {
   const [date, setDate] = useState("");
   const [starts, setStarts] = useState<number[] | null>(null);
   const [selectedStart, setSelectedStart] = useState<number | null>(null);
+  const [couponCode, setCouponCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -95,14 +96,17 @@ export function BookingPage() {
     setLoading(true);
     setError(null);
     try {
-      await createBooking({
+      const created = await createBooking({
         salonId,
         serviceId,
         operatorId,
         date,
         startMin: selectedStart,
+        ...(couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}),
       });
-      setMessage("Richiesta inviata. Il salone deve ancora confermarla.");
+      setMessage(created.sconto > 0
+        ? `Richiesta inviata. Coupon applicato: risparmi € ${(created.sconto / 100).toFixed(2)}.`
+        : "Richiesta inviata. Il salone deve ancora confermarla.");
       setSelectedStart(null);
       const result = await getAvailability({ salonId, serviceId, operatorId, date });
       setStarts(result.starts);
@@ -186,6 +190,10 @@ export function BookingPage() {
               }}
               required
             />
+          </div>
+          <div className="booking-field">
+            <label htmlFor="booking-coupon">Coupon (opzionale)</label>
+            <input id="booking-coupon" value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} placeholder="Es. OGGI20" autoComplete="off" />
           </div>
         </div>
 

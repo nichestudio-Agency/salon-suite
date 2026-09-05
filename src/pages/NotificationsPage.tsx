@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../app/auth-context";
 import {
-  listCoupons, createCoupon, deleteCoupon, type CouponWithId,
+  listCoupons, createCoupon, getCouponAnalytics, updateCoupon,
+  type CouponAnalytics, type CouponWithId,
 } from "../firebase/coupon-repo";
 import { sendCampaign } from "../firebase/campaign";
 import { getSalon, updateBirthdayConfig } from "../firebase/salon-repo";
@@ -16,6 +17,7 @@ function descrizioneSconto(c: CouponWithId): string {
 export function NotificationsPage() {
   const { salonId } = useAuth();
   const [coupons, setCoupons] = useState<CouponWithId[]>([]);
+  const [analytics, setAnalytics] = useState<CouponAnalytics[]>([]);
   const [codice, setCodice] = useState("");
   const [tipo, setTipo] = useState<CouponType>("percentuale");
   const [valore, setValore] = useState("");
@@ -35,9 +37,14 @@ export function NotificationsPage() {
   const [bdMessaggio, setBdMessaggio] = useState("");
   const [bdCoupon, setBdCoupon] = useState("");
   const [bdResult, setBdResult] = useState<string | null>(null);
+  const [flashDiscount, setFlashDiscount] = useState("20");
+  const [flashBusy, setFlashBusy] = useState(false);
+  const [flashResult, setFlashResult] = useState<string | null>(null);
 
   async function reload(id: string) {
-    setCoupons(await listCoupons(id));
+    const nextCoupons = await listCoupons(id);
+    setCoupons(nextCoupons);
+    setAnalytics(await getCouponAnalytics(id, nextCoupons));
   }
   useEffect(() => {
     if (salonId) void reload(salonId);
@@ -76,10 +83,45 @@ export function NotificationsPage() {
     }
   }
 
-  async function onDelete(id: string) {
+  async function toggleCoupon(coupon: CouponWithId) {
     if (!salonId) return;
-    await deleteCoupon(salonId, id);
+    await updateCoupon(salonId, coupon.id, { attivo: !coupon.attivo });
     await reload(salonId);
+  }
+
+  async function onFlashCampaign(e: FormEvent) {
+    e.preventDefault();
+    if (!salonId) return;
+    setFlashBusy(true);
+    setFlashResult(null);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const discount = Math.min(Math.max(parseInt(flashDiscount, 10), 1), 100);
+      const code = `OGGI${discount}-${today.slice(5).replace("-", "")}`;
+      const existing = coupons.find((coupon) => coupon.codice === code && coupon.dataAppuntamento === today);
+      const couponId = existing?.id ?? await createCoupon(salonId, {
+          codice: code,
+          tipo: "percentuale",
+          valore: discount,
+          scadenza: today,
+          dataAppuntamento: today,
+          attivo: true,
+        });
+      if (existing && !existing.attivo) await updateCoupon(salonId, existing.id, { attivo: true });
+      const result = await sendCampaign({
+        salonId,
+        filtri: {},
+        titolo: `Solo per oggi: -${discount}%`,
+        testo: "Prenota un appuntamento per oggi e approfitta dello sconto.",
+        couponId,
+      });
+      setFlashResult(`Offerta ${code} inviata a ${result.recipientCount} clienti.`);
+      await reload(salonId);
+    } catch {
+      setFlashResult("Creazione dell'offerta lampo non riuscita.");
+    } finally {
+      setFlashBusy(false);
+    }
   }
 
   async function onSendCampaign(e: FormEvent) {
@@ -141,17 +183,22 @@ export function NotificationsPage() {
     <section>
       <div className="dashboard-page-header"><div><span>Comunicazione</span><h2>Notifiche</h2><p>Coupon, segmenti comportamentali e automazioni.</p></div></div>
       <div className="notification-overview"><article><strong>Compleanni</strong><span>Invio automatico giornaliero</span><b className={bdAttivo ? "is-active" : ""}>{bdAttivo ? "Attivo" : "Da configurare"}</b></article><article><strong>Clienti inattivi</strong><span>Segmenta per ultima prenotazione</span><b>Su richiesta</b></article><article><strong>Prodotti</strong><span>Segmenta per ultimo acquisto</span><b>Su richiesta</b></article></div>
-      <h3>Coupon</h3>
+      <div className="coupon-section-heading"><div><span>Performance</span><h3>Monitor coupon</h3><p>Dal messaggio inviato alla prenotazione effettuata.</p></div></div>
       {coupons.map((c) => (
-        <div className="card row" key={c.id} style={{ justifyContent: "space-between" }}>
-          <span>
-            <strong>{c.codice}</strong> · {descrizioneSconto(c)}
-            {c.scadenza && ` · scade ${c.scadenza}`}
-            {!c.attivo && " · (non attivo)"}
-          </span>
-          <button className="btn btn--danger" onClick={() => onDelete(c.id)}>Elimina</button>
-        </div>
+        <article className={`coupon-monitor-card ${c.attivo ? "" : "is-inactive"}`} key={c.id}>
+          <div className="coupon-monitor-card__title"><span className="coupon-code">{c.codice}</span><strong>{descrizioneSconto(c)} di sconto</strong><small>{c.dataAppuntamento ? `Solo appuntamenti del ${c.dataAppuntamento}` : c.scadenza ? `Valido fino al ${c.scadenza}` : "Senza scadenza"}</small></div>
+          {(() => { const stats = analytics.find((item) => item.couponId === c.id); return <div className="coupon-metrics"><span><b>{stats?.inviati ?? 0}</b>Inviati</span><span><b>{stats?.utilizzati ?? 0}</b>Utilizzati</span><span><b>{stats?.nonUtilizzati ?? 0}</b>Non utilizzati</span><span><b>{stats?.scaduti ?? 0}</b>Scaduti</span></div>; })()}
+          <button className="btn btn--ghost" type="button" onClick={() => void toggleCoupon(c)}>{c.attivo ? "Disattiva" : "Riattiva"}</button>
+        </article>
       ))}
+      {coupons.length === 0 && <div className="card"><p>Nessun coupon creato.</p></div>}
+
+      <form className="flash-campaign" onSubmit={onFlashCampaign}>
+        <div><span>Riempi l'agenda</span><h3>Offerta lampo di oggi</h3><p>Invia a tutti i clienti un coupon valido esclusivamente per gli appuntamenti di oggi.</p></div>
+        <div className="flash-campaign__action"><label htmlFor="flash-discount">Sconto</label><div><input id="flash-discount" aria-label="Sconto offerta lampo" type="number" min="1" max="100" value={flashDiscount} onChange={(e) => setFlashDiscount(e.target.value)} /><span>%</span></div><button className="btn" type="submit" disabled={flashBusy}>{flashBusy ? "Invio…" : "Crea e invia"}</button></div>
+        {flashResult && <p className="flash-campaign__result" role="status">{flashResult}</p>}
+      </form>
+
       <form className="card" onSubmit={onSubmit}>
         <h3>Nuovo coupon</h3>
         <div className="field"><label htmlFor="cc">Codice</label>
