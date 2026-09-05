@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signIn } from "../firebase/auth";
+import { signIn, signOutUser } from "../firebase/auth";
 import { AuthLayout } from "../app/AuthLayout";
 import "./customer.css";
 
@@ -10,11 +10,11 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  function goToAccount(ruolo?: string, salonId?: string) {
-    if (ruolo === "superadmin") navigate("/admin");
-    else if (ruolo === "owner" && salonId) navigate("/dashboard");
-    else if (ruolo === "cliente") navigate("/home");
-    else navigate("/area");
+  function goToAccount(ruolo?: string, salonId?: string): boolean {
+    if (ruolo === "superadmin") { navigate("/admin"); return true; }
+    if (ruolo === "owner" && salonId) { navigate("/dashboard"); return true; }
+    if (ruolo === "cliente") { navigate("/home"); return true; }
+    return false;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -22,7 +22,10 @@ export function LoginPage() {
     setError(null);
     try {
       const session = await signIn(email, password);
-      goToAccount(session.ruolo, session.salonId);
+      if (!goToAccount(session.ruolo, session.salonId)) {
+        await signOutUser();
+        setError("Il profilo dell'account non è configurato. Ripristina i dati demo e riprova.");
+      }
     } catch {
       setError("Email o password non validi.");
     }
@@ -32,7 +35,10 @@ export function LoginPage() {
     setError(null);
     try {
       const session = await signIn(email, password);
-      goToAccount(session.ruolo, session.salonId);
+      if (!goToAccount(session.ruolo, session.salonId)) {
+        await signOutUser();
+        setError("Il profilo demo non è configurato. Esegui nuovamente il seed degli emulatori.");
+      }
     } catch {
       setError("Accesso demo non riuscito. Verifica che gli emulatori siano avviati.");
     }

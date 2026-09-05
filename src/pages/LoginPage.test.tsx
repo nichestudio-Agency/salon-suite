@@ -17,4 +17,17 @@ describe("LoginPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Accedi" }));
     expect(await screen.findByText("dashboard piattaforma")).toBeInTheDocument();
   });
+
+  it("segnala un profilo non configurato senza lasciare una sessione aperta", async () => {
+    vi.spyOn(authApi, "signIn").mockResolvedValue({ uid: "orphan-account" });
+    const signOutSpy = vi.spyOn(authApi, "signOutUser").mockResolvedValue();
+
+    render(<MemoryRouter initialEntries={["/accedi"]}><LoginPage /></MemoryRouter>);
+    await userEvent.type(screen.getByLabelText("Email"), "orphan@example.test");
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.click(screen.getByRole("button", { name: "Accedi" }));
+
+    expect(await screen.findByText(/profilo dell'account non è configurato/i)).toBeInTheDocument();
+    expect(signOutSpy).toHaveBeenCalledOnce();
+  });
 });
