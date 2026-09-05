@@ -37,7 +37,15 @@ const demoClients = [
   { email: "simone.ricci@barberia.local", password: "TestBarber26!", nome: "Simone Ricci", sesso: "maschile", dataNascita: "1985-12-03" },
 ];
 
-const [ownerUid, ...clientUids] = await Promise.all([
+const platformSalons = [
+  { id: "officina-27", nome: "Officina 27", dominio: "officina27.barberia.app", owner: "Riccardo Serra", email: "riccardo@officina27.demo", piano: "pro", stato: "attiva", prezzo: 12900, scadenza: dateOffset(142), clienti: 18, prenotazioni: 11 },
+  { id: "barbieri-navigli", nome: "Barbieri Navigli", dominio: "navigli.barberia.app", owner: "Matteo Villa", email: "matteo@navigli.demo", piano: "start", stato: "trial", prezzo: 4900, scadenza: dateOffset(9), clienti: 9, prenotazioni: 5 },
+  { id: "bottega-1932", nome: "Bottega 1932", dominio: "bottega1932.barberia.app", owner: "Andrea Greco", email: "andrea@bottega1932.demo", piano: "studio", stato: "sospesa", prezzo: 7900, scadenza: dateOffset(-8), clienti: 27, prenotazioni: 3 },
+  { id: "uomo-torino", nome: "Uomo Torino", dominio: "uomotorino.barberia.app", owner: "Stefano Ferri", email: "stefano@uomotorino.demo", piano: "studio", stato: "attiva", prezzo: 7900, scadenza: dateOffset(67), clienti: 14, prenotazioni: 8 },
+];
+
+const [adminUid, ownerUid, ...clientUids] = await Promise.all([
+  ensureUser("admin@barberia.local", "AdminBarber26!", "Fabio Pace"),
   ensureUser("titolare.test@barberia.local", "OwnerBarber26!", "Titolare Test"),
   ...demoClients.map((client) => ensureUser(client.email, client.password, client.nome)),
 ]);
@@ -56,6 +64,9 @@ await Promise.all([
     },
     impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
     compleanno: { attivo: true, messaggio: "Buon compleanno dal team di Salone X. Oggi festeggiamo il tuo stile.", couponId: "birthday-15" },
+    dominio: "salonex.barberia.app",
+    licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(118), prezzoMensile: 9900 },
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 210 * 86_400_000)),
   }),
   db.doc("salons/salone-x/services/taglio-sartoriale").set({
     titolo: "Taglio sartoriale",
@@ -108,6 +119,7 @@ await Promise.all([
     salonId: "salone-x",
     fcmTokens: [],
   }),
+  db.doc(`users/${adminUid}`).set({ nome: "Fabio Pace", email: "admin@barberia.local", ruolo: "superadmin", fcmTokens: [] }),
   db.doc("salons/salone-x/bookings/demo-today-01").set({ clientId: clientUids[1], clientNome: "Luca Bianchi", clientEmail: demoClients[1].email, operatorId: "marco-rinaldi", serviceId: "taglio-sartoriale", date: dateOffset(0), startMin: 570, endMin: 615, stato: "confermata", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-02").set({ clientId: clientUids[2], clientNome: "Alessandro Conti", clientEmail: demoClients[2].email, operatorId: "lorenzo-bassi", serviceId: "combo-signature", date: dateOffset(0), startMin: 630, endMin: 705, stato: "in_attesa", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-03").set({ clientId: clientUids[3], clientNome: "Paolo Romano", clientEmail: demoClients[3].email, operatorId: "marco-rinaldi", serviceId: "rituale-barba", date: dateOffset(0), startMin: 720, endMin: 750, stato: "confermata", createdAt: Timestamp.now() }),
@@ -119,4 +131,25 @@ await Promise.all([
   db.doc("salons/salone-x/orders/demo-order-03").set({ clientId: clientUids[4], clientNome: "Davide Russo", clientEmail: demoClients[4].email, items: [{ productId: "shampoo-daily", titolo: "Shampoo daily", prezzo: 1600, qta: 1 }], totale: 1600, stato: "in_attesa", createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 86_400_000)) }),
 ]);
 
-console.log("Demo Salone X, cliente e titolare ripristinati.");
+for (const [salonIndex, salon] of platformSalons.entries()) {
+  const ownerUid = await ensureUser(salon.email, "OwnerBarber26!", salon.owner);
+  await Promise.all([
+    db.doc(`salons/${salon.id}`).set({
+      nome: salon.nome,
+      dominio: salon.dominio,
+      timezone: "Europe/Rome",
+      orariApertura: { lun: [{ start: 540, end: 1080 }], mar: [{ start: 540, end: 1080 }], mer: [{ start: 540, end: 1080 }], gio: [{ start: 540, end: 1080 }], ven: [{ start: 540, end: 1080 }], sab: [{ start: 540, end: 1080 }] },
+      impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
+      licenza: { stato: salon.stato, piano: salon.piano, scadenza: salon.scadenza, prezzoMensile: salon.prezzo },
+      createdAt: Timestamp.fromDate(new Date(Date.now() - (40 + salonIndex * 37) * 86_400_000)),
+    }),
+    db.doc(`users/${ownerUid}`).set({ nome: salon.owner, email: salon.email, ruolo: "owner", salonId: salon.id, fcmTokens: [] }),
+    db.doc(`salons/${salon.id}/operators/barber-1`).set({ nome: "Operatore principale", attivo: true }),
+    db.doc(`salons/${salon.id}/operators/barber-2`).set({ nome: "Secondo operatore", attivo: salonIndex !== 1 }),
+    db.doc(`salons/${salon.id}/services/taglio`).set({ titolo: "Taglio", descrizione: "", prezzo: 2800 + salonIndex * 300, durataMin: 40, attivo: true }),
+    ...Array.from({ length: salon.clienti }, (_, index) => db.doc(`users/demo-${salon.id}-${index}`).set({ nome: `Cliente ${index + 1}`, email: `cliente${index + 1}@${salon.id}.demo`, ruolo: "cliente", salonId: salon.id, fcmTokens: [] })),
+    ...Array.from({ length: salon.prenotazioni }, (_, index) => db.doc(`salons/${salon.id}/bookings/demo-${index}`).set({ clientId: `demo-${salon.id}-${index % salon.clienti}`, clientNome: `Cliente ${(index % salon.clienti) + 1}`, operatorId: index % 2 ? "barber-1" : "barber-2", serviceId: "taglio", date: dateOffset(-(index % 24)), startMin: 570 + (index % 8) * 60, endMin: 610 + (index % 8) * 60, stato: index % 5 === 0 ? "in_attesa" : "confermata", createdAt: Timestamp.now() })),
+  ]);
+}
+
+console.log("Demo Salone X e piattaforma Super Admin ripristinati.");

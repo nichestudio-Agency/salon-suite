@@ -10,14 +10,31 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  function goToAccount(ruolo?: string, salonId?: string) {
+    if (ruolo === "superadmin") navigate("/admin");
+    else if (ruolo === "owner" && salonId) navigate("/dashboard");
+    else if (ruolo === "cliente") navigate("/home");
+    else navigate("/area");
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     try {
-      await signIn(email, password);
-      navigate("/area");
+      const session = await signIn(email, password);
+      goToAccount(session.ruolo, session.salonId);
     } catch {
       setError("Email o password non validi.");
+    }
+  }
+
+  async function demoLogin(email: string, password: string) {
+    setError(null);
+    try {
+      const session = await signIn(email, password);
+      goToAccount(session.ruolo, session.salonId);
+    } catch {
+      setError("Accesso demo non riuscito. Verifica che gli emulatori siano avviati.");
     }
   }
 
@@ -52,6 +69,15 @@ export function LoginPage() {
 
         {error && <p className="customer-error" role="alert">{error}</p>}
         <button className="customer-button" type="submit">Accedi</button>
+
+        {import.meta.env.DEV && import.meta.env.VITE_USE_EMULATOR === "true" && (
+          <div className="demo-access" aria-label="Accesso rapido demo">
+            <span>Accesso rapido locale</span>
+            <button type="button" onClick={() => void demoLogin("admin@barberia.local", "AdminBarber26!")}>Super Admin</button>
+            <button type="button" onClick={() => void demoLogin("titolare.test@barberia.local", "OwnerBarber26!")}>Titolare</button>
+            <button type="button" onClick={() => void demoLogin("cliente.test@barberia.local", "TestBarber26!")}>Cliente</button>
+          </div>
+        )}
 
         <p className="auth-alt">Sei un cliente? <Link to="/registrati">Registrati</Link></p>
         <p className="auth-alt">Nuovo salone? <Link to="/registrati-salone">Registra il salone</Link></p>

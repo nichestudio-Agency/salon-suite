@@ -11,6 +11,9 @@ type IconName =
   | "orders"
   | "clock"
   | "spark"
+  | "building"
+  | "key"
+  | "chart"
   | "arrow";
 
 export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) {
@@ -25,6 +28,9 @@ export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) 
     orders: <><path d="M6 3h12v18H6z" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
     spark: <><path d="M12 2c.8 5.6 2.4 7.2 8 8-5.6.8-7.2 2.4-8 8-.8-5.6-2.4-7.2-8-8 5.6-.8 7.2-2.4 8-8Z" /></>,
+    building: <><path d="M4 21V5l8-3 8 3v16" /><path d="M2 21h20M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-3h4v3" /></>,
+    key: <><circle cx="8" cy="15" r="5" /><path d="m11.5 11.5 7-7M16 7l2 2M18 5l2 2" /></>,
+    chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
     arrow: <><path d="M5 12h14M14 7l5 5-5 5" /></>,
   };
 

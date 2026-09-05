@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./app";
 import type { Gender, UserProfile } from "../domain/models";
 
@@ -21,6 +21,8 @@ export interface RegisterClientInput {
 
 export interface AuthResult {
   uid: string;
+  ruolo?: UserProfile["ruolo"];
+  salonId?: string;
 }
 
 /** Registra un cliente: crea l'utente auth e il suo documento profilo. */
@@ -58,7 +60,13 @@ export async function signIn(
   password: string
 ): Promise<AuthResult> {
   const cred = await signInWithEmailAndPassword(auth, email, password);
-  return { uid: cred.user.uid };
+  const profile = await getDoc(doc(db, "users", cred.user.uid));
+  const data = profile.data() as Partial<UserProfile> | undefined;
+  return {
+    uid: cred.user.uid,
+    ...(data?.ruolo ? { ruolo: data.ruolo } : {}),
+    ...(data?.salonId ? { salonId: data.salonId } : {}),
+  };
 }
 
 /** Esce dall'account corrente. */

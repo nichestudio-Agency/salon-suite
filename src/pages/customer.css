@@ -142,6 +142,7 @@
 .auth-panel h1 { margin: 0 0 12px; font-size: clamp(2.6rem, 13vw, 4rem); }
 .auth-panel .customer-button { width: 100%; margin-top: 8px; }
 .auth-alt, .auth-panel > p { color: var(--muted); font-size: .8rem; }.auth-alt a, .auth-panel > p a { font-weight: 750; }
+.demo-access { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; padding-top: 4px; }.demo-access > span { grid-column: 1 / -1; color: var(--muted); font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }.demo-access button { min-height: 38px; padding: 6px; border: 1px solid var(--border); border-radius: 9px; background: var(--panel-strong); color: var(--ink); cursor: pointer; font-size: .6rem; font-weight: 750; }.demo-access button:hover { border-color: var(--accent); color: var(--accent); }
 
 @media (min-width: 720px) {
   .customer-app__content { padding: 40px 40px 110px; }.home-hero { min-height: 470px; }.home-hero__copy { right: 40px; bottom: 40px; left: 40px; }

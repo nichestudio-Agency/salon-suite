@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 
 if (getApps().length === 0) initializeApp();
 
@@ -36,6 +36,13 @@ export const createSalon = onCall<CreateSalonData>(async (request) => {
       timezone,
       orariApertura: orariApertura ?? {},
       impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
+      licenza: {
+        stato: "trial",
+        piano: "start",
+        scadenza: new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10),
+        prezzoMensile: 4900,
+      },
+      createdAt: FieldValue.serverTimestamp(),
     });
     tx.set(userRef, {
       ruolo: "owner",

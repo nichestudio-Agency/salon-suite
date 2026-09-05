@@ -3,7 +3,7 @@ import type { Interval } from "./time";
 import type { WeeklyHours } from "./availability";
 
 export type Gender = "maschile" | "femminile" | "altro";
-export type UserRole = "cliente" | "staff" | "owner";
+export type UserRole = "cliente" | "staff" | "owner" | "superadmin";
 export type BookingStatus =
   | "in_attesa"
   | "confermata"
@@ -41,6 +41,20 @@ export interface Salon {
     modalitaConferma: "manuale" | "auto";
   };
   compleanno?: CompleannoConfig;
+  licenza?: SalonLicense;
+  dominio?: string;
+  createdAt?: Timestamp;
+}
+
+export type LicenseStatus = "trial" | "attiva" | "scaduta" | "sospesa";
+export type LicensePlan = "start" | "studio" | "pro";
+
+export interface SalonLicense {
+  stato: LicenseStatus;
+  piano: LicensePlan;
+  scadenza: string;
+  /** Canone mensile in centesimi. */
+  prezzoMensile: number;
 }
 
 /** Documento in `salons/{salonId}/operators/{id}`. */

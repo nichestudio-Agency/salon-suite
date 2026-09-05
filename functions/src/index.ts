@@ -5,5 +5,7 @@ export { notifyBookingStatus } from "./notifyBookingStatus.js";
 export { createOrder } from "./createOrder.js";
 export { notifyOrderStatus } from "./notifyOrderStatus.js";
 export { sendCampaign } from "./sendCampaign.js";
+export { listPlatformSalons } from "./listPlatformSalons.js";
+export { updateSalonLicense } from "./updateSalonLicense.js";
 export { runBirthdayGreetings, birthdayNotifications } from "./birthdayNotifications.js";
 export { listSalonClients } from "./listSalonClients.js";

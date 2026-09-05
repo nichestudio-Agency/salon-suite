@@ -26,6 +26,9 @@ import { CustomerOperatorsPage } from "./pages/CustomerOperatorsPage";
 import { CustomerHomePage } from "./pages/CustomerHomePage";
 import { DashboardHomePage } from "./pages/DashboardHomePage";
 import { ClientsPage } from "./pages/ClientsPage";
+import { RequireSuperAdmin } from "./app/RequireSuperAdmin";
+import { PlatformLayout } from "./app/PlatformLayout";
+import { PlatformDashboardPage } from "./pages/PlatformDashboardPage";
 
 export default function App() {
   return (
@@ -64,6 +67,9 @@ export default function App() {
               <Route path="prodotti" element={<ProductsPage />} />
               <Route path="ordini" element={<OrdersPage />} />
               <Route path="notifiche" element={<NotificationsPage />} />
+            </Route>
+            <Route path="/admin" element={<RequireSuperAdmin><PlatformLayout /></RequireSuperAdmin>}>
+              <Route index element={<PlatformDashboardPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/area" replace />} />
           </Routes>

@@ -7,6 +7,9 @@ export function RoleHome() {
   if (role === "owner" && salonId) {
     return <Navigate to="/dashboard" replace />;
   }
+  if (role === "superadmin") {
+    return <Navigate to="/admin" replace />;
+  }
   if (role === "cliente") {
     return <Navigate to="/home" replace />;
   }
