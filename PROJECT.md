@@ -2,9 +2,11 @@
 
 ## Panoramica
 
-Barber Shop Platform è una piattaforma SaaS white-label per saloni e barber shop. Ogni salone acquista una licenza e distribuisce ai propri clienti un sito/app con identità e contenuti dedicati.
+Barber Shop Platform è una piattaforma SaaS white-label per barberie e parrucchierie. Ogni attività acquista una licenza e distribuisce ai propri clienti un sito/app con identità e contenuti dedicati.
 
 Il cliente finale non vede un marketplace e non sceglie tra più saloni: accede direttamente all'app del salone di riferimento. La piattaforma multi-tenant rimane dietro le quinte e consente di riutilizzare la stessa infrastruttura per più attività.
+
+Lo stesso codice supporta due verticali, `barberia` e `parrucchieria`. Il campo `tipo` del salone seleziona automaticamente linguaggio, palette, immagini e contenuti, mantenendo separati dati e identità del tenant.
 
 Il progetto comprende tre esperienze distinte:
 
@@ -69,7 +71,7 @@ Il gestore della piattaforma può:
 
 ## Area cliente
 
-L'area cliente utilizza una navigazione persistente laterale su desktop e una barra inferiore su mobile.
+L'area cliente è progettata come una vera app mobile. Anche quando viene aperta da desktop resta racchiusa in un canvas centrato di circa 500 px e conserva la barra di navigazione inferiore. Non si espande quindi in un sito desktop tradizionale.
 
 | Percorso | Funzione |
 | --- | --- |
@@ -81,6 +83,8 @@ L'area cliente utilizza una navigazione persistente laterale su desktop e una ba
 | `/i-miei-ordini` | Storico e stato degli ordini |
 
 ## Dashboard del salone
+
+La dashboard del titolare è invece completamente responsive: su smartphone usa una navigazione e una gerarchia compatte, mentre su desktop sfrutta l'intera area disponibile per agenda, KPI, tabelle e strumenti gestionali.
 
 | Percorso | Funzione |
 | --- | --- |
@@ -240,12 +244,14 @@ VITE_USE_EMULATOR=true npm run dev -- --host 127.0.0.1
 
 L'app è disponibile normalmente su `http://127.0.0.1:5173`.
 
-Il seed crea **Salone X** con orari, servizi, prodotti, più operatori, clienti, appuntamenti e ordini dimostrativi distribuiti nella settimana corrente. Crea inoltre gli account locali principali:
+Il seed crea due tenant completi: **Salone X** per la barberia e **Atelier Luce** per la parrucchieria. Entrambi includono orari, servizi, prodotti, team, clienti, appuntamenti e ordini dimostrativi. Crea inoltre gli account locali principali:
 
 | Ruolo | Email | Password |
 | --- | --- | --- |
-| Cliente | `cliente.test@barberia.local` | `TestBarber26!` |
-| Titolare | `titolare.test@barberia.local` | `OwnerBarber26!` |
+| Cliente barberia | `cliente.test@barberia.local` | `TestBarber26!` |
+| Titolare barberia | `titolare.test@barberia.local` | `OwnerBarber26!` |
+| Cliente parrucchieria | `cliente.hair@barberia.local` | `HairStudio26!` |
+| Titolare parrucchieria | `titolare.hair@barberia.local` | `HairStudio26!` |
 | Super Admin | `admin@barberia.local` | `AdminBarber26!` |
 
 I test dell'emulatore possono ripulire Firestore e Authentication; in quel caso è sufficiente rieseguire `npm run emu:seed`.
@@ -273,7 +279,7 @@ npm run preview    # anteprima della build
 npm run lint       # analisi statica
 npm run test       # test unitari e componenti
 npm run emu:start  # emulatori Firebase
-npm run emu:seed   # dati demo Salone X
+npm run emu:seed   # dati demo Salone X e Atelier Luce
 npm run test:emu   # test di integrazione con emulatori
 ```
 
@@ -305,3 +311,5 @@ Prima della pubblicazione commerciale restano da definire per ogni installazione
 - configurazione delle notifiche push e dei processi schedulati;
 - eventuale integrazione di pagamenti online;
 - policy privacy, cookie e condizioni di servizio.
+
+Il frontend è già predisposto per Vercel tramite `vercel.json`, che inoltra tutte le route della SPA a `index.html`. La pubblicazione richiede le variabili Firebase di produzione; Cloud Functions, Firestore, Authentication e Storage restano distribuiti su Firebase.

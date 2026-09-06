@@ -14,6 +14,7 @@ describe("registerOwner", () => {
       email,
       password: "password123",
       nomeSalone: "Barberia Centrale",
+      tipo: "parrucchieria",
       timezone: "Europe/Rome",
       orariApertura: { lun: [{ start: 540, end: 1140 }] },
     });
@@ -23,5 +24,8 @@ describe("registerOwner", () => {
     const userSnap = await getDoc(doc(db, "users", auth.currentUser!.uid));
     expect(userSnap.data()?.ruolo).toBe("owner");
     expect(userSnap.data()?.salonId).toBe(res.salonId);
+
+    const salonSnap = await getDoc(doc(db, "salons", res.salonId));
+    expect(salonSnap.data()?.tipo).toBe("parrucchieria");
   });
 });

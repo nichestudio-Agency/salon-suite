@@ -7,9 +7,7 @@ import { formatEuro } from "../domain/money";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listProducts, type ProductWithId } from "../firebase/product-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
-import barberEditorial from "../assets/barber-editorial.webp";
-import barberTools from "../assets/barber-tools.webp";
-import beardTreatment from "../assets/beard-treatment.webp";
+import { getSalonExperience } from "../app/salon-experience";
 import "./customer.css";
 
 export function CustomerHomePage() {
@@ -30,6 +28,7 @@ export function CustomerHomePage() {
   }, [salonId]);
 
   const firstName = user?.displayName?.split(" ")[0];
+  const experience = getSalonExperience(salon?.tipo);
   return (
     <section className="customer-page customer-home">
       <header className="app-page-topbar">
@@ -41,14 +40,14 @@ export function CustomerHomePage() {
       </header>
 
       <article className="industrial-hero">
-        <div className="industrial-wordline"><span>Barber</span><img src={barberTools} alt="Strumenti professionali da barbiere" /><span>Shop</span></div>
+        <div className="industrial-wordline"><span>{experience.heroWords[0]}</span><img src={experience.images.products} alt={experience.type === "parrucchieria" ? "Prodotti e strumenti professionali per capelli" : "Strumenti professionali da barbiere"} /><span>{experience.heroWords[1]}</span></div>
         <div className="industrial-mosaic">
-          <div className="industrial-mosaic__portrait"><img src={barberEditorial} alt="Barbiere durante un trattamento" /></div>
-          <div className="industrial-mosaic__detail"><img src={beardTreatment} alt="Trattamento tradizionale della barba" /></div>
-          <div className="industrial-mosaic__copy"><span>{salon?.nome}</span><p>Un solo salone. Tecniche contemporanee e rituali su misura per il tuo stile.</p></div>
+          <div className="industrial-mosaic__portrait"><img src={experience.images.editorial} alt={`${experience.professional} al lavoro`} /></div>
+          <div className="industrial-mosaic__detail"><img src={experience.images.treatment} alt={experience.featureAlt} /></div>
+          <div className="industrial-mosaic__copy"><span>{salon?.nome}</span><p>Un solo salone. {experience.heroDescription}</p></div>
           <Link className="industrial-mosaic__cta" to="/prenota"><span>Prenota ora</span><AppIcon name="arrow" size={34} /></Link>
         </div>
-        <div className="industrial-promo"><b>ON</b><strong>Prenota senza attese</strong><span>Scegli servizio, barber e orario in autonomia.</span></div>
+        <div className="industrial-promo"><b>ON</b><strong>Prenota senza attese</strong><span>Scegli servizio, {experience.professional.toLowerCase()} e orario in autonomia.</span></div>
       </article>
 
       <section className="industrial-section industrial-services-preview">
@@ -59,15 +58,15 @@ export function CustomerHomePage() {
       </section>
 
       <section className="industrial-section industrial-team">
-        <header><span>02 / Il team</span><h2>Le mani<br />giuste.</h2><Link to="/operatori">Conosci i barber →</Link></header>
+        <header><span>02 / Il team</span><h2>Le mani<br />giuste.</h2><Link to="/operatori">Conosci gli {experience.professionals} →</Link></header>
         <div className="industrial-team__gallery">
-          <img src={barberEditorial} alt="Il team del salone al lavoro" />
-          <img src={beardTreatment} alt="Dettaglio di un trattamento barba" />
-          <Link to="/operatori"><strong>{operators.length || "01"}</strong><span>Barber.<br />Un solo standard.</span></Link>
+          <img src={experience.images.editorial} alt="Il team del salone al lavoro" />
+          <img src={experience.images.treatment} alt={experience.featureAlt} />
+          <Link to="/operatori"><strong>{operators.length || "01"}</strong><span>{experience.teamPromise}</span></Link>
         </div>
       </section>
 
-      {products.length > 0 && <section className="industrial-products"><img src={barberTools} alt="Strumenti e prodotti professionali" /><div><span>03 / Shop</span><h2>La cura<br />continua.</h2><p>Prodotti scelti dal salone per mantenere il risultato anche a casa.</p><Link to="/catalogo">Scopri i prodotti <AppIcon name="arrow" size={20} /></Link></div></section>}
+      {products.length > 0 && <section className="industrial-products"><img src={experience.images.products} alt="Strumenti e prodotti professionali" /><div><span>03 / Shop</span><h2>La cura<br />continua.</h2><p>Prodotti scelti dal salone per mantenere il risultato anche a casa.</p><Link to="/catalogo">Scopri i prodotti <AppIcon name="arrow" size={20} /></Link></div></section>}
     </section>
   );
 }

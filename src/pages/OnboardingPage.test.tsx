@@ -37,6 +37,7 @@ describe("OnboardingPage", () => {
       email: "t@ex.com",
       password: "password123",
       nomeSalone: "Barberia X",
+      tipo: "barberia",
     });
   });
 

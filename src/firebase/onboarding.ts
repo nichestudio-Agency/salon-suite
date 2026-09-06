@@ -2,11 +2,13 @@ import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { httpsCallable } from "firebase/functions";
 import { auth, functions } from "./app";
 import type { WeeklyHours } from "../domain/availability";
+import type { SalonType } from "../domain/models";
 
 export interface RegisterOwnerInput {
   email: string;
   password: string;
   nomeSalone: string;
+  tipo?: SalonType;
   timezone: string;
   orariApertura: WeeklyHours;
 }
@@ -25,12 +27,13 @@ export async function registerOwner(
 ): Promise<RegisterOwnerResult> {
   const cred = await createUserWithEmailAndPassword(auth, input.email, input.password);
   const createSalon = httpsCallable<
-    { nome: string; timezone: string; orariApertura: WeeklyHours },
+    { nome: string; tipo?: SalonType; timezone: string; orariApertura: WeeklyHours },
     { salonId: string }
   >(functions, "createSalon");
   try {
     const res = await createSalon({
       nome: input.nomeSalone,
+      tipo: input.tipo ?? "barberia",
       timezone: input.timezone,
       orariApertura: input.orariApertura,
     });

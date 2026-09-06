@@ -18,7 +18,7 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState>({
-  loading: true,
+  loading: false,
   user: null,
   role: null,
   salonId: null,

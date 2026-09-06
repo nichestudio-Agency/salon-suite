@@ -44,15 +44,18 @@ const platformSalons = [
   { id: "uomo-torino", nome: "Uomo Torino", dominio: "uomotorino.barberia.app", owner: "Stefano Ferri", email: "stefano@uomotorino.demo", piano: "studio", stato: "attiva", prezzo: 7900, scadenza: dateOffset(67), clienti: 14, prenotazioni: 8 },
 ];
 
-const [adminUid, ownerUid, ...clientUids] = await Promise.all([
+const [adminUid, ownerUid, hairOwnerUid, hairClientUid, ...clientUids] = await Promise.all([
   ensureUser("admin@barberia.local", "AdminBarber26!", "Fabio Pace"),
   ensureUser("titolare.test@barberia.local", "OwnerBarber26!", "Titolare Test"),
+  ensureUser("titolare.hair@barberia.local", "HairStudio26!", "Elena Moretti"),
+  ensureUser("cliente.hair@barberia.local", "HairStudio26!", "Giulia Ferri"),
   ...demoClients.map((client) => ensureUser(client.email, client.password, client.nome)),
 ]);
 
 await Promise.all([
   db.doc("salons/salone-x").set({
     nome: "Salone X",
+    tipo: "barberia",
     timezone: "Europe/Rome",
     orariApertura: {
       lun: [{ start: 540, end: 1140 }],
@@ -120,6 +123,41 @@ await Promise.all([
     fcmTokens: [],
   }),
   db.doc(`users/${adminUid}`).set({ nome: "Fabio Pace", email: "admin@barberia.local", ruolo: "superadmin", fcmTokens: [] }),
+  db.doc("salons/atelier-luce").set({
+    nome: "Atelier Luce",
+    tipo: "parrucchieria",
+    timezone: "Europe/Rome",
+    orariApertura: {
+      lun: [{ start: 540, end: 1140 }], mar: [{ start: 540, end: 1140 }], mer: [{ start: 540, end: 1140 }],
+      gio: [{ start: 540, end: 1200 }], ven: [{ start: 540, end: 1200 }], sab: [{ start: 510, end: 1080 }],
+    },
+    impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
+    compleanno: { attivo: true, messaggio: "Buon compleanno da Atelier Luce. Per te un momento dedicato al tuo stile.", couponId: "luce-birthday" },
+    dominio: "atelierluce.barberia.app",
+    licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(176), prezzoMensile: 10900 },
+    createdAt: Timestamp.fromDate(new Date(Date.now() - 128 * 86_400_000)),
+  }),
+  db.doc(`users/${hairOwnerUid}`).set({ nome: "Elena Moretti", email: "titolare.hair@barberia.local", sesso: "femminile", dataNascita: "1987-04-12", ruolo: "owner", salonId: "atelier-luce", fcmTokens: [] }),
+  db.doc(`users/${hairClientUid}`).set({ nome: "Giulia Ferri", email: "cliente.hair@barberia.local", sesso: "femminile", dataNascita: "1993-10-21", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
+  db.doc("users/demo-hair-chiara").set({ nome: "Chiara Riva", email: "chiara@atelierluce.demo", sesso: "femminile", dataNascita: "1989-06-08", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
+  db.doc("users/demo-hair-marta").set({ nome: "Marta Leone", email: "marta@atelierluce.demo", sesso: "femminile", dataNascita: "1998-02-17", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
+  db.doc("users/demo-hair-sofia").set({ nome: "Sofia Romano", email: "sofia@atelierluce.demo", sesso: "femminile", dataNascita: "1984-12-02", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
+  db.doc("salons/atelier-luce/services/taglio-luce").set({ titolo: "Taglio su misura", descrizione: "Consulenza, taglio e finish costruiti sulla forma del viso.", prezzo: 4800, durataMin: 60, attivo: true }),
+  db.doc("salons/atelier-luce/services/balayage").set({ titolo: "Balayage luminoso", descrizione: "Schiariture personalizzate e tonalizzazione gloss.", prezzo: 9800, durataMin: 120, attivo: true }),
+  db.doc("salons/atelier-luce/services/piega-seta").set({ titolo: "Piega seta", descrizione: "Trattamento termoprotettivo e styling a lunga durata.", prezzo: 3200, durataMin: 45, attivo: true }),
+  db.doc("salons/atelier-luce/services/rituale-repair").set({ titolo: "Rituale repair", descrizione: "Detersione, maschera intensiva e finish luminoso.", prezzo: 4200, durataMin: 45, attivo: true }),
+  db.doc("salons/atelier-luce/operators/elena-moretti").set({ nome: "Elena Moretti", attivo: true, fotoUrl: "/demo/team-elena.webp" }),
+  db.doc("salons/atelier-luce/operators/sara-vitali").set({ nome: "Sara Vitali", attivo: true, fotoUrl: "/demo/team-sara.webp" }),
+  db.doc("salons/atelier-luce/operators/gaia-neri").set({ nome: "Gaia Neri", attivo: true }),
+  db.doc("salons/atelier-luce/products/olio-luce").set({ titolo: "Olio luce", descrizione: "Finish leggero, morbido e luminoso.", prezzo: 2600, attivo: true }),
+  db.doc("salons/atelier-luce/products/maschera-repair").set({ titolo: "Maschera repair", descrizione: "Trattamento intensivo per lunghezze sensibilizzate.", prezzo: 3100, attivo: true }),
+  db.doc("salons/atelier-luce/products/spray-termico").set({ titolo: "Spray termico", descrizione: "Protezione quotidiana prima dello styling.", prezzo: 2200, attivo: true }),
+  db.doc("salons/atelier-luce/coupons/luce-birthday").set({ codice: "LUCE15", tipo: "percentuale", valore: 15, attivo: true }),
+  db.doc("salons/atelier-luce/bookings/demo-hair-today-01").set({ clientId: hairClientUid, clientNome: "Giulia Ferri", clientEmail: "cliente.hair@barberia.local", operatorId: "elena-moretti", serviceId: "taglio-luce", date: dateOffset(0), startMin: 570, endMin: 630, stato: "confermata", createdAt: Timestamp.now() }),
+  db.doc("salons/atelier-luce/bookings/demo-hair-today-02").set({ clientId: "demo-hair-chiara", clientNome: "Chiara Riva", clientEmail: "chiara@atelierluce.demo", operatorId: "sara-vitali", serviceId: "balayage", date: dateOffset(0), startMin: 660, endMin: 780, stato: "confermata", createdAt: Timestamp.now() }),
+  db.doc("salons/atelier-luce/bookings/demo-hair-today-03").set({ clientId: "demo-hair-marta", clientNome: "Marta Leone", clientEmail: "marta@atelierluce.demo", operatorId: "gaia-neri", serviceId: "piega-seta", date: dateOffset(0), startMin: 840, endMin: 885, stato: "in_attesa", createdAt: Timestamp.now() }),
+  db.doc("salons/atelier-luce/bookings/demo-hair-today-04").set({ clientId: "demo-hair-sofia", clientNome: "Sofia Romano", clientEmail: "sofia@atelierluce.demo", operatorId: "elena-moretti", serviceId: "rituale-repair", date: dateOffset(0), startMin: 930, endMin: 975, stato: "confermata", createdAt: Timestamp.now() }),
+  db.doc("salons/atelier-luce/orders/demo-hair-order-01").set({ clientId: hairClientUid, clientNome: "Giulia Ferri", clientEmail: "cliente.hair@barberia.local", items: [{ productId: "olio-luce", titolo: "Olio luce", prezzo: 2600, qta: 1 }], totale: 2600, stato: "pronto", createdAt: Timestamp.fromDate(new Date(Date.now() - 2 * 86_400_000)) }),
   db.doc("salons/salone-x/bookings/demo-today-01").set({ clientId: clientUids[1], clientNome: "Luca Bianchi", clientEmail: demoClients[1].email, operatorId: "marco-rinaldi", serviceId: "taglio-sartoriale", date: dateOffset(0), startMin: 570, endMin: 615, stato: "confermata", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-02").set({ clientId: clientUids[2], clientNome: "Alessandro Conti", clientEmail: demoClients[2].email, operatorId: "lorenzo-bassi", serviceId: "combo-signature", date: dateOffset(0), startMin: 630, endMin: 705, stato: "in_attesa", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-03").set({ clientId: clientUids[3], clientNome: "Paolo Romano", clientEmail: demoClients[3].email, operatorId: "marco-rinaldi", serviceId: "rituale-barba", date: dateOffset(0), startMin: 720, endMin: 750, stato: "confermata", createdAt: Timestamp.now() }),
@@ -136,6 +174,7 @@ for (const [salonIndex, salon] of platformSalons.entries()) {
   await Promise.all([
     db.doc(`salons/${salon.id}`).set({
       nome: salon.nome,
+      tipo: "barberia",
       dominio: salon.dominio,
       timezone: "Europe/Rome",
       orariApertura: { lun: [{ start: 540, end: 1080 }], mar: [{ start: 540, end: 1080 }], mer: [{ start: 540, end: 1080 }], gio: [{ start: 540, end: 1080 }], ven: [{ start: 540, end: 1080 }], sab: [{ start: 540, end: 1080 }] },
@@ -152,4 +191,4 @@ for (const [salonIndex, salon] of platformSalons.entries()) {
   ]);
 }
 
-console.log("Demo Salone X e piattaforma Super Admin ripristinati.");
+console.log("Demo Salone X, Atelier Luce e piattaforma Super Admin ripristinati.");

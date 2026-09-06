@@ -4,6 +4,7 @@ import type { WeeklyHours } from "./availability";
 
 export type Gender = "maschile" | "femminile" | "altro";
 export type UserRole = "cliente" | "staff" | "owner" | "superadmin";
+export type SalonType = "barberia" | "parrucchieria";
 export type BookingStatus =
   | "in_attesa"
   | "confermata"
@@ -33,6 +34,8 @@ export interface CompleannoConfig {
 /** Documento in `salons/{salonId}`. */
 export interface Salon {
   nome: string;
+  /** Verticale visuale e lessicale usato dall'app white-label. */
+  tipo?: SalonType;
   /** Fuso orario IANA, es. "Europe/Rome". */
   timezone: string;
   orariApertura: WeeklyHours;

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerOwner } from "../firebase/onboarding";
 import type { WeeklyHours } from "../domain/availability";
+import type { SalonType } from "../domain/models";
 import { AuthLayout } from "../app/AuthLayout";
 import "./customer.css";
 
@@ -20,6 +21,7 @@ export function OnboardingPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nomeSalone, setNomeSalone] = useState("");
+  const [tipo, setTipo] = useState<SalonType>("barberia");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -32,6 +34,7 @@ export function OnboardingPage() {
         email,
         password,
         nomeSalone,
+        tipo,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome",
         orariApertura: DEFAULT_HOURS,
       });
@@ -80,6 +83,14 @@ export function OnboardingPage() {
             onChange={(e) => setNomeSalone(e.target.value)}
             required
           />
+        </div>
+
+        <div className="booking-field">
+          <label htmlFor="ob-tipo">Tipo di attività</label>
+          <select id="ob-tipo" value={tipo} onChange={(event) => setTipo(event.target.value as SalonType)}>
+            <option value="barberia">Barberia</option>
+            <option value="parrucchieria">Parrucchieria</option>
+          </select>
         </div>
 
         {error && <p className="customer-error" role="alert">{error}</p>}

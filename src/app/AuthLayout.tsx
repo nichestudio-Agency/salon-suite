@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import barberEditorial from "../assets/barber-editorial.webp";
 import { useOptionalSalonTenant } from "./salon-tenant-context";
+import { getSalonExperience } from "./salon-experience";
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -9,18 +9,19 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ children, variant = "client" }: AuthLayoutProps) {
   const salon = useOptionalSalonTenant()?.salon;
+  const experience = getSalonExperience(salon?.tipo);
   const brandName = variant === "client" && salon ? salon.nome : "BARBERIA";
   return (
     <main className="auth-shell">
       <section className="auth-showcase" aria-label="Barberia">
-        <img src={barberEditorial} alt="Barbiere durante un trattamento della barba" />
+        <img src={experience.images.editorial} alt={experience.type === "parrucchieria" ? "Hair stylist al lavoro" : "Barbiere durante un trattamento della barba"} />
         <div className="auth-showcase__scrim" />
         <div className="auth-showcase__topline">
           <span className="brand-mark" aria-hidden="true">B</span>
           <span>{brandName}</span>
         </div>
         <div className="auth-showcase__copy">
-          <span className="auth-showcase__eyebrow">Taglio · Barba · Stile</span>
+          <span className="auth-showcase__eyebrow">{experience.type === "parrucchieria" ? "Taglio · Colore · Stile" : "Taglio · Barba · Stile"}</span>
           <h2>{variant === "owner" ? "Il tuo salone, sotto controllo." : "Il tuo tempo. Il tuo stile."}</h2>
           <p>
             {variant === "owner"

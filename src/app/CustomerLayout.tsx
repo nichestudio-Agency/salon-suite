@@ -1,9 +1,9 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { signOutUser } from "../firebase/auth";
 import { useCart } from "./cart-context";
-import barberEditorial from "../assets/barber-editorial.webp";
 import { useSalonTenant } from "./salon-tenant-context";
 import { AppIcon } from "../components/AppIcon";
+import { getSalonExperience } from "./salon-experience";
 
 const CUSTOMER_SECTIONS = [
   { to: "/home", label: "Home", icon: "home" as const },
@@ -19,9 +19,10 @@ export function CustomerLayout() {
 
   if (loading) return <div className="customer-tenant-state">Prepariamo il salone…</div>;
   if (!salon) return <div className="customer-tenant-state">{error}</div>;
+  const experience = getSalonExperience(salon.tipo);
 
   return (
-    <div className="customer-app">
+    <div className={`customer-app customer-app--${experience.type}`}>
       <aside className="customer-nav">
         <div className="customer-nav__brand">
           <span className="brand-mark" aria-hidden="true">B</span>
@@ -31,7 +32,7 @@ export function CustomerLayout() {
           {CUSTOMER_SECTIONS.map((section) => (
             <NavLink key={section.to} to={section.to} className={section.primary ? "customer-nav__primary" : undefined}>
               <span className="customer-nav__icon"><AppIcon name={section.icon} /></span>
-              <span>{section.label}</span>
+              <span>{section.to === "/operatori" ? experience.professional : section.label}</span>
             </NavLink>
           ))}
         </nav>
@@ -41,7 +42,7 @@ export function CustomerLayout() {
           <button type="button" onClick={() => signOutUser()}>Esci</button>
         </div>
         <div className="customer-nav__visual" aria-hidden="true">
-          <img src={barberEditorial} alt="" />
+          <img src={experience.images.editorial} alt="" />
           <p>Il tuo stile,<br />senza attese.</p>
         </div>
       </aside>

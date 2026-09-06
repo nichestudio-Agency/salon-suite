@@ -82,8 +82,10 @@ export function LoginPage() {
           <div className="demo-access" aria-label="Accesso rapido demo">
             <div className="demo-access__heading"><span>Demo commerciale</span><small>Esplora il prodotto da ogni punto di vista</small></div>
             <button aria-label="Super Admin" type="button" onClick={() => void demoLogin("admin@barberia.local", "AdminBarber26!")}><span><AppIcon name="chart" size={19} /></span><span><strong>Super Admin</strong><small>Licenze e saloni</small></span><AppIcon name="arrow" size={17} /></button>
-            <button aria-label="Titolare" type="button" onClick={() => void demoLogin("titolare.test@barberia.local", "OwnerBarber26!")}><span><AppIcon name="building" size={19} /></span><span><strong>Titolare</strong><small>Agenda e gestione</small></span><AppIcon name="arrow" size={17} /></button>
-            <button aria-label="Cliente" type="button" onClick={() => void demoLogin("cliente.test@barberia.local", "TestBarber26!")}><span><AppIcon name="scissors" size={19} /></span><span><strong>Cliente</strong><small>Prenotazioni e shop</small></span><AppIcon name="arrow" size={17} /></button>
+            <button aria-label="Titolare barberia" type="button" onClick={() => void demoLogin("titolare.test@barberia.local", "OwnerBarber26!")}><span><AppIcon name="building" size={19} /></span><span><strong>Titolare · Barberia</strong><small>Agenda e gestione</small></span><AppIcon name="arrow" size={17} /></button>
+            <button aria-label="Cliente barberia" type="button" onClick={() => void demoLogin("cliente.test@barberia.local", "TestBarber26!")}><span><AppIcon name="scissors" size={19} /></span><span><strong>App · Barberia</strong><small>Prenotazioni e shop</small></span><AppIcon name="arrow" size={17} /></button>
+            <button aria-label="Titolare parrucchieria" type="button" onClick={() => void demoLogin("titolare.hair@barberia.local", "HairStudio26!")}><span><AppIcon name="building" size={19} /></span><span><strong>Titolare · Parrucchieria</strong><small>Agenda e gestione</small></span><AppIcon name="arrow" size={17} /></button>
+            <button aria-label="Cliente parrucchieria" type="button" onClick={() => void demoLogin("cliente.hair@barberia.local", "HairStudio26!")}><span><AppIcon name="spark" size={19} /></span><span><strong>App · Parrucchieria</strong><small>Taglio, colore e shop</small></span><AppIcon name="arrow" size={17} /></button>
           </div>
         )}
 

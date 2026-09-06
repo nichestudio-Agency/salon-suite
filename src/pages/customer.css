@@ -288,6 +288,7 @@
 .industrial-team__gallery > * { min-width: 0; background: #181817; }
 .industrial-team__gallery img { width: 100%; height: 220px; object-fit: cover; filter: grayscale(1) contrast(1.08); }.industrial-team__gallery img:nth-child(2) { object-position: center 65%; }
 .industrial-team__gallery a { display: flex; grid-column: 1 / -1; min-height: 150px; align-items: center; justify-content: space-between; padding: 24px; background: var(--accent); color: #181817; text-decoration: none; }.industrial-team__gallery a strong { font-family: var(--industrial); font-size: 4.7rem; line-height: .8; }.industrial-team__gallery a span { max-width: 155px; font-family: var(--industrial); font-size: 1.35rem; font-weight: 700; line-height: 1; text-align: right; text-transform: uppercase; }
+.industrial-team__gallery a span, .service-editorial-feature__line { white-space: pre-line; }
 .industrial-products { display: grid; margin-top: 76px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .industrial-products > img { width: 100%; height: 230px; object-fit: cover; filter: grayscale(1) contrast(1.1); }.industrial-products > div { padding: 24px 0 28px; }.industrial-products p { max-width: 430px; margin: 16px 0 24px; color: #99958e; font-family: var(--technical); font-size: .65rem; line-height: 1.6; text-transform: uppercase; }.industrial-products a { display: flex; min-height: 62px; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--accent); color: #181817; font-family: var(--industrial); font-size: 1.3rem; font-weight: 800; text-decoration: none; text-transform: uppercase; }
 
@@ -329,4 +330,88 @@
   .industrial-team { display: grid; grid-template-columns: .34fr .66fr; border-top: 1px solid var(--border); }.industrial-team > header { align-content: space-between; border-top: 0; border-right: 1px solid var(--border); }.industrial-team__gallery { margin: 0; }.industrial-team__gallery img, .industrial-team__gallery a { min-height: 420px; height: 420px; }
   .industrial-products { margin-top: 140px; }.industrial-products > img { min-height: 520px; }.industrial-products > div { padding: 64px; }.industrial-products h2 { font-size: clamp(4.5rem,7vw,8rem); }
   .customer-app .customer-page:not(.customer-home) { padding-top: 20px; }.customer-app .booking-hero { min-height: 500px; }.customer-app .booking-hero__copy { right: 46px; bottom: 42px; left: 46px; }.customer-app .booking-hero__copy h1 { font-size: clamp(5rem,8vw,9rem); }.customer-app .operator-grid { grid-template-columns: repeat(3,1fr); }
+}
+
+/* Hair salon vertical: same product architecture, its own photographic and color world. */
+.customer-app--parrucchieria {
+  --panel: #1c1719;
+  --panel-strong: #251e21;
+  --surface: #2b2226;
+  --ink: #f5efec;
+  --muted: #aa999f;
+  --border: #594a50;
+  --border-strong: #806b72;
+  --accent: #d9a0aa;
+  --accent-hover: #ead0d5;
+  --accent-soft: rgba(217,160,170,.14);
+  background: #1c1719;
+}
+.customer-app--parrucchieria .industrial-wordline img,
+.customer-app--parrucchieria .industrial-mosaic img,
+.customer-app--parrucchieria .industrial-team__gallery img,
+.customer-app--parrucchieria .industrial-products > img,
+.customer-app--parrucchieria .booking-hero img,
+.customer-app--parrucchieria .operator-card__photo { filter: saturate(.72) contrast(1.05) brightness(.86); }
+.customer-app--parrucchieria .industrial-mosaic__cta,
+.customer-app--parrucchieria .industrial-team__gallery a,
+.customer-app--parrucchieria .industrial-products a,
+.customer-app--parrucchieria .customer-button { color: #211a1d; }
+
+/* The customer product is an app: on large screens it stays inside a phone-sized canvas. */
+@media (min-width: 1040px) {
+  body:has(.customer-app) { background: #d8d2cc; }
+  .customer-app { width: min(100%, 500px); min-height: 100dvh; margin: 0 auto; padding: 0; box-shadow: 0 0 0 1px rgba(29,24,21,.1), 0 30px 100px rgba(36,27,22,.22); }
+  .customer-app::before { display: none; }
+  .customer-app .customer-nav { position: fixed; top: auto; right: auto; bottom: 0; left: 50%; display: block; width: min(100%, 500px); height: calc(76px + env(safe-area-inset-bottom)); padding: 0 6px env(safe-area-inset-bottom); border: 0; border-top: 1px solid var(--border); border-radius: 0; background: rgba(24,24,23,.98); box-shadow: none; transform: translateX(-50%); }
+  .customer-app--parrucchieria .customer-nav { background: rgba(28,23,25,.98); }
+  .customer-app .customer-nav__brand, .customer-app .customer-nav__account, .customer-app .customer-nav__visual, .customer-app .customer-nav > button { display: none; }
+  .customer-app .customer-nav nav { display: grid; width: 100%; height: 76px; grid-template-columns: repeat(5,1fr); align-items: end; gap: 0; margin: 0; }
+  .customer-app .customer-nav nav a { position: relative; display: flex; width: auto; height: 66px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; color: #9a968f; font-size: .68rem; }
+  .customer-app .customer-nav nav a::after { display: none; }
+  .customer-app .customer-nav nav a:hover, .customer-app .customer-nav nav a.active { color: var(--accent); }
+  .customer-app .customer-nav__icon { display: grid; width: 30px; height: 30px; place-items: center; }
+  .customer-app .customer-nav__primary { transform: translateY(-8px); }
+  .customer-app .customer-nav__primary .customer-nav__icon, .customer-app .customer-nav__primary.active .customer-nav__icon { display: grid; width: 52px; height: 52px; border-radius: 2px; background: var(--accent); color: #181817; }
+  .customer-app__content { padding: 18px 18px calc(98px + env(safe-area-inset-bottom)); }
+  .customer-app .customer-page { max-width: none; }
+  .customer-app .customer-page:not(.customer-home) { padding: 0; }
+  .customer-app .app-page-topbar { display: flex; }
+  .industrial-wordline { grid-template-columns: minmax(0,1.15fr) minmax(70px,.55fr) minmax(0,.9fr); }
+  .industrial-wordline span { font-size: 4rem; }
+  .industrial-wordline img { min-height: 106px; }
+  .industrial-mosaic { grid-template-columns: .82fr 1.18fr; grid-template-rows: auto; }
+  .industrial-mosaic__portrait { grid-column: auto; grid-row: span 2; }
+  .industrial-mosaic__portrait img { min-height: 264px; }
+  .industrial-mosaic__detail { grid-column: auto; grid-row: auto; height: 132px; }
+  .industrial-mosaic__copy { grid-column: auto; grid-row: auto; min-height: 132px; border-right: 0; }
+  .industrial-mosaic__cta { grid-column: 1 / -1; grid-row: auto; min-height: 86px; font-size: 2rem; }
+  .industrial-promo { min-height: 0; grid-template-columns: auto 1fr; gap: 2px 14px; }
+  .industrial-promo b { grid-row: span 2; font-size: 2.7rem; }
+  .industrial-promo strong { font-size: 1.15rem; }
+  .industrial-promo span { margin-left: 0; }
+  .industrial-section { margin-top: 76px; }
+  .industrial-section > header { display: block; padding: 18px 0; }
+  .industrial-section > header h2 { font-size: 4.5rem; }
+  .industrial-section > header > a { margin: 20px 0 0; }
+  .industrial-service-list > a { grid-template-columns: 32px minmax(0,1fr) auto; }
+  .industrial-service-list p { display: none; }
+  .industrial-service-list data { grid-column: 2; }
+  .industrial-service-list b { grid-column: 3; grid-row: 1 / span 2; }
+  .industrial-team { display: block; border-top: 0; }
+  .industrial-team > header { border-top: 1px solid var(--border); border-right: 0; }
+  .industrial-team__gallery { grid-template-columns: 1.2fr .8fr; margin-top: 1px; }
+  .industrial-team__gallery img { min-height: 0; height: 220px; }
+  .industrial-team__gallery a { grid-column: 1 / -1; min-height: 150px; height: auto; }
+  .industrial-products { grid-template-columns: 1fr; margin-top: 76px; }
+  .industrial-products > img { height: 230px; min-height: 0; }
+  .industrial-products > div { display: block; padding: 24px 0 28px; }
+  .industrial-products h2 { font-size: 4.5rem; }
+  .customer-app .customer-page__header h1, .customer-app .customer-page > h1, .customer-app .customer-shell__header h1 { font-size: 4rem; }
+  .customer-app .service-row { grid-template-columns: 38px minmax(0,1fr) auto; }
+  .customer-app .service-row .customer-button { grid-column: 2 / 4; width: 100%; }
+  .customer-app .booking-hero { min-height: 320px; }
+  .customer-app .booking-hero__copy { right: 18px; bottom: 26px; left: 18px; }
+  .customer-app .booking-hero__copy h1 { font-size: 4.5rem; }
+  .customer-app .booking-actions .customer-button { width: 100%; min-width: 0; }
+  .customer-app .operator-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }

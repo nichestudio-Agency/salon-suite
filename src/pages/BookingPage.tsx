@@ -9,7 +9,7 @@ import {
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
 import { useSalonTenant } from "../app/salon-tenant-context";
-import beardTreatment from "../assets/beard-treatment.webp";
+import { getSalonExperience } from "../app/salon-experience";
 import "./customer.css";
 
 function formatTime(minutes: number): string {
@@ -20,6 +20,7 @@ function formatTime(minutes: number): string {
 
 export function BookingPage() {
   const { salon } = useSalonTenant();
+  const experience = getSalonExperience(salon?.tipo);
   const [services, setServices] = useState<ServiceWithId[]>([]);
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
   const [bookings, setBookings] = useState<BookingWithId[]>([]);
@@ -121,17 +122,17 @@ export function BookingPage() {
   return (
     <section className="customer-page customer-page--booking">
       <div className="booking-hero">
-        <img src={beardTreatment} alt="Trattamento professionale della barba" />
+        <img src={experience.images.treatment} alt={experience.featureAlt} />
         <div className="booking-hero__copy">
           <span className="customer-shell__eyebrow">Prenotazione online</span>
           <h1>Prenota / ora</h1>
-          <p>{salon?.nome ? `${salon.nome} · ` : ""}Taglio, barba e styling su misura, quando vuoi tu.</p>
+          <p>{salon?.nome ? `${salon.nome} · ` : ""}{experience.bookingDescription}</p>
         </div>
       </div>
 
       <div className="booking-progress" aria-label="Avanzamento prenotazione">
         <span className={serviceId ? "is-complete" : "is-active"}><b>1</b> Servizio</span>
-        <span className={operatorId ? "is-complete" : serviceId ? "is-active" : ""}><b>2</b> Barber</span>
+        <span className={operatorId ? "is-complete" : serviceId ? "is-active" : ""}><b>2</b> {experience.professional}</span>
         <span className={date ? "is-active" : ""}><b>3</b> Orario</span>
       </div>
 

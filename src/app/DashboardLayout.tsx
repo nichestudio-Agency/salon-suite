@@ -43,7 +43,7 @@ export function DashboardLayout() {
   const secondarySectionActive = !MOBILE_SECTIONS.some((section) => section.to === location.pathname);
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard dashboard--${salon?.tipo ?? "barberia"}`}>
       <nav aria-label="Sezioni dashboard" className={`dashboard__sidebar${menuOpen ? " is-open" : ""}`}>
         <div className="dashboard__brand">
           <span className="brand-mark" aria-hidden="true"><AppIcon name="scissors" size={22} /></span>

@@ -6,6 +6,7 @@ if (getApps().length === 0) initializeApp();
 
 interface CreateSalonData {
   nome: string;
+  tipo?: "barberia" | "parrucchieria";
   timezone: string;
   orariApertura: Record<string, { start: number; end: number }[]>;
 }
@@ -14,9 +15,12 @@ export const createSalon = onCall<CreateSalonData>(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Devi essere autenticato.");
 
-  const { nome, timezone, orariApertura } = request.data ?? ({} as CreateSalonData);
+  const { nome, tipo = "barberia", timezone, orariApertura } = request.data ?? ({} as CreateSalonData);
   if (!nome || !nome.trim() || !timezone) {
     throw new HttpsError("invalid-argument", "Nome del salone e fuso orario sono obbligatori.");
+  }
+  if (!(["barberia", "parrucchieria"] as const).includes(tipo)) {
+    throw new HttpsError("invalid-argument", "Tipo di attività non valido.");
   }
 
   const db = getFirestore();
@@ -33,6 +37,7 @@ export const createSalon = onCall<CreateSalonData>(async (request) => {
     }
     tx.set(salonRef, {
       nome: nome.trim(),
+      tipo,
       timezone,
       orariApertura: orariApertura ?? {},
       impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
