@@ -18,7 +18,7 @@
   --radius: 18px;
   --radius-sm: 12px;
   --shadow: 0 18px 50px rgba(38, 27, 18, 0.08);
-  --sans: "Avenir Next", Avenir, Inter, "Segoe UI", system-ui, sans-serif;
+  --sans: "Outfit", "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
   --display: var(--sans);
   color-scheme: light;
   font-family: var(--sans);
@@ -32,7 +32,7 @@
 }
 
 * { box-sizing: border-box; }
-html { min-width: 320px; background: var(--bg); }
+html { min-width: 320px; background: var(--bg); scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--ink); }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }

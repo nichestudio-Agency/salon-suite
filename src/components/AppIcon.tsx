@@ -14,7 +14,9 @@ type IconName =
   | "building"
   | "key"
   | "chart"
-  | "arrow";
+  | "arrow"
+  | "menu"
+  | "close";
 
 export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
@@ -32,6 +34,8 @@ export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) 
     key: <><circle cx="8" cy="15" r="5" /><path d="m11.5 11.5 7-7M16 7l2 2M18 5l2 2" /></>,
     chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
     arrow: <><path d="M5 12h14M14 7l5 5-5 5" /></>,
+    menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
+    close: <><path d="m6 6 12 12M18 6 6 18" /></>,
   };
 
   return (

@@ -6,10 +6,11 @@ Barber Shop Platform è una piattaforma SaaS white-label per saloni e barber sho
 
 Il cliente finale non vede un marketplace e non sceglie tra più saloni: accede direttamente all'app del salone di riferimento. La piattaforma multi-tenant rimane dietro le quinte e consente di riutilizzare la stessa infrastruttura per più attività.
 
-Il progetto comprende due esperienze distinte:
+Il progetto comprende tre esperienze distinte:
 
 - **Area cliente**, per prenotare servizi, conoscere gli operatori e ordinare prodotti.
 - **Dashboard del salone**, per gestire agenda, cataloghi, team, ordini e comunicazioni.
+- **Console di piattaforma**, riservata al gestore SaaS per monitorare saloni, licenze e ricavi ricorrenti.
 
 ## Modello white-label e multi-tenant
 
@@ -57,6 +58,15 @@ La dashboard del salone permette di:
 - configurare campagne, coupon e comunicazioni automatiche di compleanno;
 - segmentare le campagne per dati anagrafici, inattività di prenotazione e inattività di acquisto.
 
+### Super Admin
+
+Il gestore della piattaforma può:
+
+- consultare saloni, clienti aggregati e prenotazioni recenti;
+- monitorare ricavo mensile ricorrente, piani e scadenze;
+- filtrare i tenant per stato della licenza;
+- aggiornare piano, canone, scadenza e stato di ogni licenza.
+
 ## Area cliente
 
 L'area cliente utilizza una navigazione persistente laterale su desktop e una barra inferiore su mobile.
@@ -83,6 +93,12 @@ L'area cliente utilizza una navigazione persistente laterale su desktop e una ba
 | `/dashboard/prodotti` | Gestione prodotti e immagini |
 | `/dashboard/ordini` | Gestione degli ordini |
 | `/dashboard/notifiche` | Coupon, campagne segmentate e automazioni |
+
+## Console di piattaforma
+
+| Percorso | Funzione |
+| --- | --- |
+| `/admin` | Panoramica commerciale, saloni e gestione licenze |
 
 ## Autenticazione
 
@@ -175,7 +191,7 @@ Sono presenti regole dedicate anche per Cloud Storage.
 L'interfaccia segue una direzione premium ed editoriale ispirata al mondo barber:
 
 - palette avorio caldo, grafite e arancio rame;
-- titoli serif e interfaccia sans-serif;
+- titoli ad alto impatto e interfaccia sans-serif;
 - fotografia cinematografica usata come elemento identitario;
 - superfici aperte e divisori al posto di card annidate;
 - navigazione scura per le aree operative;
@@ -230,6 +246,7 @@ Il seed crea **Salone X** con orari, servizi, prodotti, più operatori, clienti,
 | --- | --- | --- |
 | Cliente | `cliente.test@barberia.local` | `TestBarber26!` |
 | Titolare | `titolare.test@barberia.local` | `OwnerBarber26!` |
+| Super Admin | `admin@barberia.local` | `AdminBarber26!` |
 
 I test dell'emulatore possono ripulire Firestore e Authentication; in quel caso è sufficiente rieseguire `npm run emu:seed`.
 

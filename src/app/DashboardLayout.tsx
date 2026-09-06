@@ -1,5 +1,6 @@
 import "./dashboard.css";
-import { NavLink, Outlet } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { signOutUser } from "../firebase/auth";
 import barberEditorial from "../assets/barber-editorial.webp";
 import { AppIcon } from "../components/AppIcon";
@@ -25,9 +26,13 @@ const SECTIONS: DashboardSection[] = [
   { to: "/dashboard/notifiche", label: "Notifiche", icon: "bell" as const },
 ];
 
+const MOBILE_SECTIONS = [SECTIONS[0], SECTIONS[1], SECTIONS[2], SECTIONS[8]];
+
 export function DashboardLayout() {
   const { user } = useAuth();
   const { salon } = useSalonTenant();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const today = new Date();
   const todayLabel = new Intl.DateTimeFormat("it-IT", { weekday: "long", day: "numeric", month: "long" }).format(today);
   const monthLabel = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(today);
@@ -35,14 +40,16 @@ export function DashboardLayout() {
   const offset = (firstDay.getDay() + 6) % 7;
   const monthDays = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   const calendarDays = Array.from({ length: offset + monthDays }, (_, index) => index < offset ? null : index - offset + 1);
+  const secondarySectionActive = !MOBILE_SECTIONS.some((section) => section.to === location.pathname);
 
   return (
     <div className="dashboard">
-      <nav aria-label="Sezioni dashboard" className="dashboard__sidebar">
+      <nav aria-label="Sezioni dashboard" className={`dashboard__sidebar${menuOpen ? " is-open" : ""}`}>
         <div className="dashboard__brand">
           <span className="brand-mark" aria-hidden="true"><AppIcon name="scissors" size={22} /></span>
           <span><strong>{salon?.nome ?? "BARBERIA"}</strong><small>Workspace salone</small></span>
         </div>
+        <button className="dashboard__close" type="button" aria-label="Chiudi menu" onClick={() => setMenuOpen(false)}><AppIcon name="close" /></button>
         <section className="dashboard__mini-calendar" aria-label="Calendario del mese">
           <span>Oggi</span><strong>{todayLabel}</strong>
           <h2>{monthLabel}</h2>
@@ -53,7 +60,7 @@ export function DashboardLayout() {
         <ul>
           {SECTIONS.map((s) => (
             <li key={s.to}>
-              <NavLink to={s.to} end={s.end}>
+              <NavLink to={s.to} end={s.end} onClick={() => setMenuOpen(false)}>
                 <AppIcon name={s.icon} size={20} />
                 {s.label}
               </NavLink>
@@ -64,7 +71,12 @@ export function DashboardLayout() {
           <img src={barberEditorial} alt="" />
           <span><strong>{user?.displayName || "Titolare"}</strong><small>Proprietario</small></span>
         </div>
-        <button type="button" onClick={() => signOutUser()}>Esci</button>
+        <button className="dashboard__logout" type="button" onClick={() => signOutUser()}>Esci dall’account</button>
+      </nav>
+      {menuOpen && <button className="dashboard__overlay" type="button" aria-label="Chiudi menu" onClick={() => setMenuOpen(false)} />}
+      <nav className="dashboard__mobile-nav" aria-label="Navigazione principale">
+        {MOBILE_SECTIONS.map((section) => <NavLink to={section.to} end={section.end} key={section.to}><AppIcon name={section.icon} size={20} />{section.label}</NavLink>)}
+        <button className={secondarySectionActive ? "is-active" : undefined} type="button" aria-label="Apri tutte le sezioni" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><AppIcon name="menu" size={20} />Altro</button>
       </nav>
       <main className="dashboard__content">
         <header className="dashboard__topbar">

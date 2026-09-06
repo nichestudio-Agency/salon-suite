@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signIn, signOutUser } from "../firebase/auth";
 import { AuthLayout } from "../app/AuthLayout";
+import { AppIcon } from "../components/AppIcon";
 import "./customer.css";
 
 export function LoginPage() {
@@ -47,8 +48,9 @@ export function LoginPage() {
   return (
     <AuthLayout>
       <form className="booking-panel auth-panel" onSubmit={onSubmit}>
-        <span className="customer-shell__eyebrow">Barber Shop</span>
-        <h1>Accedi</h1>
+        <span className="customer-shell__eyebrow">Area riservata</span>
+        <h1>Bentornato.</h1>
+        <p className="auth-panel__intro">Accedi per prenotare, gestire il salone o controllare la piattaforma.</p>
 
         <div className="booking-field">
           <label htmlFor="login-email">Email</label>
@@ -78,10 +80,10 @@ export function LoginPage() {
 
         {import.meta.env.DEV && import.meta.env.VITE_USE_EMULATOR === "true" && (
           <div className="demo-access" aria-label="Accesso rapido demo">
-            <span>Accesso rapido locale</span>
-            <button type="button" onClick={() => void demoLogin("admin@barberia.local", "AdminBarber26!")}>Super Admin</button>
-            <button type="button" onClick={() => void demoLogin("titolare.test@barberia.local", "OwnerBarber26!")}>Titolare</button>
-            <button type="button" onClick={() => void demoLogin("cliente.test@barberia.local", "TestBarber26!")}>Cliente</button>
+            <div className="demo-access__heading"><span>Demo commerciale</span><small>Esplora il prodotto da ogni punto di vista</small></div>
+            <button aria-label="Super Admin" type="button" onClick={() => void demoLogin("admin@barberia.local", "AdminBarber26!")}><span><AppIcon name="chart" size={19} /></span><span><strong>Super Admin</strong><small>Licenze e saloni</small></span><AppIcon name="arrow" size={17} /></button>
+            <button aria-label="Titolare" type="button" onClick={() => void demoLogin("titolare.test@barberia.local", "OwnerBarber26!")}><span><AppIcon name="building" size={19} /></span><span><strong>Titolare</strong><small>Agenda e gestione</small></span><AppIcon name="arrow" size={17} /></button>
+            <button aria-label="Cliente" type="button" onClick={() => void demoLogin("cliente.test@barberia.local", "TestBarber26!")}><span><AppIcon name="scissors" size={19} /></span><span><strong>Cliente</strong><small>Prenotazioni e shop</small></span><AppIcon name="arrow" size={17} /></button>
           </div>
         )}
 

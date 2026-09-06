@@ -140,9 +140,13 @@
 .auth-main__brand { display: flex; align-items: center; gap: 10px; margin-bottom: 58px; font-size: .75rem; font-weight: 750; }
 .auth-panel { display: flex; width: 100%; max-width: 440px; margin: 0 auto; flex-direction: column; gap: 17px; }
 .auth-panel h1 { margin: 0 0 12px; font-size: clamp(2.6rem, 13vw, 4rem); }
+.auth-panel__intro { max-width: 380px; margin: -14px 0 7px; color: var(--muted); font-size: .82rem; line-height: 1.6; text-wrap: pretty; }
 .auth-panel .customer-button { width: 100%; margin-top: 8px; }
 .auth-alt, .auth-panel > p { color: var(--muted); font-size: .8rem; }.auth-alt a, .auth-panel > p a { font-weight: 750; }
-.demo-access { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; padding-top: 4px; }.demo-access > span { grid-column: 1 / -1; color: var(--muted); font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }.demo-access button { min-height: 38px; padding: 6px; border: 1px solid var(--border); border-radius: 9px; background: var(--panel-strong); color: var(--ink); cursor: pointer; font-size: .6rem; font-weight: 750; }.demo-access button:hover { border-color: var(--accent); color: var(--accent); }
+.demo-access { display: grid; gap: 7px; margin-top: 8px; padding: 15px; border: 1px solid var(--border); border-radius: 18px; background: rgba(255,255,255,.38); }
+.demo-access__heading { display: flex; flex-direction: column; margin-bottom: 3px; }.demo-access__heading span { color: var(--ink); font-size: .68rem; font-weight: 780; letter-spacing: .06em; text-transform: uppercase; }.demo-access__heading small { color: var(--muted); font-size: .62rem; }
+.demo-access button { display: grid; min-height: 54px; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 7px 10px; border: 1px solid transparent; border-radius: 12px; background: var(--panel-strong); color: var(--ink); cursor: pointer; text-align: left; box-shadow: 0 6px 20px rgba(45,31,20,.04); }
+.demo-access button > span:first-child { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: var(--accent-soft); color: var(--accent); }.demo-access button > span:nth-child(2) { display: flex; flex-direction: column; }.demo-access button strong { font-size: .68rem; }.demo-access button small { color: var(--muted); font-size: .56rem; }.demo-access button > .app-icon { color: var(--muted); transition: transform 180ms ease; }.demo-access button:hover { border-color: rgba(255,100,39,.3); color: var(--accent); transform: translateY(-1px); }.demo-access button:hover > .app-icon { transform: translateX(2px); }
 
 @media (min-width: 720px) {
   .customer-app__content { padding: 40px 40px 110px; }.home-hero { min-height: 470px; }.home-hero__copy { right: 40px; bottom: 40px; left: 40px; }
@@ -229,8 +233,8 @@
   --accent: #f04a12;
   --accent-hover: #ff5a1f;
   --accent-soft: rgba(240,74,18,.12);
-  --industrial: "Avenir Next Condensed", "Arial Narrow", Impact, sans-serif;
-  --technical: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --industrial: "Barlow Condensed", "Avenir Next Condensed", "Arial Narrow", Impact, sans-serif;
+  --technical: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   position: relative;
   background: #181817;
   color: #f2efe8;
