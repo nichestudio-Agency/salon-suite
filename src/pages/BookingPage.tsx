@@ -20,7 +20,7 @@ function formatTime(minutes: number): string {
 
 export function BookingPage() {
   const { salon } = useSalonTenant();
-  const experience = getSalonExperience(salon?.tipo);
+  const experience = getSalonExperience(salon?.tipo, salon?.branding);
   const [services, setServices] = useState<ServiceWithId[]>([]);
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
   const [bookings, setBookings] = useState<BookingWithId[]>([]);

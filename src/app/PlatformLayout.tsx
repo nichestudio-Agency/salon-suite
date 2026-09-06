@@ -9,10 +9,10 @@ export function PlatformLayout() {
   return (
     <div className="platform-shell">
       <header className="platform-header">
-        <NavLink className="platform-brand" to="/admin"><span>BS</span><div><strong>Barber Suite</strong><small>Platform control</small></div></NavLink>
+        <NavLink className="platform-brand" to="/admin"><span>SS</span><div><strong>Salon Suite</strong><small>Platform control</small></div></NavLink>
         <nav aria-label="Navigazione piattaforma">
           <NavLink to="/admin" end><AppIcon name="chart" size={18} />Panoramica</NavLink>
-          <a href="#saloni"><AppIcon name="building" size={18} />Saloni</a>
+          <a href="#saloni"><AppIcon name="building" size={18} />Attività</a>
           <a href="#licenze"><AppIcon name="key" size={18} />Licenze</a>
           <button className="platform-mobile-exit" type="button" onClick={() => signOutUser()}><AppIcon name="arrow" size={18} />Esci</button>
         </nav>

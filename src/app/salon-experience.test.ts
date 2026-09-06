@@ -18,4 +18,15 @@ describe("getSalonExperience", () => {
     expect(experience.professional).toBe("Stylist");
     expect(experience.images.editorial).toContain("hair-editorial");
   });
+
+  it("sostituisce le immagini predefinite con gli asset del tenant", () => {
+    const experience = getSalonExperience("barberia", {
+      backgroundColor: "#111111", foregroundColor: "#ffffff", accentColor: "#cc5522",
+      heroImageUrl: "https://assets.test/hero.webp",
+      treatmentImageUrl: "https://assets.test/treatment.webp",
+    });
+    expect(experience.images.editorial).toBe("https://assets.test/hero.webp");
+    expect(experience.images.treatment).toBe("https://assets.test/treatment.webp");
+    expect(experience.images.products).toContain("barber-tools");
+  });
 });

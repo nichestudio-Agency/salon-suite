@@ -6,7 +6,14 @@ if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_
   throw new Error("Questo seed può essere eseguito solo contro gli emulatori Firebase.");
 }
 
-initializeApp({ projectId: "demo-barbershop" });
+const projectId = "demo-barbershop";
+const [firestoreReset, authReset] = await Promise.all([
+  fetch(`http://${process.env.FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${projectId}/databases/(default)/documents`, { method: "DELETE" }),
+  fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/emulator/v1/projects/${projectId}/accounts`, { method: "DELETE" }),
+]);
+if (!firestoreReset.ok || !authReset.ok) throw new Error("Non siamo riusciti a ripulire i dati demo precedenti.");
+
+initializeApp({ projectId });
 const db = getFirestore();
 const auth = getAuth();
 
@@ -56,6 +63,7 @@ await Promise.all([
   db.doc("salons/salone-x").set({
     nome: "Salone X",
     tipo: "barberia",
+    branding: { backgroundColor: "#181817", foregroundColor: "#f4f0e9", accentColor: "#ff5420" },
     timezone: "Europe/Rome",
     orariApertura: {
       lun: [{ start: 540, end: 1140 }],
@@ -126,6 +134,7 @@ await Promise.all([
   db.doc("salons/atelier-luce").set({
     nome: "Atelier Luce",
     tipo: "parrucchieria",
+    branding: { backgroundColor: "#1c1719", foregroundColor: "#f5efec", accentColor: "#d9a0aa" },
     timezone: "Europe/Rome",
     orariApertura: {
       lun: [{ start: 540, end: 1140 }], mar: [{ start: 540, end: 1140 }], mer: [{ start: 540, end: 1140 }],

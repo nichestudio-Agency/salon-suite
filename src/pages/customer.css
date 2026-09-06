@@ -7,6 +7,7 @@
 
 .customer-nav { position: fixed; right: 0; bottom: 0; left: 0; z-index: 30; height: calc(76px + env(safe-area-inset-bottom)); padding: 0 6px env(safe-area-inset-bottom); border-top: 1px solid var(--border); background: rgba(255,253,249,.96); backdrop-filter: blur(18px); }
 .customer-nav__brand, .customer-nav__account, .customer-nav__visual, .customer-nav > button { display: none; }
+.customer-brand-logo, .auth-brand-logo { width: 38px; height: 38px; flex: none; object-fit: contain; border-radius: 10px; }
 .customer-nav nav { display: grid; height: 76px; grid-template-columns: repeat(5, 1fr); align-items: end; }
 .customer-nav nav a { display: flex; min-width: 0; height: 66px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #77726c; font-size: .66rem; font-weight: 650; text-decoration: none; }
 .customer-nav nav a.active { color: var(--accent); }

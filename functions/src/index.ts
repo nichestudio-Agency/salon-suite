@@ -7,5 +7,6 @@ export { notifyOrderStatus } from "./notifyOrderStatus.js";
 export { sendCampaign } from "./sendCampaign.js";
 export { listPlatformSalons } from "./listPlatformSalons.js";
 export { updateSalonLicense } from "./updateSalonLicense.js";
+export { createPlatformSalon, updateSalonBranding } from "./managePlatformSalon.js";
 export { runBirthdayGreetings, birthdayNotifications } from "./birthdayNotifications.js";
 export { listSalonClients } from "./listSalonClients.js";

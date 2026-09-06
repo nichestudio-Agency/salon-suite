@@ -46,8 +46,10 @@ export const listPlatformSalons = onCall(async (request) => {
     return {
       id: salonId,
       nome: salon.nome ?? "Salone senza nome",
+      tipo: salon.tipo ?? "barberia",
       dominio: salon.dominio ?? `${salonId}.barberia.app`,
       timezone: salon.timezone ?? "Europe/Rome",
+      branding: salon.branding ?? null,
       licenza: salon.licenza ?? { stato: "trial", piano: "start", scadenza: "", prezzoMensile: 0 },
       owner: owner ? { nome: owner.nome ?? "Titolare", email: owner.email ?? "" } : null,
       clienti: clients.length,

@@ -8,7 +8,7 @@ import "./customer.css";
 export function CustomerOperatorsPage() {
   const { salon } = useSalonTenant();
   const salonId = salon?.id ?? "";
-  const experience = getSalonExperience(salon?.tipo);
+  const experience = getSalonExperience(salon?.tipo, salon?.branding);
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
 
   useEffect(() => { if (salonId) void listOperators(salonId).then((items) => setOperators(items.filter((item) => item.attivo))); }, [salonId]);

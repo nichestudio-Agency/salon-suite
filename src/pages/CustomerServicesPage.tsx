@@ -9,7 +9,7 @@ import "./customer.css";
 export function CustomerServicesPage() {
   const { salon } = useSalonTenant();
   const salonId = salon?.id ?? "";
-  const experience = getSalonExperience(salon?.tipo);
+  const experience = getSalonExperience(salon?.tipo, salon?.branding);
   const [services, setServices] = useState<ServiceWithId[]>([]);
 
   useEffect(() => {

@@ -1,11 +1,11 @@
 import "./dashboard.css";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { signOutUser } from "../firebase/auth";
-import barberEditorial from "../assets/barber-editorial.webp";
 import { AppIcon } from "../components/AppIcon";
 import { useAuth } from "./auth-context";
 import { useSalonTenant } from "./salon-tenant-context";
+import { getSalonExperience } from "./salon-experience";
 
 type DashboardSection = {
   to: string;
@@ -41,12 +41,17 @@ export function DashboardLayout() {
   const monthDays = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   const calendarDays = Array.from({ length: offset + monthDays }, (_, index) => index < offset ? null : index - offset + 1);
   const secondarySectionActive = !MOBILE_SECTIONS.some((section) => section.to === location.pathname);
+  const experience = getSalonExperience(salon?.tipo, salon?.branding);
+  const brandStyle = salon?.branding ? {
+    "--accent": salon.branding.accentColor,
+    "--accent-hover": salon.branding.accentColor,
+  } as CSSProperties : undefined;
 
   return (
-    <div className={`dashboard dashboard--${salon?.tipo ?? "barberia"}`}>
+    <div className={`dashboard dashboard--${salon?.tipo ?? "barberia"}`} style={brandStyle}>
       <nav aria-label="Sezioni dashboard" className={`dashboard__sidebar${menuOpen ? " is-open" : ""}`}>
         <div className="dashboard__brand">
-          <span className="brand-mark" aria-hidden="true"><AppIcon name="scissors" size={22} /></span>
+          {salon?.branding?.logoUrl ? <img className="dashboard-brand-logo" src={salon.branding.logoUrl} alt={`Logo ${salon.nome}`} /> : <span className="brand-mark" aria-hidden="true"><AppIcon name="scissors" size={22} /></span>}
           <span><strong>{salon?.nome ?? "BARBERIA"}</strong><small>Workspace salone</small></span>
         </div>
         <button className="dashboard__close" type="button" aria-label="Chiudi menu" onClick={() => setMenuOpen(false)}><AppIcon name="close" /></button>
@@ -68,7 +73,7 @@ export function DashboardLayout() {
           ))}
         </ul>
         <div className="dashboard__profile">
-          <img src={barberEditorial} alt="" />
+          <img src={experience.images.editorial} alt="" />
           <span><strong>{user?.displayName || "Titolare"}</strong><small>Proprietario</small></span>
         </div>
         <button className="dashboard__logout" type="button" onClick={() => signOutUser()}>Esci dall’account</button>

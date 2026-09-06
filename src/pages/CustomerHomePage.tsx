@@ -28,7 +28,7 @@ export function CustomerHomePage() {
   }, [salonId]);
 
   const firstName = user?.displayName?.split(" ")[0];
-  const experience = getSalonExperience(salon?.tipo);
+  const experience = getSalonExperience(salon?.tipo, salon?.branding);
   return (
     <section className="customer-page customer-home">
       <header className="app-page-topbar">

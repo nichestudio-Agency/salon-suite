@@ -1,8 +1,8 @@
-# Barber Shop Platform
+# Salon Suite Platform
 
 ## Panoramica
 
-Barber Shop Platform è una piattaforma SaaS white-label per barberie e parrucchierie. Ogni attività acquista una licenza e distribuisce ai propri clienti un sito/app con identità e contenuti dedicati.
+Salon Suite Platform è una piattaforma SaaS white-label per barberie e parrucchierie. Ogni attività acquista una licenza e distribuisce ai propri clienti un sito/app con identità e contenuti dedicati.
 
 Il cliente finale non vede un marketplace e non sceglie tra più saloni: accede direttamente all'app del salone di riferimento. La piattaforma multi-tenant rimane dietro le quinte e consente di riutilizzare la stessa infrastruttura per più attività.
 
@@ -68,6 +68,16 @@ Il gestore della piattaforma può:
 - monitorare ricavo mensile ricorrente, piani e scadenze;
 - filtrare i tenant per stato della licenza;
 - aggiornare piano, canone, scadenza e stato di ogni licenza.
+- registrare una nuova attività e creare l'accesso iniziale del titolare;
+- scegliere il verticale barberia o parrucchieria;
+- configurare palette, logo e fotografie dell'esperienza white-label;
+- vedere un'anteprima mobile del brand prima della pubblicazione.
+
+### Identità white-label
+
+Ogni documento `salons/{salonId}` può contenere un oggetto `branding` con tre colori (`backgroundColor`, `foregroundColor`, `accentColor`) e gli asset per logo, immagine principale, trattamento e prodotti. In assenza di personalizzazioni vengono usati i preset editoriali della barberia o della parrucchieria.
+
+Gli asset caricati dal Super Admin vengono salvati in `salons/{salonId}/branding/` su Cloud Storage. L'app cliente applica automaticamente immagini e palette; la dashboard del titolare eredita logo, fotografia e colore d'accento.
 
 ## Area cliente
 
@@ -155,6 +165,10 @@ Le funzioni esportate da `functions/src/index.ts` sono:
 - `createOrder`
 - `notifyOrderStatus`
 - `sendCampaign`
+- `listPlatformSalons`
+- `updateSalonLicense`
+- `createPlatformSalon`
+- `updateSalonBranding`
 - `runBirthdayGreetings`
 - `birthdayNotifications`
 - `listSalonClients`

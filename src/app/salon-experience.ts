@@ -1,4 +1,4 @@
-import type { SalonType } from "../domain/models";
+import type { SalonBranding, SalonType } from "../domain/models";
 import barberEditorial from "../assets/barber-editorial.webp";
 import barberTools from "../assets/barber-tools.webp";
 import beardTreatment from "../assets/beard-treatment.webp";
@@ -62,6 +62,15 @@ const EXPERIENCES: Record<SalonType, SalonExperience> = {
   },
 };
 
-export function getSalonExperience(type?: SalonType): SalonExperience {
-  return EXPERIENCES[type ?? "barberia"];
+export function getSalonExperience(type?: SalonType, branding?: SalonBranding | null): SalonExperience {
+  const base = EXPERIENCES[type ?? "barberia"];
+  if (!branding) return base;
+  return {
+    ...base,
+    images: {
+      editorial: branding.heroImageUrl || base.images.editorial,
+      treatment: branding.treatmentImageUrl || base.images.treatment,
+      products: branding.productsImageUrl || base.images.products,
+    },
+  };
 }

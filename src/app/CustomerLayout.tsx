@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import type { CSSProperties } from "react";
 import { signOutUser } from "../firebase/auth";
 import { useCart } from "./cart-context";
 import { useSalonTenant } from "./salon-tenant-context";
@@ -19,13 +20,20 @@ export function CustomerLayout() {
 
   if (loading) return <div className="customer-tenant-state">Prepariamo il salone…</div>;
   if (!salon) return <div className="customer-tenant-state">{error}</div>;
-  const experience = getSalonExperience(salon.tipo);
+  const experience = getSalonExperience(salon.tipo, salon.branding);
+  const brandStyle = salon.branding ? {
+    "--panel": salon.branding.backgroundColor,
+    "--panel-strong": salon.branding.backgroundColor,
+    "--ink": salon.branding.foregroundColor,
+    "--accent": salon.branding.accentColor,
+    "--accent-hover": salon.branding.accentColor,
+  } as CSSProperties : undefined;
 
   return (
-    <div className={`customer-app customer-app--${experience.type}`}>
+    <div className={`customer-app customer-app--${experience.type}`} style={brandStyle}>
       <aside className="customer-nav">
         <div className="customer-nav__brand">
-          <span className="brand-mark" aria-hidden="true">B</span>
+          {salon.branding?.logoUrl ? <img className="customer-brand-logo" src={salon.branding.logoUrl} alt={`Logo ${salon.nome}`} /> : <span className="brand-mark" aria-hidden="true">B</span>}
           <span><strong>{salon.nome}</strong><small>Il tuo salone</small></span>
         </div>
         <nav aria-label="Area cliente">

@@ -16,6 +16,7 @@ type IconName =
   | "chart"
   | "arrow"
   | "menu"
+  | "plus"
   | "close";
 
 export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) {
@@ -35,6 +36,7 @@ export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) 
     chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
     arrow: <><path d="M5 12h14M14 7l5 5-5 5" /></>,
     menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
+    plus: <><path d="M12 5v14M5 12h14" /></>,
     close: <><path d="m6 6 12 12M18 6 6 18" /></>,
   };
 

@@ -31,11 +31,30 @@ export interface CompleannoConfig {
   couponId?: string | null;
 }
 
+export interface SalonBranding {
+  /** Colore principale delle superfici. */
+  backgroundColor: string;
+  /** Colore di testo e contrasto. */
+  foregroundColor: string;
+  /** Colore usato per CTA, link e stati attivi. */
+  accentColor: string;
+  logoUrl?: string;
+  logoPath?: string;
+  heroImageUrl?: string;
+  heroImagePath?: string;
+  treatmentImageUrl?: string;
+  treatmentImagePath?: string;
+  productsImageUrl?: string;
+  productsImagePath?: string;
+}
+
 /** Documento in `salons/{salonId}`. */
 export interface Salon {
   nome: string;
   /** Verticale visuale e lessicale usato dall'app white-label. */
   tipo?: SalonType;
+  /** Identità visiva configurabile dal pannello di piattaforma. */
+  branding?: SalonBranding;
   /** Fuso orario IANA, es. "Europe/Rome". */
   timezone: string;
   orariApertura: WeeklyHours;

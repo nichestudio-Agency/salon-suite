@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useOptionalSalonTenant } from "./salon-tenant-context";
 import { getSalonExperience } from "./salon-experience";
 
@@ -9,15 +9,20 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ children, variant = "client" }: AuthLayoutProps) {
   const salon = useOptionalSalonTenant()?.salon;
-  const experience = getSalonExperience(salon?.tipo);
+  const experience = getSalonExperience(salon?.tipo, salon?.branding);
   const brandName = variant === "client" && salon ? salon.nome : "BARBERIA";
+  const brandStyle = salon?.branding ? {
+    "--panel": salon.branding.backgroundColor,
+    "--ink": salon.branding.foregroundColor,
+    "--accent": salon.branding.accentColor,
+  } as CSSProperties : undefined;
   return (
-    <main className="auth-shell">
+    <main className="auth-shell" style={brandStyle}>
       <section className="auth-showcase" aria-label="Barberia">
         <img src={experience.images.editorial} alt={experience.type === "parrucchieria" ? "Hair stylist al lavoro" : "Barbiere durante un trattamento della barba"} />
         <div className="auth-showcase__scrim" />
         <div className="auth-showcase__topline">
-          <span className="brand-mark" aria-hidden="true">B</span>
+          {salon?.branding?.logoUrl ? <img className="auth-brand-logo" src={salon.branding.logoUrl} alt="" /> : <span className="brand-mark" aria-hidden="true">B</span>}
           <span>{brandName}</span>
         </div>
         <div className="auth-showcase__copy">
@@ -33,7 +38,7 @@ export function AuthLayout({ children, variant = "client" }: AuthLayoutProps) {
       </section>
       <section className="auth-main">
         <div className="auth-main__brand" aria-hidden="true">
-          <span className="brand-mark">B</span>
+          {salon?.branding?.logoUrl ? <img className="auth-brand-logo" src={salon.branding.logoUrl} alt="" /> : <span className="brand-mark">B</span>}
           <span>{brandName}</span>
         </div>
         {children}
