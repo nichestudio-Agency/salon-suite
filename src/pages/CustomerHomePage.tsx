@@ -36,7 +36,7 @@ export function CustomerHomePage() {
           <span className="app-page-topbar__kicker">{firstName ? `Ciao, ${firstName}` : "Bentornato"}</span>
           <strong>{salon?.nome}</strong>
         </div>
-        <Link className="round-action" to="/i-miei-ordini" aria-label="I miei ordini"><AppIcon name="bell" /></Link>
+        <Link className="round-action" to="/profilo" aria-label="Apri il profilo"><AppIcon name="profile" /></Link>
       </header>
 
       <article className="industrial-hero">

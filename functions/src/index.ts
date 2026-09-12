@@ -10,3 +10,7 @@ export { updateSalonLicense } from "./updateSalonLicense.js";
 export { createPlatformSalon, updateSalonBranding } from "./managePlatformSalon.js";
 export { runBirthdayGreetings, birthdayNotifications } from "./birthdayNotifications.js";
 export { listSalonClients } from "./listSalonClients.js";
+export { createLoyaltyCardForNewClient, loyaltyProgram } from "./loyaltyProgram.js";
+export { manageBookingOutcome } from "./manageBookingOutcome.js";
+export { manageWaitlist } from "./manageWaitlist.js";
+export { notifyWaitlistSlot } from "./notifyWaitlistSlot.js";

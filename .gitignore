@@ -25,3 +25,12 @@ npm-debug.log*
 *.sln
 *.sw?
 *.tsbuildinfo
+.vercel
+
+# Local build and visual-QA artifacts
+.claude/
+.chart-data-*/
+.codex-deck-*/
+.codex-finalizer*/
+output/
+tmp/

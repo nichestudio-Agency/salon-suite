@@ -37,11 +37,13 @@ Il cliente può:
 - registrarsi e accedere all'app del salone;
 - consultare servizi, durata e prezzo;
 - consultare gli operatori disponibili;
-- cercare gli orari liberi;
+- cercare gli orari liberi anche per più servizi e serie settimanali;
 - inviare e annullare una prenotazione;
+- entrare in lista d'attesa ed essere avvisato quando torna una fascia compatibile;
 - consultare e acquistare prodotti con pagamento in salone;
 - gestire il carrello;
 - consultare e annullare gli ordini consentiti.
+- usare una card fidelity virtuale con QR, saldo, avanzamento premio e storico movimenti.
 
 Il profilo cliente conserva anche il `salonId` del tenant dal quale è avvenuta la registrazione.
 
@@ -59,6 +61,7 @@ La dashboard del salone permette di:
 - consultare notifiche;
 - configurare campagne, coupon e comunicazioni automatiche di compleanno;
 - segmentare le campagne per dati anagrafici, inattività di prenotazione e inattività di acquisto.
+- configurare la fidelity, scansionare le card, accreditare punti dopo il pagamento in negozio e riscattare premi.
 
 ### Super Admin
 
@@ -91,6 +94,7 @@ L'area cliente è progettata come una vera app mobile. Anche quando viene aperta
 | `/catalogo` | Catalogo prodotti |
 | `/carrello` | Gestione del carrello e invio ordine |
 | `/i-miei-ordini` | Storico e stato degli ordini |
+| `/fidelity` | Card virtuale, QR, saldo punti, premio e movimenti |
 
 ## Dashboard del salone
 
@@ -107,6 +111,8 @@ La dashboard del titolare è invece completamente responsive: su smartphone usa 
 | `/dashboard/prodotti` | Gestione prodotti e immagini |
 | `/dashboard/ordini` | Gestione degli ordini |
 | `/dashboard/notifiche` | Coupon, campagne segmentate e automazioni |
+| `/dashboard/fidelity` | Scanner QR, accrediti, riscatti, KPI e regole del programma |
+| `/dashboard/importa` | Importazione CSV di clienti, servizi, operatori e prodotti |
 
 ## Console di piattaforma
 
@@ -128,17 +134,25 @@ La disponibilità viene calcolata considerando:
 
 - orari settimanali del salone;
 - eventuali orari personalizzati dell'operatore;
-- durata del servizio;
+- durata complessiva dei servizi scelti;
 - passo temporale configurato dal salone;
 - prenotazioni già in attesa o confermate.
 
-La creazione passa dalla Cloud Function `createBooking`, che esegue i controlli sul server per evitare sovrapposizioni e problemi di concorrenza.
+La creazione passa dalla Cloud Function `createBooking`, che esegue i controlli sul server per evitare sovrapposizioni e problemi di concorrenza. Una prenotazione può contenere da uno a cinque servizi e può generare una serie settimanale da quattro o otto occorrenze: la transazione crea l'intera serie oppure non crea nulla. La lista d'attesa è idempotente e una funzione automatica notifica il cliente soltanto quando esiste nuovamente una fascia compatibile.
 
 ## Ordini e prodotti
 
 I prodotti appartengono a un singolo salone. Il carrello accetta prodotti di un solo tenant alla volta e l'ordine viene creato tramite `createOrder`.
 
 Il pagamento avviene attualmente in salone. Le righe dell'ordine contengono uno snapshot di titolo e prezzo, così le modifiche future al catalogo non alterano gli ordini già creati.
+
+## Fidelity card
+
+Ogni cliente registrato riceve automaticamente una card virtuale con codice opaco e QR. Il QR identifica la card senza contenere nome, email o altri dati personali.
+
+Il programma non richiede pagamenti in-app: dopo il pagamento tramite cassa o POS, lo staff scansiona il QR, conferma l'importo e accredita i punti. Lo stesso flusso copre appuntamenti, clienti di passaggio e acquisti di prodotti. Solo owner e staff possono modificare il saldo; la Cloud Function usa transazioni Firestore e impedisce che una stessa operazione venga registrata due volte.
+
+Il titolare può scegliere punti per euro, soglia, nome e valore indicativo del premio. Il cliente vede saldo disponibile, punti mancanti, visite premiate e storico di accrediti e riscatti.
 
 ## Stack tecnologico
 
@@ -161,6 +175,8 @@ Le funzioni esportate da `functions/src/index.ts` sono:
 - `createSalon`
 - `createBooking`
 - `getAvailability`
+- `manageWaitlist`
+- `notifyWaitlistSlot`
 - `notifyBookingStatus`
 - `createOrder`
 - `notifyOrderStatus`
@@ -172,6 +188,9 @@ Le funzioni esportate da `functions/src/index.ts` sono:
 - `runBirthdayGreetings`
 - `birthdayNotifications`
 - `listSalonClients`
+- `createLoyaltyCardForNewClient`
+- `loyaltyProgram`
+- `manageBookingOutcome`
 
 ## Struttura dati principale
 
@@ -181,11 +200,14 @@ salons/{salonId}
   operators/{operatorId}
   services/{serviceId}
   bookings/{bookingId}
+  sales/{saleId}
   products/{productId}
   orders/{orderId}
   coupons/{couponId}
   campaigns/{campaignId}
   notifications/{notificationId}
+  loyaltyAccounts/{clientId}
+    transactions/{transactionId}
 ```
 
 I prezzi sono memorizzati come centesimi interi. Date anagrafiche e date locali del salone usano il formato `YYYY-MM-DD`; gli orari sono rappresentati come minuti dalla mezzanotte.
@@ -276,6 +298,7 @@ I test dell'emulatore possono ripulire Firestore e Authentication; in quel caso 
 | --- | --- |
 | `VITE_SALON_ID` | Tenant esposto dall'installazione white-label |
 | `VITE_USE_EMULATOR` | Usa gli emulatori Firebase quando vale `true` |
+| `VITE_SHOW_DEMO_ACCESS` | Mostra gli accessi rapidi della demo commerciale |
 | `VITE_FIREBASE_API_KEY` | API key Firebase |
 | `VITE_FIREBASE_AUTH_DOMAIN` | Dominio Authentication |
 | `VITE_FIREBASE_PROJECT_ID` | ID progetto Firebase |

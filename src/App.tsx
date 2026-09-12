@@ -29,6 +29,13 @@ import { ClientsPage } from "./pages/ClientsPage";
 import { RequireSuperAdmin } from "./app/RequireSuperAdmin";
 import { PlatformLayout } from "./app/PlatformLayout";
 import { PlatformDashboardPage } from "./pages/PlatformDashboardPage";
+import { LoyaltyCardPage } from "./pages/LoyaltyCardPage";
+import { LoyaltyManagementPage } from "./pages/LoyaltyManagementPage";
+import { CustomerProfilePage } from "./pages/CustomerProfilePage";
+import { CustomerSupportPage } from "./pages/CustomerSupportPage";
+import { SalonSupportPage } from "./pages/SalonSupportPage";
+import { PlatformSupportPage } from "./pages/PlatformSupportPage";
+import { DataImportPage } from "./pages/DataImportPage";
 
 export default function App() {
   return (
@@ -49,6 +56,9 @@ export default function App() {
               <Route path="/catalogo" element={<CatalogPage />} />
               <Route path="/carrello" element={<CartPage />} />
               <Route path="/i-miei-ordini" element={<MyOrdersPage />} />
+              <Route path="/fidelity" element={<LoyaltyCardPage />} />
+              <Route path="/profilo" element={<CustomerProfilePage />} />
+              <Route path="/assistenza" element={<CustomerSupportPage />} />
             </Route>
             <Route
               path="/dashboard"
@@ -67,9 +77,13 @@ export default function App() {
               <Route path="prodotti" element={<ProductsPage />} />
               <Route path="ordini" element={<OrdersPage />} />
               <Route path="notifiche" element={<NotificationsPage />} />
+              <Route path="fidelity" element={<LoyaltyManagementPage />} />
+              <Route path="assistenza" element={<SalonSupportPage />} />
+              <Route path="importa" element={<DataImportPage />} />
             </Route>
             <Route path="/admin" element={<RequireSuperAdmin><PlatformLayout /></RequireSuperAdmin>}>
               <Route index element={<PlatformDashboardPage />} />
+              <Route path="assistenza" element={<PlatformSupportPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/area" replace />} />
           </Routes>

@@ -17,6 +17,7 @@ interface CampaignFilters {
   natoA?: string;
   bookingInactiveDays?: number;
   productInactiveDays?: number;
+  recipientIds?: string[];
 }
 interface SendCampaignData {
   salonId: string;
@@ -116,6 +117,7 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
   for (const snap of profileSnaps) {
     const profile = snap.data();
     if (!profile) continue;
+    if (filtri.recipientIds?.length && !filtri.recipientIds.includes(snap.id)) continue;
     if (filtri.sesso && profile.sesso !== filtri.sesso) continue;
     const nascita = typeof profile.dataNascita === "string" ? profile.dataNascita : null;
     if (filtri.natoDa && (!nascita || nascita < filtri.natoDa)) continue;

@@ -26,7 +26,7 @@ export function HoursPage() {
 
   return (
     <section>
-      <h2>Orari di apertura</h2>
+      <header className="dashboard-page-header"><div><span>Disponibilità</span><h2>Orari di apertura</h2><p>L’intera settimana è visibile senza scorrere. Gli operatori ereditano questi orari.</p></div></header>
       <WeeklyHoursEditor
         value={hours}
         onChange={(nextHours) => {

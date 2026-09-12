@@ -36,6 +36,13 @@ async function setupBookableSalon(options: {
     durataMin: 30,
     attivo: true,
   });
+  await setDoc(doc(db, `salons/${salonId}/services/svc2`), {
+    titolo: "Barba",
+    descrizione: "",
+    prezzo: 1200,
+    durataMin: 15,
+    attivo: true,
+  });
   if (options.coupon) {
     await setDoc(doc(db, `salons/${salonId}/coupons/test-coupon`), options.coupon);
   }
@@ -157,6 +164,39 @@ describe("createBooking", () => {
       ),
     );
     expect(bookings.docs).toHaveLength(1);
+  });
+
+  it("crea atomicamente una serie settimanale con più servizi", async () => {
+    const salonId = await setupBookableSalon();
+    const availability = await getAvailability({
+      salonId, operatorId: "op1", serviceId: "svc1", serviceIds: ["svc1", "svc2"],
+      date: "2026-08-24", recurrenceCount: 4,
+    });
+    expect(availability).toMatchObject({ durationMin: 45 });
+    expect(availability.starts).toContain(600);
+
+    const result = await createBooking({
+      salonId, operatorId: "op1", serviceId: "svc1", serviceIds: ["svc1", "svc2"],
+      date: "2026-08-24", startMin: 600, recurrenceCount: 4,
+    });
+    expect(result).toMatchObject({ occurrenceCount: 4, endMin: 645, prezzoOriginale: 3200 });
+    expect(result.bookingIds).toHaveLength(4);
+    const bookings = await listMyBookings(salonId);
+    expect(bookings).toHaveLength(4);
+    expect(bookings.map((booking) => booking.date)).toEqual(["2026-08-24", "2026-08-31", "2026-09-07", "2026-09-14"]);
+    expect(bookings[0]).toMatchObject({ serviceIds: ["svc1", "svc2"], occurrenceIndex: 0, occurrenceCount: 4 });
+    expect(bookings[0].serviceItems).toHaveLength(2);
+  });
+
+  it("non crea nessuna ricorrenza se una data della serie è occupata", async () => {
+    const salonId = await setupBookableSalon();
+    await createBooking({ salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-31", startMin: 600 });
+    await expect(createBooking({
+      salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600, recurrenceCount: 4,
+    })).rejects.toMatchObject({ code: expect.stringMatching(/already-exists|failed-precondition/) });
+    const bookings = await listMyBookings(salonId);
+    expect(bookings).toHaveLength(1);
+    expect(bookings[0].date).toBe("2026-08-31");
   });
 
   it("rifiuta uno slot fuori dagli orari di lavoro", async () => {

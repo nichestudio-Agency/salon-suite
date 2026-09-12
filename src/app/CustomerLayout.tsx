@@ -1,7 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import type { CSSProperties } from "react";
 import { signOutUser } from "../firebase/auth";
-import { useCart } from "./cart-context";
 import { useSalonTenant } from "./salon-tenant-context";
 import { AppIcon } from "../components/AppIcon";
 import { getSalonExperience } from "./salon-experience";
@@ -10,12 +9,11 @@ const CUSTOMER_SECTIONS = [
   { to: "/home", label: "Home", icon: "home" as const },
   { to: "/servizi", label: "Servizi", icon: "scissors" as const },
   { to: "/prenota", label: "Prenota", icon: "calendar" as const, primary: true },
-  { to: "/operatori", label: "Barber", icon: "users" as const },
-  { to: "/catalogo", label: "Prodotti", icon: "bag" as const },
+  { to: "/catalogo", label: "Shop", icon: "bag" as const },
+  { to: "/profilo", label: "Profilo", icon: "profile" as const },
 ];
 
 export function CustomerLayout() {
-  const cart = useCart();
   const { salon, loading, error } = useSalonTenant();
 
   if (loading) return <div className="customer-tenant-state">Prepariamo il salone…</div>;
@@ -45,8 +43,8 @@ export function CustomerLayout() {
           ))}
         </nav>
         <div className="customer-nav__account">
-          <NavLink to="/i-miei-ordini"><AppIcon name="orders" size={18} /> I miei ordini</NavLink>
-          <NavLink to="/carrello"><AppIcon name="cart" size={18} /> Carrello <span>{cart.items.length}</span></NavLink>
+          <NavLink to="/profilo"><AppIcon name="profile" size={18} /> Il mio profilo</NavLink>
+          <NavLink to="/assistenza"><AppIcon name="ticket" size={18} /> Assistenza</NavLink>
           <button type="button" onClick={() => signOutUser()}>Esci</button>
         </div>
         <div className="customer-nav__visual" aria-hidden="true">

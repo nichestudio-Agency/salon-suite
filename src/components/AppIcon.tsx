@@ -17,7 +17,17 @@ type IconName =
   | "arrow"
   | "menu"
   | "plus"
-  | "close";
+  | "close"
+  | "card"
+  | "gift"
+  | "scan"
+  | "check"
+  | "profile"
+  | "logout"
+  | "ticket"
+  | "paperclip"
+  | "video"
+  | "send";
 
 export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
@@ -38,6 +48,16 @@ export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) 
     menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
     plus: <><path d="M12 5v14M5 12h14" /></>,
     close: <><path d="m6 6 12 12M18 6 6 18" /></>,
+    card: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M3 10h18M7 15h3" /></>,
+    gift: <><path d="M4 10h16v11H4zM2.5 7h19v4h-19zM12 7v14" /><path d="M12 7H8.5A2.5 2.5 0 1 1 11 4.5L12 7Zm0 0h3.5A2.5 2.5 0 1 0 13 4.5L12 7Z" /></>,
+    scan: <><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /><path d="M7 12h10" /></>,
+    check: <><circle cx="12" cy="12" r="9" /><path d="m8 12 2.7 2.7L16.5 9" /></>,
+    profile: <><circle cx="12" cy="8" r="4" /><path d="M4.5 21c.7-4.5 3.2-6.7 7.5-6.7s6.8 2.2 7.5 6.7" /></>,
+    logout: <><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" /></>,
+    ticket: <><path d="M4 5h16v4a3 3 0 0 0 0 6v4H4v-4a3 3 0 0 0 0-6V5Z" /><path d="M9 9h6M9 13h4" /></>,
+    paperclip: <path d="m20 12-7.6 7.6a6 6 0 0 1-8.5-8.5l8.2-8.2a4 4 0 0 1 5.7 5.7l-8.3 8.3a2 2 0 0 1-2.8-2.8l7.6-7.6" />,
+    video: <><rect x="3" y="5" width="14" height="14" rx="3" /><path d="m17 10 4-2v8l-4-2" /></>,
+    send: <><path d="m22 2-7 20-4-9-9-4 20-7Z" /><path d="M22 2 11 13" /></>,
   };
 
   return (

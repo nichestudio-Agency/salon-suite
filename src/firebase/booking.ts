@@ -9,13 +9,17 @@ export interface CreateBookingInput {
   salonId: string;
   operatorId: string;
   serviceId: string;
+  serviceIds?: string[];
   date: string;
   startMin: number;
   couponCode?: string;
+  recurrenceCount?: number;
 }
 
 export interface CreateBookingResult {
   bookingId: string;
+  bookingIds?: string[];
+  occurrenceCount?: number;
   endMin: number;
   stato: "in_attesa";
   prezzoOriginale: number;
@@ -27,11 +31,14 @@ export interface GetAvailabilityInput {
   salonId: string;
   operatorId: string;
   serviceId: string;
+  serviceIds?: string[];
   date: string;
+  recurrenceCount?: number;
 }
 
 export interface GetAvailabilityResult {
   date: string;
+  dates?: string[];
   durationMin: number;
   stepMin: number;
   starts: number[];

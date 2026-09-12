@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../app/cart-context";
 import { createOrder } from "../firebase/order";
 import { formatEuro } from "../domain/money";
@@ -10,6 +10,7 @@ export function CartPage() {
   const { salonId, items, totale, setQta, remove, clear } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
 
   async function onCheckout() {
     if (!salonId || items.length === 0) return;
@@ -19,6 +20,7 @@ export function CartPage() {
       await createOrder({
         salonId,
         items: items.map((l) => ({ productId: l.product.id, qta: l.qta })),
+        ...(couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}),
       });
       clear();
       navigate("/i-miei-ordini");
@@ -31,8 +33,10 @@ export function CartPage() {
 
   return (
     <section className="customer-page customer-page--narrow">
-      <span className="customer-shell__eyebrow">Carrello</span>
-      <h1>Il tuo ordine</h1>
+      <div className="customer-shell__header">
+        <div><span className="customer-shell__eyebrow">Carrello</span><h1>Il tuo ordine</h1></div>
+        <Link className="cart-back" to="/catalogo">Torna allo shop</Link>
+      </div>
       {items.length === 0 && <p className="customer-booking__meta">Il carrello è vuoto.</p>}
       {items.map((l) => (
         <div className="customer-booking" key={l.product.id}>
@@ -51,6 +55,7 @@ export function CartPage() {
       {items.length > 0 && (
         <>
           <p style={{ marginTop: 16 }}><strong>Totale: € {formatEuro(totale)}</strong></p>
+          <label className="customer-coupon-field"><span>Hai un codice coupon?</span><input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} placeholder="Inserisci il codice" /></label>
           {error && <p className="customer-error" role="alert">{error}</p>}
           <button className="customer-button" onClick={onCheckout} disabled={busy}>
             {busy ? "Invio…" : "Invia ordine (paghi in salone)"}

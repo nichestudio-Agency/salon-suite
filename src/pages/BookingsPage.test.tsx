@@ -4,7 +4,9 @@ import userEvent from "@testing-library/user-event";
 import * as authCtx from "../app/auth-context";
 import * as bookingRepo from "../firebase/booking-repo";
 import * as operatorRepo from "../firebase/operator-repo";
+import * as salonRepo from "../firebase/salon-repo";
 import * as serviceRepo from "../firebase/service-repo";
+import * as salesRepo from "../firebase/sales-repo";
 import { BookingsPage } from "./BookingsPage";
 
 beforeEach(() => {
@@ -28,6 +30,8 @@ beforeEach(() => {
   vi.spyOn(operatorRepo, "listOperators").mockResolvedValue([
     { id: "op1", nome: "Marco", attivo: true },
   ]);
+  vi.spyOn(salonRepo, "getSalon").mockResolvedValue(null);
+  vi.spyOn(salesRepo, "manageBookingOutcome").mockResolvedValue({ bookingId: "b1", stato: "completata", saleId: "booking_b1", alreadyProcessed: false });
 });
 
 describe("BookingsPage", () => {
@@ -53,12 +57,26 @@ describe("BookingsPage", () => {
 
     render(<BookingsPage />);
 
-    expect(await screen.findByText("Giulia")).toBeInTheDocument();
+    expect((await screen.findAllByText("Giulia")).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Agenda di Marco")).toBeInTheDocument();
     expect(screen.getByText(/Taglio con Marco/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /conferma/i }));
 
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith("s1", "b1", "confermata"),
     );
+  });
+
+  it("chiude un appuntamento confermato attribuendolo all'operatore effettivo", async () => {
+    vi.spyOn(bookingRepo, "listBookings")
+      .mockResolvedValueOnce([{ id: "b1", clientId: "c1", clientNome: "Giulia", operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600, endMin: 630, stato: "confermata" }])
+      .mockResolvedValueOnce([]);
+
+    render(<BookingsPage />);
+    await userEvent.click(await screen.findByRole("button", { name: /completa e incassa/i }));
+
+    await waitFor(() => expect(salesRepo.manageBookingOutcome).toHaveBeenCalledWith({
+      salonId: "s1", bookingId: "b1", outcome: "completata", performedByOperatorId: "op1",
+    }));
   });
 });

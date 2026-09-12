@@ -6,6 +6,7 @@ import * as repo from "../firebase/coupon-repo";
 import * as authCtx from "../app/auth-context";
 import * as campaignApi from "../firebase/campaign";
 import * as salonRepo from "../firebase/salon-repo";
+import * as productRepo from "../firebase/product-repo";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -14,6 +15,7 @@ beforeEach(() => {
   });
   vi.spyOn(salonRepo, "getSalon").mockResolvedValue(null);
   vi.spyOn(repo, "getCouponAnalytics").mockResolvedValue([]);
+  vi.spyOn(productRepo, "listProducts").mockResolvedValue([{ id: "p1", titolo: "Shampoo", descrizione: "", prezzo: 1200, attivo: true }]);
 });
 
 describe("NotificationsPage — coupon", () => {
@@ -39,6 +41,19 @@ describe("NotificationsPage — coupon", () => {
         expect.objectContaining({ codice: "AUTUNNO10", tipo: "percentuale", valore: 10, attivo: true })
       )
     );
+  });
+
+  it("crea un coupon con soglia di spesa e prodotto omaggio", async () => {
+    vi.spyOn(repo, "listCoupons").mockResolvedValue([]);
+    const create = vi.spyOn(repo, "createCoupon").mockResolvedValue("gift-id");
+    render(<NotificationsPage />);
+    await userEvent.type(screen.getByLabelText("Codice"), "REGALO");
+    await userEvent.selectOptions(screen.getByLabelText("Tipo"), "prodotto_omaggio");
+    await screen.findByRole("option", { name: "Shampoo" }, { timeout: 3000 });
+    await userEvent.selectOptions(await screen.findByLabelText("Prodotto omaggio"), "p1");
+    await userEvent.type(screen.getByLabelText("Spesa minima"), "50");
+    await userEvent.click(screen.getByRole("button", { name: /crea coupon/i }));
+    await waitFor(() => expect(create).toHaveBeenCalledWith("s1", expect.objectContaining({ tipo: "prodotto_omaggio", valore: 0, giftProductId: "p1", giftProductTitle: "Shampoo", spesaMinima: 5000 })));
   });
 
   it("invia una campagna con i filtri scelti e mostra i destinatari", async () => {

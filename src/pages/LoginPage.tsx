@@ -7,6 +7,7 @@ import "./customer.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const showDemoAccess = import.meta.env.VITE_SHOW_DEMO_ACCESS === "true";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +39,10 @@ export function LoginPage() {
       const session = await signIn(email, password);
       if (!goToAccount(session.ruolo, session.salonId)) {
         await signOutUser();
-        setError("Il profilo demo non è configurato. Esegui nuovamente il seed degli emulatori.");
+        setError("Il profilo demo non è configurato. Contatta l’amministratore della demo.");
       }
     } catch {
-      setError("Accesso demo non riuscito. Verifica che gli emulatori siano avviati.");
+      setError("Accesso demo non riuscito. Riprova tra qualche istante.");
     }
   }
 
@@ -78,7 +79,7 @@ export function LoginPage() {
         {error && <p className="customer-error" role="alert">{error}</p>}
         <button className="customer-button" type="submit">Accedi</button>
 
-        {import.meta.env.DEV && import.meta.env.VITE_USE_EMULATOR === "true" && (
+        {showDemoAccess && (
           <div className="demo-access" aria-label="Accesso rapido demo">
             <div className="demo-access__heading"><span>Demo commerciale</span><small>Esplora il prodotto da ogni punto di vista</small></div>
             <button aria-label="Super Admin" type="button" onClick={() => void demoLogin("admin@barberia.local", "AdminBarber26!")}><span><AppIcon name="chart" size={19} /></span><span><strong>Super Admin</strong><small>Licenze e saloni</small></span><AppIcon name="arrow" size={17} /></button>

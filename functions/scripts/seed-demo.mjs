@@ -2,16 +2,20 @@ import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
-if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_HOST) {
-  throw new Error("Questo seed può essere eseguito solo contro gli emulatori Firebase.");
+const isEmulator = Boolean(process.env.FIRESTORE_EMULATOR_HOST && process.env.FIREBASE_AUTH_EMULATOR_HOST);
+const projectId = process.env.GOOGLE_CLOUD_PROJECT || "demo-barbershop";
+
+if (!isEmulator && process.env.ALLOW_PRODUCTION_SEED !== "true") {
+  throw new Error("Per caricare la demo su Firebase reale imposta esplicitamente ALLOW_PRODUCTION_SEED=true.");
 }
 
-const projectId = "demo-barbershop";
-const [firestoreReset, authReset] = await Promise.all([
-  fetch(`http://${process.env.FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${projectId}/databases/(default)/documents`, { method: "DELETE" }),
-  fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/emulator/v1/projects/${projectId}/accounts`, { method: "DELETE" }),
-]);
-if (!firestoreReset.ok || !authReset.ok) throw new Error("Non siamo riusciti a ripulire i dati demo precedenti.");
+if (isEmulator) {
+  const [firestoreReset, authReset] = await Promise.all([
+    fetch(`http://${process.env.FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${projectId}/databases/(default)/documents`, { method: "DELETE" }),
+    fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/emulator/v1/projects/${projectId}/accounts`, { method: "DELETE" }),
+  ]);
+  if (!firestoreReset.ok || !authReset.ok) throw new Error("Non siamo riusciti a ripulire i dati demo precedenti.");
+}
 
 initializeApp({ projectId });
 const db = getFirestore();
@@ -74,6 +78,7 @@ await Promise.all([
       sab: [{ start: 540, end: 1140 }],
     },
     impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
+    fidelity: { attiva: true, puntiPerEuro: 1, sogliaPremio: 100, premioNome: "Buono da 10 €", premioValore: 1000, rewards: [{ id: "reward-buono-10", nome: "Buono da 10 €", descrizione: "Da utilizzare su un servizio a scelta.", tipo: "buono", punti: 100, valore: 1000, attivo: true }, { id: "reward-cera", nome: "Cera opaca omaggio", descrizione: "Prodotto full size da ritirare in salone.", tipo: "prodotto", punti: 160, valore: 1800, attivo: true }, { id: "reward-barba", nome: "Rituale barba", descrizione: "Servizio completo offerto dal salone.", tipo: "servizio", punti: 220, valore: 2800, attivo: true }] },
     compleanno: { attivo: true, messaggio: "Buon compleanno dal team di Salone X. Oggi festeggiamo il tuo stile.", couponId: "birthday-15" },
     dominio: "salonex.barberia.app",
     licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(118), prezzoMensile: 9900 },
@@ -120,6 +125,21 @@ await Promise.all([
   db.doc(`salons/salone-x/couponRedemptions/ritorna-20_${clientUids[0]}`).set({ couponId: "ritorna-20", couponCode: "RITORNA20", clientId: clientUids[0], bookingId: "demo-week-1", appointmentDate: dateOffset(-1), discountAmount: 640, redeemedAt: Timestamp.fromDate(new Date(Date.now() - 2 * 86_400_000)) }),
   db.doc(`salons/salone-x/couponRedemptions/ritorna-20_${clientUids[1]}`).set({ couponId: "ritorna-20", couponCode: "RITORNA20", clientId: clientUids[1], bookingId: "demo-today-01", appointmentDate: dateOffset(0), discountAmount: 640, redeemedAt: Timestamp.now() }),
   db.doc(`salons/salone-x/couponRedemptions/estate-scaduto_${clientUids[2]}`).set({ couponId: "estate-scaduto", couponCode: "ESTATE15", clientId: clientUids[2], bookingId: "demo-week-4", appointmentDate: dateOffset(-16), discountAmount: 480, redeemedAt: Timestamp.fromDate(new Date(Date.now() - 16 * 86_400_000)) }),
+  ...clientUids.map((uid, index) => db.doc(`salons/salone-x/loyaltyAccounts/${uid}`).set({
+    clientId: uid,
+    codice: `CARD-SX${String(index + 1).padStart(6, "0")}`,
+    nome: demoClients[index].nome,
+    email: demoClients[index].email,
+    punti: [74, 128, 42, 96, 115, 18][index],
+    puntiTotali: [174, 328, 142, 296, 215, 118][index],
+    puntiRiscattati: [100, 200, 100, 200, 100, 100][index],
+    visite: [6, 11, 5, 9, 8, 4][index],
+    createdAt: Timestamp.fromDate(new Date(Date.now() - (180 - index * 17) * 86_400_000)),
+    updatedAt: Timestamp.fromDate(new Date(Date.now() - index * 2 * 86_400_000)),
+  })),
+  db.doc(`salons/salone-x/loyaltyAccounts/${clientUids[0]}/transactions/demo-credit-1`).set({ tipo: "accredito", punti: 32, importo: 3200, descrizione: "Taglio sartoriale", operatorId: ownerUid, createdAt: Timestamp.fromDate(new Date(Date.now() - 7 * 86_400_000)) }),
+  db.doc(`salons/salone-x/loyaltyAccounts/${clientUids[0]}/transactions/demo-credit-2`).set({ tipo: "accredito", punti: 42, importo: 4200, descrizione: "Taglio e cera opaca", operatorId: ownerUid, createdAt: Timestamp.fromDate(new Date(Date.now() - 31 * 86_400_000)) }),
+  db.doc(`salons/salone-x/loyaltyAccounts/${clientUids[0]}/transactions/demo-redeem-1`).set({ tipo: "riscatto", punti: -100, descrizione: "Buono da 10 €", operatorId: ownerUid, createdAt: Timestamp.fromDate(new Date(Date.now() - 64 * 86_400_000)) }),
   ...demoClients.map((client, index) => db.doc(`users/${clientUids[index]}`).set({ nome: client.nome, email: client.email, sesso: client.sesso, dataNascita: client.dataNascita, ruolo: "cliente", salonId: "salone-x", fcmTokens: [] })),
   db.doc(`users/${ownerUid}`).set({
     nome: "Titolare Test",
@@ -141,6 +161,7 @@ await Promise.all([
       gio: [{ start: 540, end: 1200 }], ven: [{ start: 540, end: 1200 }], sab: [{ start: 510, end: 1080 }],
     },
     impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
+    fidelity: { attiva: true, puntiPerEuro: 1, sogliaPremio: 120, premioNome: "Trattamento gloss omaggio", premioValore: 1800, rewards: [{ id: "reward-gloss", nome: "Trattamento gloss", descrizione: "Trattamento luminosità da riscattare in salone.", tipo: "servizio", punti: 120, valore: 1800, attivo: true }, { id: "reward-olio", nome: "Olio luce", descrizione: "Prodotto omaggio da ritirare alla cassa.", tipo: "prodotto", punti: 180, valore: 2600, attivo: true }] },
     compleanno: { attivo: true, messaggio: "Buon compleanno da Atelier Luce. Per te un momento dedicato al tuo stile.", couponId: "luce-birthday" },
     dominio: "atelierluce.barberia.app",
     licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(176), prezzoMensile: 10900 },
@@ -148,6 +169,7 @@ await Promise.all([
   }),
   db.doc(`users/${hairOwnerUid}`).set({ nome: "Elena Moretti", email: "titolare.hair@barberia.local", sesso: "femminile", dataNascita: "1987-04-12", ruolo: "owner", salonId: "atelier-luce", fcmTokens: [] }),
   db.doc(`users/${hairClientUid}`).set({ nome: "Giulia Ferri", email: "cliente.hair@barberia.local", sesso: "femminile", dataNascita: "1993-10-21", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
+  db.doc(`salons/atelier-luce/loyaltyAccounts/${hairClientUid}`).set({ clientId: hairClientUid, codice: "CARD-AL000001", nome: "Giulia Ferri", email: "cliente.hair@barberia.local", punti: 86, puntiTotali: 206, puntiRiscattati: 120, visite: 7, createdAt: Timestamp.fromDate(new Date(Date.now() - 150 * 86_400_000)), updatedAt: Timestamp.now() }),
   db.doc("users/demo-hair-chiara").set({ nome: "Chiara Riva", email: "chiara@atelierluce.demo", sesso: "femminile", dataNascita: "1989-06-08", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
   db.doc("users/demo-hair-marta").set({ nome: "Marta Leone", email: "marta@atelierluce.demo", sesso: "femminile", dataNascita: "1998-02-17", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
   db.doc("users/demo-hair-sofia").set({ nome: "Sofia Romano", email: "sofia@atelierluce.demo", sesso: "femminile", dataNascita: "1984-12-02", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),

@@ -7,7 +7,6 @@ import { formatEuro } from "../domain/money";
 import { listBookings, type BookingWithId } from "../firebase/booking-repo";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
-import barberEditorial from "../assets/barber-editorial.webp";
 
 function dateKey(date: Date) {
   const year = date.getFullYear();
@@ -99,7 +98,11 @@ export function DashboardHomePage() {
           <p>{salon?.nome ?? "Il tuo salone"} · ecco cosa succede oggi.</p>
           <Link to="/dashboard/prenotazioni">Apri agenda <AppIcon name="arrow" size={17} /></Link>
         </div>
-        <img src={barberEditorial} alt="Barbiere al lavoro" />
+        <div className="owner-welcome__identity" aria-label={`Identità ${salon?.nome ?? "salone"}`}>
+          {salon?.branding?.logoUrl ? <img src={salon.branding.logoUrl} alt={`Logo ${salon.nome}`} /> : <strong>{(salon?.nome ?? "S").slice(0, 1)}</strong>}
+          <span>{salon?.nome ?? "Il tuo salone"}</span>
+          <small>Workspace gestionale</small>
+        </div>
       </header>
 
       {error && <p className="owner-home__error" role="alert">{error}</p>}
@@ -129,7 +132,7 @@ export function DashboardHomePage() {
         <section className="owner-chart-panel">
           <header><div><span>Settimana corrente</span><h2>Andamento settimanale</h2></div><strong>€ {formatEuro(dashboard.days.reduce((sum, day) => sum + day.revenue, 0))}</strong></header>
           <div className={`owner-chart ${dashboard.days.some((day) => day.revenue > 0) ? "" : "is-empty"}`} aria-label="Incasso della settimana">
-            {dashboard.days.map((day) => <div key={day.key}><span style={{ height: `${Math.max(4, (day.revenue / dashboard.maxRevenue) * 100)}%` }} /><b>€ {Math.round(day.revenue)}</b><small>{day.label}</small></div>)}
+            {dashboard.days.map((day) => <div key={day.key}><span style={{ height: `${Math.max(4, (day.revenue / dashboard.maxRevenue) * 100)}%` }} /><b>€ {formatEuro(day.revenue)}</b><small>{day.label}</small></div>)}
             {!dashboard.days.some((day) => day.revenue > 0) && <p><AppIcon name="orders" /><strong>Nessun incasso confermato</strong><span>I dati compariranno con le prenotazioni della settimana.</span></p>}
           </div>
           <footer><span><i /> Incasso confermato</span><Link to="/dashboard/prenotazioni">Dettagli →</Link></footer>

@@ -8,11 +8,13 @@ export type { OrderWithId } from "../domain/models";
 export interface CreateOrderInput {
   salonId: string;
   items: { productId: string; qta: number }[];
+  couponCode?: string;
 }
 export interface CreateOrderResult {
   orderId: string;
   totale: number;
   stato: "in_attesa";
+  giftProductTitle?: string;
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {

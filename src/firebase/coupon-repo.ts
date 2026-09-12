@@ -11,6 +11,8 @@ export interface CouponAnalytics {
   utilizzati: number;
   nonUtilizzati: number;
   scaduti: number;
+  recipientIds: string[];
+  usedClientIds: string[];
 }
 
 const couponsCol = (salonId: string) =>
@@ -76,6 +78,8 @@ export async function getCouponAnalytics(
       utilizzati,
       nonUtilizzati,
       scaduti: expired ? nonUtilizzati : 0,
+      recipientIds: [...recipients],
+      usedClientIds: [...usedClients],
     };
   });
 }

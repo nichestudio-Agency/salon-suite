@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { OperatorsPage } from "./OperatorsPage";
 import * as repo from "../firebase/operator-repo";
 import * as authCtx from "../app/auth-context";
+import * as salesRepo from "../firebase/sales-repo";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -13,6 +14,7 @@ beforeEach(() => {
     role: "owner",
     salonId: "s1",
   });
+  vi.spyOn(salesRepo, "listOperatorStats").mockResolvedValue([]);
 });
 
 describe("OperatorsPage", () => {

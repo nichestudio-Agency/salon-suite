@@ -6,7 +6,7 @@ import {
   assertFails,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, writeBatch } from "firebase/firestore";
 
 let testEnv: RulesTestEnvironment;
 
@@ -352,8 +352,8 @@ describe("coupon", () => {
 });
 
 describe("campagne", () => {
-  it("creazione diretta vietata (solo via Cloud Function)", async () => {
-    await assertFails(
+  it("lo staff può creare una campagna per il proprio salone", async () => {
+    await assertSucceeds(
       setDoc(doc(client("staffA"), "salons/salonA/campaigns/x1"), {
         filtri: {}, titolo: "T", testo: "B", recipientCount: 0,
       })
@@ -382,5 +382,78 @@ describe("isolamento multi-salone sulle prenotazioni", () => {
         date: "2026-08-24", startMin: 600, endMin: 630, stato: "confermata",
       })
     );
+  });
+});
+
+describe("ticket di assistenza", () => {
+  it("il cliente apre un ticket visibile soltanto al proprio salone", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/cli1"), { ruolo: "cliente", salonId: "salonA", nome: "Cliente" });
+    });
+    const db = client("cli1"); const ticketRef = doc(db, "tickets/t1"); const messageRef = doc(db, "tickets/t1/messages/m1"); const batch = writeBatch(db);
+    batch.set(ticketRef, { salonId: "salonA", channel: "cliente_salone", oggetto: "Prenotazione", categoria: "Prenotazione", priorita: "normale", stato: "aperto", requesterId: "cli1", requesterName: "Cliente", requesterRole: "cliente", createdAtMs: 1, updatedAtMs: 1, lastMessage: "Aiuto", messageCount: 1 });
+    batch.set(messageRef, { senderId: "cli1", senderName: "Cliente", senderRole: "cliente", testo: "Aiuto", allegati: [], createdAtMs: 1 });
+    await assertSucceeds(batch.commit());
+    await assertSucceeds(getDoc(doc(client("staffA"), "tickets/t1")));
+    await assertSucceeds(getDoc(doc(client("staffA"), "tickets/t1/messages/m1")));
+    await assertFails(getDoc(doc(client("staffB"), "tickets/t1")));
+  });
+
+  it("un salone contatta la piattaforma e il super admin risponde", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/admin"), { ruolo: "superadmin" });
+    });
+    await assertSucceeds(setDoc(doc(client("staffA"), "tickets/t2"), { salonId: "salonA", channel: "salone_piattaforma", oggetto: "Errore", categoria: "Problema tecnico", priorita: "alta", stato: "aperto", requesterId: "staffA", requesterName: "Salone A", requesterRole: "owner", createdAtMs: 1, updatedAtMs: 1, lastMessage: "Errore", messageCount: 1 }));
+    await assertSucceeds(getDoc(doc(client("admin"), "tickets/t2")));
+    await assertFails(getDoc(doc(client("staffB"), "tickets/t2")));
+    await assertSucceeds(setDoc(doc(client("admin"), "tickets/t2/messages/m2"), { senderId: "admin", senderName: "Supporto", senderRole: "piattaforma", testo: "Verifichiamo", allegati: [], createdAtMs: 2 }));
+  });
+});
+
+describe("preferenze dashboard e comunicazioni piattaforma", () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/admin"), { ruolo: "superadmin" });
+    });
+  });
+
+  it("ogni operatore salva soltanto le proprie scorciatoie", async () => {
+    await assertSucceeds(setDoc(doc(client("staffA"), "users/staffA/preferences/dashboard"), {
+      shortcuts: ["agenda", "nuovo_cliente"],
+      lastNotificationsReadAt: 100,
+    }));
+    await assertFails(setDoc(doc(client("staffA"), "users/staffB/preferences/dashboard"), {
+      shortcuts: ["assistenza"],
+    }));
+  });
+
+  it("solo il super admin pubblica comunicazioni", async () => {
+    await assertSucceeds(setDoc(doc(client("admin"), "platformAnnouncements/a1"), {
+      titolo: "Aggiornamento",
+      testo: "Nuova agenda disponibile",
+      audience: "all",
+      createdAtMs: 1,
+    }));
+    await assertFails(setDoc(doc(client("staffA"), "platformAnnouncements/a2"), {
+      titolo: "Non autorizzato",
+      testo: "Test",
+      audience: "all",
+      createdAtMs: 1,
+    }));
+  });
+
+  it("una comunicazione mirata resta isolata sul salone", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "platformAnnouncements/a3"), {
+        titolo: "Solo salone A",
+        testo: "Messaggio riservato",
+        audience: "salon",
+        salonId: "salonA",
+        createdAtMs: 1,
+      });
+    });
+    await assertSucceeds(getDoc(doc(client("staffA"), "platformAnnouncements/a3")));
+    await assertFails(getDoc(doc(client("staffB"), "platformAnnouncements/a3")));
+    await assertSucceeds(getDoc(doc(client("admin"), "platformAnnouncements/a3")));
   });
 });

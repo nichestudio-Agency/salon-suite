@@ -21,16 +21,6 @@ async function processSalon(db: Firestore, salonId: string, today: string): Prom
       ? compleanno.messaggio.trim()
       : "Tanti auguri di buon compleanno!";
 
-  let couponSuffix = "";
-  if (typeof compleanno.couponId === "string" && compleanno.couponId) {
-    const coupon = (await db.doc(`salons/${salonId}/coupons/${compleanno.couponId}`).get()).data();
-    if (coupon && coupon.attivo === true && (typeof coupon.scadenza !== "string" || coupon.scadenza >= today)) {
-      const sconto =
-        coupon.tipo === "percentuale" ? `-${coupon.valore}%` : `-€${(Number(coupon.valore) / 100).toFixed(2)}`;
-      couponSuffix = ` Usa il codice ${coupon.codice} (${sconto}).`;
-    }
-  }
-  const body = messaggio + couponSuffix;
 
   const [bookings, orders] = await Promise.all([
     db.collection(`salons/${salonId}/bookings`).get(),
@@ -59,6 +49,12 @@ async function processSalon(db: Firestore, salonId: string, today: string): Prom
       : [];
     const notifId = `bday_${snap.id}_${today}`;
     const notifRef = db.doc(`salons/${salonId}/notifications/${notifId}`);
+    const couponRef = db.doc(`salons/${salonId}/coupons/${notifId}`);
+    const validity = Math.max(1, Number(compleanno.validitaGiorni) || 14); const expiry = new Date(`${today}T12:00:00Z`); expiry.setUTCDate(expiry.getUTCDate() + validity);
+    const discountType = compleanno.scontoTipo === "prodotto_omaggio" ? "prodotto_omaggio" : compleanno.scontoTipo === "fisso" ? "fisso" : "percentuale"; const discountValue = discountType === "prodotto_omaggio" ? 0 : Math.max(1, Number(compleanno.scontoValore) || 15);
+    const personalCode = `AUGURI-${today.slice(0, 4)}-${snap.id.slice(0, 6).toUpperCase()}`;
+    const discountLabel = discountType === "prodotto_omaggio" ? `${compleanno.giftProductTitle ?? "un prodotto"} in omaggio` : discountType === "percentuale" ? `-${discountValue}%` : `-€${(discountValue / 100).toFixed(2)}`;
+    const body = `${messaggio} Usa il tuo codice personale ${personalCode} (${discountLabel}), valido ${validity} giorni.`;
 
     const created = await db.runTransaction(async (tx) => {
       if ((await tx.get(notifRef)).exists) return false;
@@ -73,6 +69,7 @@ async function processSalon(db: Firestore, salonId: string, today: string): Prom
         },
         createdAt: FieldValue.serverTimestamp(),
       });
+      tx.create(couponRef, { codice: personalCode, tipo: discountType, valore: discountValue, ...(discountType === "prodotto_omaggio" && compleanno.giftProductId ? { giftProductId: compleanno.giftProductId, giftProductTitle: compleanno.giftProductTitle ?? "Prodotto omaggio" } : {}), scadenza: expiry.toISOString().slice(0, 10), attivo: true, clientId: snap.id, singleUse: true, origin: "compleanno" });
       if (email) {
         tx.set(db.doc(`mail/${salonId}_${notifId}`), {
           to: email,

@@ -25,24 +25,28 @@ export function WeeklyHoursEditor({
   }
 
   return (
-    <div>
+    <div className="weekly-schedule">
+      <div className="weekly-schedule__head" aria-hidden="true">
+        <span>Giorno</span><span>Stato</span><span>Fasce orarie</span>
+      </div>
       {DAYS.map(({ key, label }) => {
         const slots = value[key] ?? [];
         return (
-          <div key={key} className="card">
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <strong>{label}</strong>
+          <section key={key} className={`weekly-schedule__row ${slots.length ? "is-open" : "is-closed"}`}>
+            <div className="weekly-schedule__day"><strong>{label}</strong><small>{slots.length ? `${slots.length} ${slots.length === 1 ? "fascia" : "fasce"}` : "Nessun orario"}</small></div>
+            <div className="weekly-schedule__status">
               <button
                 type="button"
-                className="btn btn--ghost"
-                onClick={() => setDay(key, [...slots, { ...DEFAULT_SLOT }])}
+                className="weekly-schedule__toggle"
+                aria-label={slots.length ? `Imposta ${label} come chiuso` : `Aggiungi fascia a ${label}`}
+                onClick={() => setDay(key, slots.length ? [] : [{ ...DEFAULT_SLOT }])}
               >
-                Aggiungi fascia
+                {slots.length ? "Aperto" : "Chiuso"}
               </button>
             </div>
-            {slots.length === 0 && <p style={{ color: "var(--muted)" }}>Chiuso</p>}
-            {slots.map((slot, i) => (
-              <div className="row" key={i} style={{ marginTop: 6 }}>
+            <div className="weekly-schedule__times">
+              {slots.map((slot, i) => (
+              <div className="weekly-schedule__slot" key={i}>
                 <input
                   aria-label={`${label} inizio fascia ${i + 1}`}
                   type="time"
@@ -66,15 +70,18 @@ export function WeeklyHoursEditor({
                 />
                 <button
                   type="button"
-                  className="btn btn--danger"
+                  className="weekly-schedule__remove"
                   aria-label={`Rimuovi fascia ${i + 1} di ${label}`}
                   onClick={() => setDay(key, slots.filter((_, j) => j !== i))}
                 >
-                  Rimuovi fascia
+                  ×
                 </button>
               </div>
-            ))}
-          </div>
+              ))}
+              {slots.length > 0 && <button type="button" className="weekly-schedule__add" onClick={() => setDay(key, [...slots, { ...DEFAULT_SLOT }])}>+ Altra fascia</button>}
+              {slots.length === 0 && <span className="weekly-schedule__closed">Attiva il giorno per impostare l’orario</span>}
+            </div>
+          </section>
         );
       })}
     </div>

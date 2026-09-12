@@ -53,3 +53,39 @@
 .brand-preview__phone > button { width: calc(100% - 24px); min-height: 42px; margin: 12px; border: 0; border-radius: 8px; background: var(--preview-accent); color: var(--preview-bg); font-size: .58rem; font-weight: 850; text-transform: uppercase; }.brand-preview__phone footer { display: flex; height: 42px; align-items: center; justify-content: space-around; border-top: 1px solid color-mix(in srgb, var(--preview-fg) 20%, transparent); }.brand-preview__phone footer i { width: 15px; height: 15px; border: 1px solid var(--preview-fg); border-radius: 50%; opacity: .55; }
 @media (min-width: 720px) { .platform-create form { grid-template-columns: repeat(3,1fr); }.platform-create footer, .platform-create .platform-form-error { grid-column: 1 / -1; }.platform-create footer { flex-direction: row; align-items: center; justify-content: space-between; }.brand-editor { grid-template-columns: minmax(0,1.1fr) minmax(280px,.7fr); }.brand-assets { grid-template-columns: repeat(2,1fr); }.brand-preview { min-height: 100%; }.platform-title > div:last-child { align-items: flex-end; } }
 @media (min-width: 1050px) { .platform-salon.is-editing { grid-template-columns: minmax(250px,1.15fr) minmax(330px,1.5fr) minmax(190px,.85fr) auto; }.platform-editor-suite { margin: 8px -4px -4px; }.brand-editor__controls { padding: 30px; } }
+
+/* Contrast pass for the Super Admin light surfaces. */
+.platform-header nav a,
+.platform-mobile-exit { color: #59635c; }
+.platform-header nav a.active { color: #285f45; }
+.platform-kpis small { color: #536058; }
+.platform-kpis p { color: #5f6962; }
+.platform-salon__identity small,
+.platform-salon__identity em,
+.platform-salon__license small { color: #59645d; }
+.platform-salon__numbers span { color: #536058; }
+.platform-brand small,
+.platform-profile small,
+.platform-profile button { color: #5d6760; }
+.platform-filters input::placeholder,
+.license-editor input::placeholder { color: #657068; }
+.brand-colors code,
+.brand-assets small { color: #aab8af; }
+.platform-create input::placeholder,
+.brand-editor input::placeholder { color: #b8c4bc; }
+
+/* Platform announcements feed the real notification centre used by salon owners. */
+.platform-announcement-composer{display:grid;gap:22px;margin:0 0 26px;padding:24px;border-radius:24px;background:#18221c;color:#fff;box-shadow:0 24px 60px rgba(25,47,35,.12)}
+.platform-announcement-composer>header span{color:#79b691;font-size:.58rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+.platform-announcement-composer>header h2{margin:5px 0;color:#fff;font-size:clamp(1.6rem,5vw,2.7rem)}
+.platform-announcement-composer>header p{max-width:580px;color:#9caaa1;font-size:.65rem;line-height:1.5}
+.platform-announcement-composer__fields{display:grid;gap:11px}
+.platform-announcement-composer label{display:flex;flex-direction:column;gap:6px;color:#b5c0b8;font-size:.58rem;font-weight:700}
+.platform-announcement-composer input,.platform-announcement-composer select,.platform-announcement-composer textarea{min-height:45px;padding:10px 11px;border:1px solid #425047;border-radius:10px;background:#222e27;color:#fff;font:inherit}
+.platform-announcement-composer textarea{min-height:94px;resize:vertical}
+.platform-announcement-composer input::placeholder,.platform-announcement-composer textarea::placeholder{color:#8d9b92}
+.platform-announcement-composer footer{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.platform-announcement-composer footer p{color:#91d3a8;font-size:.62rem}
+.platform-announcement-composer .platform-button{background:#78bd90;color:#142018}
+.platform-announcement-composer .platform-button:disabled{cursor:not-allowed;opacity:.55}
+@media(min-width:720px){.platform-announcement-composer{grid-template-columns:minmax(240px,.7fr) minmax(360px,1.3fr);align-items:start;padding:30px}.platform-announcement-composer__fields{grid-template-columns:minmax(180px,.7fr) 1fr}.platform-announcement-composer__fields .is-wide{grid-column:1/-1}.platform-announcement-composer footer{grid-column:2;flex-direction:row;align-items:center;justify-content:space-between}}

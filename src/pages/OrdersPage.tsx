@@ -1,63 +1,17 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../app/auth-context";
+import { AppIcon } from "../components/AppIcon";
 import { listSalonOrders, updateOrderStatus, type OrderWithId } from "../firebase/order-repo";
 import { formatEuro } from "../domain/money";
 
+const statusLabel = { in_attesa: "Da preparare", pronto: "Pronto al ritiro", ritirato: "Ritirato", annullato: "Annullato" } as const;
 export function OrdersPage() {
-  const { salonId } = useAuth();
-  const [orders, setOrders] = useState<OrderWithId[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  async function reload(id: string) {
-    setOrders(await listSalonOrders(id));
-  }
-  useEffect(() => {
-    if (!salonId) return;
-    void reload(salonId).catch(() => {
-      setError("Non è stato possibile caricare gli ordini.");
-    });
-  }, [salonId]);
-
-  async function setStatus(id: string, stato: "pronto" | "ritirato" | "annullato") {
-    if (!salonId) return;
-    setError(null);
-    try {
-      await updateOrderStatus(salonId, id, stato);
-      await reload(salonId);
-    } catch {
-      setError("Operazione non riuscita. Aggiorna la pagina e riprova.");
-    }
-  }
-
-  return (
-    <section>
-      <h2>Ordini</h2>
-      {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-      {orders.length === 0 && <p style={{ color: "var(--muted)" }}>Nessun ordine.</p>}
-      {orders.map((o) => (
-        <div className="card" key={o.id}>
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <span>
-              <strong>{o.clientNome ?? "Cliente"}</strong> · € {formatEuro(o.totale)} · <em>{o.stato}</em>
-              <br />
-              <span style={{ color: "var(--muted)" }}>
-                {o.items.map((i) => `${i.titolo} ×${i.qta}`).join(", ")}
-              </span>
-            </span>
-            <span className="row">
-              {o.stato === "in_attesa" && (
-                <button className="btn" onClick={() => setStatus(o.id, "pronto")}>Pronto</button>
-              )}
-              {o.stato === "pronto" && (
-                <button className="btn" onClick={() => setStatus(o.id, "ritirato")}>Ritirato</button>
-              )}
-              {(o.stato === "in_attesa" || o.stato === "pronto") && (
-                <button className="btn btn--danger" onClick={() => setStatus(o.id, "annullato")}>Annulla</button>
-              )}
-            </span>
-          </div>
-        </div>
-      ))}
-    </section>
-  );
+  const { salonId } = useAuth(); const [orders, setOrders] = useState<OrderWithId[]>([]); const [selected, setSelected] = useState<OrderWithId | null>(null); const [error, setError] = useState<string | null>(null);
+  async function reload(id: string) { const next = await listSalonOrders(id); setOrders(next); setSelected((current) => current ? next.find((item) => item.id === current.id) ?? null : null); }
+  useEffect(() => { if (salonId) void reload(salonId).catch(() => setError("Non è stato possibile caricare gli ordini.")); }, [salonId]);
+  async function setStatus(id: string, stato: "pronto" | "ritirato" | "annullato") { if (!salonId) return; try { await updateOrderStatus(salonId, id, stato); await reload(salonId); } catch { setError("Operazione non riuscita."); } }
+  return <section className="orders-page"><header className="dashboard-page-header"><div><span>Shop</span><h2>Ordini</h2><p>Apri un ordine per vedere cliente, prodotti, pagamento e punti.</p></div><strong>{orders.length}</strong></header>{error && <p role="alert">{error}</p>}
+    <div className="orders-workspace"><div className="orders-list">{orders.map((order) => <article className={`${selected?.id === order.id ? "is-selected" : ""} is-${order.stato}`} key={order.id}><button className="orders-list__open" type="button" onClick={() => setSelected(order)}><span><small>Ordine #{order.id.slice(0, 6).toUpperCase()}</small><strong>{order.clientNome ?? "Cliente"}</strong><em>{order.items.reduce((sum, item) => sum + item.qta, 0)} articoli · {statusLabel[order.stato]}</em></span><b>€ {formatEuro(order.totale)}</b><AppIcon name="arrow" /></button>{order.stato === "in_attesa" && <button className="orders-list__quick" type="button" onClick={() => void setStatus(order.id, "pronto")}>Pronto</button>}</article>)}{orders.length === 0 && <div className="owner-panel-empty"><AppIcon name="orders" /><strong>Nessun ordine</strong></div>}</div>
+      <aside className="order-detail">{!selected ? <div className="order-detail__empty"><AppIcon name="orders" size={34} /><strong>Seleziona un ordine</strong><span>Qui troverai tutti i dettagli operativi.</span></div> : <><header><span>Ordine #{selected.id.slice(0, 8).toUpperCase()}</span><h3>{selected.clientNome ?? "Cliente"}</h3><p>{selected.clientEmail ?? "Email non disponibile"}</p><b className={`is-${selected.stato}`}>{statusLabel[selected.stato]}</b></header><section><h4>Prodotti</h4>{selected.items.map((item) => <article key={item.productId}><span><strong>{item.titolo}</strong><small>Quantità {item.qta}</small></span><b>€ {formatEuro(item.prezzo * item.qta)}</b></article>)}</section><dl><div><dt>Totale pagato</dt><dd>€ {formatEuro(selected.totale)}</dd></div><div><dt>Pagamento</dt><dd>In negozio</dd></div><div><dt>Punti generati</dt><dd>+{selected.pointsEarned ?? Math.floor(selected.totale / 100)} pt</dd></div></dl><footer>{selected.stato === "in_attesa" && <button className="btn" onClick={() => void setStatus(selected.id, "pronto")}>Segna come pronto</button>}{selected.stato === "pronto" && <button className="btn" onClick={() => void setStatus(selected.id, "ritirato")}>Conferma ritiro</button>}{(selected.stato === "in_attesa" || selected.stato === "pronto") && <button className="btn btn--danger" onClick={() => void setStatus(selected.id, "annullato")}>Annulla ordine</button>}</footer></>}</aside></div>
+  </section>;
 }

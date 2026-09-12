@@ -4,6 +4,7 @@ import { listProducts, type ProductWithId } from "../firebase/product-repo";
 import { formatEuro } from "../domain/money";
 import { useCart } from "../app/cart-context";
 import { useSalonTenant } from "../app/salon-tenant-context";
+import { AppIcon } from "../components/AppIcon";
 import "./customer.css";
 
 export function CatalogPage() {
@@ -26,7 +27,10 @@ export function CatalogPage() {
           <span className="customer-shell__eyebrow">Prodotti</span>
           <h1>Acquista in salone</h1>
         </div>
-        <Link className="customer-button" to="/carrello">Carrello ({cart.items.length})</Link>
+        <Link className="catalog-cart" to="/carrello" aria-label={`Apri il carrello, ${cart.items.length} articoli`}>
+          <AppIcon name="cart" size={22} />
+          {cart.items.length > 0 && <span>{cart.items.length}</span>}
+        </Link>
       </div>
 
       <div className="booking-slots" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>

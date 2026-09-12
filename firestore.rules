@@ -17,9 +17,17 @@ service cloud.firestore {
         && userData().salonId == salonId
         && userData().ruolo in ['owner', 'staff'];
     }
+    function isSuperAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userData().ruolo == 'superadmin';
+    }
 
     match /users/{uid} {
-      allow read: if isSelf(uid);
+      allow read: if isSelf(uid) || isSuperAdmin()
+        || (isSignedIn()
+            && resource.data.salonId is string
+            && isStaffOf(resource.data.salonId));
       allow create: if isSelf(uid)
         && request.resource.data.ruolo == 'cliente'
         && request.resource.data.keys().hasOnly(['nome','email','sesso','dataNascita','ruolo','salonId','fcmTokens']);
@@ -27,28 +35,82 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['nome','email','sesso','dataNascita','fcmTokens']);
       allow delete: if false;
+
+      match /preferences/{preferenceId} {
+        allow read, write: if isSelf(uid);
+      }
+    }
+
+    match /tickets/{ticketId} {
+      function isRequester() {
+        return isSignedIn() && resource.data.requesterId == request.auth.uid;
+      }
+      function isTicketResponder() {
+        return (resource.data.channel == 'cliente_salone' && isStaffOf(resource.data.salonId))
+          || (resource.data.channel == 'salone_piattaforma' && isSuperAdmin());
+      }
+      allow read: if isRequester() || isTicketResponder()
+        || (resource.data.channel == 'salone_piattaforma' && isStaffOf(resource.data.salonId));
+      allow create: if isSignedIn()
+        && request.resource.data.requesterId == request.auth.uid
+        && request.resource.data.salonId is string
+        && ((request.resource.data.channel == 'cliente_salone'
+              && userData().salonId == request.resource.data.salonId
+              && userData().ruolo == 'cliente')
+            || (request.resource.data.channel == 'salone_piattaforma'
+              && isStaffOf(request.resource.data.salonId)));
+      allow update: if (isRequester() || isTicketResponder()
+          || (resource.data.channel == 'salone_piattaforma' && isStaffOf(resource.data.salonId)))
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['stato','lastMessage','lastSenderRole','messageCount','updatedAt','updatedAtMs']);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function parentTicket() {
+          return getAfter(/databases/$(database)/documents/tickets/$(ticketId)).data;
+        }
+        function canReadParent() {
+          return isSignedIn() && (parentTicket().requesterId == request.auth.uid
+            || (parentTicket().channel == 'cliente_salone' && isStaffOf(parentTicket().salonId))
+            || (parentTicket().channel == 'salone_piattaforma'
+              && (isStaffOf(parentTicket().salonId) || isSuperAdmin())));
+        }
+        allow read: if canReadParent();
+        allow create: if canReadParent() && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
+    match /platformAnnouncements/{announcementId} {
+      allow read: if isSignedIn()
+        && userData().ruolo in ['owner', 'staff', 'superadmin']
+        && (resource.data.audience == 'all'
+          || isSuperAdmin()
+          || (resource.data.audience == 'salon' && isStaffOf(resource.data.salonId)));
+      allow create: if isSuperAdmin();
+      allow update, delete: if false;
     }
 
     match /salons/{salonId} {
       // Il documento identità del tenant è pubblico e viene risolto dal dominio.
       // La lista completa dei saloni non è mai esposta al client white-label.
       allow get: if true;
-      allow list: if false;
+      allow list: if isSuperAdmin();
       allow write: if isStaffOf(salonId);
 
       match /operators/{operatorId} {
-        allow read: if isSignedIn();
+        allow read: if isSignedIn() || isSuperAdmin();
         allow write: if isStaffOf(salonId);
       }
 
       match /services/{serviceId} {
-        allow read: if isSignedIn();
+        allow read: if isSignedIn() || isSuperAdmin();
         allow write: if isStaffOf(salonId);
       }
 
       match /bookings/{bookingId} {
-        allow read: if isSignedIn()
-          && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
+        allow read: if isSuperAdmin() || (isSignedIn()
+          && (resource.data.clientId == request.auth.uid || isStaffOf(salonId)));
         // Le creazioni passano dalla Cloud Function transazionale anti-concorrenza.
         allow create: if false;
         allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato'])
@@ -63,6 +125,20 @@ service cloud.firestore {
               && request.resource.data.stato == 'annullata'
              ));
         allow delete: if false;
+      }
+
+      match /waitlist/{entryId} {
+        allow read: if isSuperAdmin() || isStaffOf(salonId)
+          || (isSignedIn() && resource.data.clientId == request.auth.uid);
+        // Iscrizione e cancellazione passano dalla Cloud Function idempotente.
+        allow create, update, delete: if false;
+      }
+
+      match /sales/{saleId} {
+        allow read: if isSuperAdmin() || isStaffOf(salonId)
+          || (isSignedIn() && resource.data.clientId == request.auth.uid);
+        // Chiusura e rettifiche economiche passano dalle Cloud Functions.
+        allow create, update, delete: if false;
       }
 
       match /products/{productId} {
@@ -94,7 +170,7 @@ service cloud.firestore {
 
       match /campaigns/{campaignId} {
         allow read: if isStaffOf(salonId);
-        allow write: if false;
+        allow create: if isStaffOf(salonId);
       }
 
       match /couponRedemptions/{redemptionId} {
@@ -105,7 +181,35 @@ service cloud.firestore {
       match /notifications/{notificationId} {
         allow read: if isSignedIn()
           && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
-        allow write: if false;
+        allow create: if isStaffOf(salonId);
+      }
+
+      match /loyaltyAccounts/{clientId} {
+        allow read: if isSignedIn()
+          && (request.auth.uid == clientId || isStaffOf(salonId));
+        allow write: if isStaffOf(salonId);
+
+        match /transactions/{transactionId} {
+          allow read: if isSignedIn()
+            && (request.auth.uid == clientId || isStaffOf(salonId));
+          allow create: if isStaffOf(salonId);
+        }
+      }
+
+      match /rewardRedemptions/{redemptionId} {
+        allow read: if isSignedIn()
+          && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
+        allow create: if isSignedIn()
+          && request.resource.data.clientId == request.auth.uid;
+        allow update: if isStaffOf(salonId);
+      }
+
+      match /clients/{clientId} {
+        allow read, write: if isStaffOf(salonId);
+      }
+
+      match /clientVisits/{visitId} {
+        allow read, write: if isStaffOf(salonId);
       }
     }
   }

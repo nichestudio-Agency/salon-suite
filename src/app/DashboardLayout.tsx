@@ -1,16 +1,17 @@
 import "./dashboard.css";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { signOutUser } from "../firebase/auth";
 import { AppIcon } from "../components/AppIcon";
 import { useAuth } from "./auth-context";
 import { useSalonTenant } from "./salon-tenant-context";
-import { getSalonExperience } from "./salon-experience";
+import { runBirthdayGreetings } from "../firebase/birthday";
+import { DashboardCommandBar } from "../components/DashboardCommandBar";
 
 type DashboardSection = {
   to: string;
   label: string;
-  icon: "home" | "calendar" | "scissors" | "users" | "clock" | "bag" | "orders" | "bell";
+  icon: "home" | "calendar" | "scissors" | "users" | "clock" | "bag" | "orders" | "gift" | "card" | "ticket";
   end?: boolean;
 };
 
@@ -23,7 +24,10 @@ const SECTIONS: DashboardSection[] = [
   { to: "/dashboard/orari", label: "Orari", icon: "clock" as const },
   { to: "/dashboard/prodotti", label: "Prodotti", icon: "bag" as const },
   { to: "/dashboard/ordini", label: "Ordini", icon: "orders" as const },
-  { to: "/dashboard/notifiche", label: "Notifiche", icon: "bell" as const },
+  { to: "/dashboard/notifiche", label: "Marketing", icon: "gift" as const },
+  { to: "/dashboard/fidelity", label: "Fidelity", icon: "card" as const },
+  { to: "/dashboard/importa", label: "Importa dati", icon: "orders" as const },
+  { to: "/dashboard/assistenza", label: "Assistenza", icon: "ticket" as const },
 ];
 
 const MOBILE_SECTIONS = [SECTIONS[0], SECTIONS[1], SECTIONS[2], SECTIONS[8]];
@@ -41,14 +45,11 @@ export function DashboardLayout() {
   const monthDays = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   const calendarDays = Array.from({ length: offset + monthDays }, (_, index) => index < offset ? null : index - offset + 1);
   const secondarySectionActive = !MOBILE_SECTIONS.some((section) => section.to === location.pathname);
-  const experience = getSalonExperience(salon?.tipo, salon?.branding);
-  const brandStyle = salon?.branding ? {
-    "--accent": salon.branding.accentColor,
-    "--accent-hover": salon.branding.accentColor,
-  } as CSSProperties : undefined;
+  const ownerInitial = (user?.displayName || salon?.nome || "S").slice(0, 1).toUpperCase();
+  useEffect(() => { if (!salon?.id || !salon.compleanno?.attivo) return; const key = `birthday-run-${salon.id}-${new Date().toLocaleDateString("sv-SE")}`; if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); void runBirthdayGreetings(salon.id).catch(() => sessionStorage.removeItem(key)); }, [salon]);
 
   return (
-    <div className={`dashboard dashboard--${salon?.tipo ?? "barberia"}`} style={brandStyle}>
+    <div className="dashboard dashboard--neutral">
       <nav aria-label="Sezioni dashboard" className={`dashboard__sidebar${menuOpen ? " is-open" : ""}`}>
         <div className="dashboard__brand">
           {salon?.branding?.logoUrl ? <img className="dashboard-brand-logo" src={salon.branding.logoUrl} alt={`Logo ${salon.nome}`} /> : <span className="brand-mark" aria-hidden="true"><AppIcon name="scissors" size={22} /></span>}
@@ -73,7 +74,7 @@ export function DashboardLayout() {
           ))}
         </ul>
         <div className="dashboard__profile">
-          <img src={experience.images.editorial} alt="" />
+          {salon?.branding?.logoUrl ? <img src={salon.branding.logoUrl} alt="" /> : <span className="dashboard__profile-initial">{ownerInitial}</span>}
           <span><strong>{user?.displayName || "Titolare"}</strong><small>Proprietario</small></span>
         </div>
         <button className="dashboard__logout" type="button" onClick={() => signOutUser()}>Esci dall’account</button>
@@ -83,15 +84,12 @@ export function DashboardLayout() {
         {MOBILE_SECTIONS.map((section) => <NavLink to={section.to} end={section.end} key={section.to}><AppIcon name={section.icon} size={20} />{section.label}</NavLink>)}
         <button className={secondarySectionActive ? "is-active" : undefined} type="button" aria-label="Apri tutte le sezioni" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><AppIcon name="menu" size={20} />Altro</button>
       </nav>
-      <main className="dashboard__content">
-        <header className="dashboard__topbar">
-          <nav aria-label="Navigazione rapida">
-            {SECTIONS.slice(0, 5).map((section) => <NavLink to={section.to} end={section.end} key={section.to}><AppIcon name={section.icon} size={19} />{section.label}</NavLink>)}
-          </nav>
-          <NavLink className="dashboard__topbar-alert" to="/dashboard/notifiche" aria-label="Notifiche"><AppIcon name="bell" size={20} /></NavLink>
-        </header>
-        <Outlet />
-      </main>
+      <div className="dashboard__main">
+        <DashboardCommandBar />
+        <main className="dashboard__content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

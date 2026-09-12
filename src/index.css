@@ -4,7 +4,7 @@
   --panel-strong: #fffdfa;
   --surface: #f0ebe4;
   --ink: #191816;
-  --muted: #716c66;
+  --muted: #5f5a55;
   --accent: #ff6427;
   --accent-hover: #e95319;
   --accent-ink: #ffffff;
@@ -35,6 +35,7 @@
 html { min-width: 320px; background: var(--bg); scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--ink); }
 button, input, select, textarea { font: inherit; }
+input::placeholder, textarea::placeholder { color: #69645f; opacity: 1; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease; }
 button:active { transform: translateY(1px); }

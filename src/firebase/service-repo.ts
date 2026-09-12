@@ -1,7 +1,8 @@
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc, getDocs,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs,
 } from "firebase/firestore";
-import { db } from "./app";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "./app";
 import type { Service } from "../domain/models";
 
 export type ServiceWithId = Service & { id: string };
@@ -26,5 +27,18 @@ export async function updateService(
 }
 
 export async function deleteService(salonId: string, id: string): Promise<void> {
-  await deleteDoc(doc(db, "salons", salonId, "services", id));
+  const serviceRef = doc(db, "salons", salonId, "services", id);
+  const snapshot = await getDoc(serviceRef);
+  const fotoPath = snapshot.data()?.fotoPath as string | undefined;
+  if (fotoPath) {
+    try { await deleteObject(ref(storage, fotoPath)); } catch { /* best effort */ }
+  }
+  await deleteDoc(serviceRef);
+}
+
+export async function uploadServicePhoto(salonId: string, serviceId: string, file: Blob, filename: string) {
+  const fotoPath = `salons/${salonId}/services/${serviceId}/${filename}`;
+  const storageRef = ref(storage, fotoPath);
+  await uploadBytes(storageRef, file);
+  return { fotoUrl: await getDownloadURL(storageRef), fotoPath };
 }
