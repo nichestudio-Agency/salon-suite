@@ -18,6 +18,15 @@ export async function getSalon(salonId: string): Promise<Salon | null> {
   return snap.exists() ? (snap.data() as Salon) : null;
 }
 
+export async function resolveSalonAccessCode(code: string): Promise<SalonWithId | null> {
+  const accessSnap = await getDoc(doc(db, "salonAccessCodes", code));
+  if (!accessSnap.exists() || accessSnap.data().attivo !== true) return null;
+  const salonId = String(accessSnap.data().salonId ?? "");
+  if (!salonId) return null;
+  const salon = await getSalon(salonId);
+  return salon ? { id: salonId, ...salon } : null;
+}
+
 export async function updateOpeningHours(
   salonId: string, orariApertura: WeeklyHours
 ): Promise<void> {

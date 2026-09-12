@@ -36,6 +36,7 @@ import { CustomerSupportPage } from "./pages/CustomerSupportPage";
 import { SalonSupportPage } from "./pages/SalonSupportPage";
 import { PlatformSupportPage } from "./pages/PlatformSupportPage";
 import { DataImportPage } from "./pages/DataImportPage";
+import { SalonAccessPage } from "./pages/SalonAccessPage";
 
 export default function App() {
   return (
@@ -44,6 +45,8 @@ export default function App() {
         <SalonTenantProvider>
           <BrowserRouter>
           <Routes>
+            <Route path="/" element={<SalonAccessPage />} />
+            <Route path="/salone/:code" element={<SalonAccessPage />} />
             <Route path="/accedi" element={<LoginPage />} />
             <Route path="/registrati" element={<RegisterClientPage />} />
             <Route path="/registrati-salone" element={<OnboardingPage />} />
@@ -85,7 +88,7 @@ export default function App() {
               <Route index element={<PlatformDashboardPage />} />
               <Route path="assistenza" element={<PlatformSupportPage />} />
             </Route>
-            <Route path="*" element={<Navigate to="/area" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </BrowserRouter>
         </SalonTenantProvider>

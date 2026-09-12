@@ -59,6 +59,8 @@ export interface SalonBranding {
 /** Documento in `salons/{salonId}`. */
 export interface Salon {
   nome: string;
+  /** Codice pubblico usato esclusivamente per selezionare il tenant nell'app unica. */
+  codiceAccesso?: string;
   /** Verticale visuale e lessicale usato dall'app white-label. */
   tipo?: SalonType;
   /** Identità visiva configurabile dal pannello di piattaforma. */

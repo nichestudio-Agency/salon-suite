@@ -66,6 +66,7 @@ const [adminUid, ownerUid, hairOwnerUid, hairClientUid, ...clientUids] = await P
 await Promise.all([
   db.doc("salons/salone-x").set({
     nome: "Salone X",
+    codiceAccesso: "SALONEX26",
     tipo: "barberia",
     branding: { backgroundColor: "#181817", foregroundColor: "#f4f0e9", accentColor: "#ff5420" },
     timezone: "Europe/Rome",
@@ -84,6 +85,7 @@ await Promise.all([
     licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(118), prezzoMensile: 9900 },
     createdAt: Timestamp.fromDate(new Date(Date.now() - 210 * 86_400_000)),
   }),
+  db.doc("salonAccessCodes/SALONEX26").set({ salonId: "salone-x", attivo: true, createdAt: new Date().toISOString() }),
   db.doc("salons/salone-x/services/taglio-sartoriale").set({
     titolo: "Taglio sartoriale",
     descrizione: "Consulenza, taglio e styling finale.",
@@ -153,6 +155,7 @@ await Promise.all([
   db.doc(`users/${adminUid}`).set({ nome: "Fabio Pace", email: "admin@barberia.local", ruolo: "superadmin", fcmTokens: [] }),
   db.doc("salons/atelier-luce").set({
     nome: "Atelier Luce",
+    codiceAccesso: "ATELIER26",
     tipo: "parrucchieria",
     branding: { backgroundColor: "#1c1719", foregroundColor: "#f5efec", accentColor: "#d9a0aa" },
     timezone: "Europe/Rome",
@@ -167,6 +170,7 @@ await Promise.all([
     licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(176), prezzoMensile: 10900 },
     createdAt: Timestamp.fromDate(new Date(Date.now() - 128 * 86_400_000)),
   }),
+  db.doc("salonAccessCodes/ATELIER26").set({ salonId: "atelier-luce", attivo: true, createdAt: new Date().toISOString() }),
   db.doc(`users/${hairOwnerUid}`).set({ nome: "Elena Moretti", email: "titolare.hair@barberia.local", sesso: "femminile", dataNascita: "1987-04-12", ruolo: "owner", salonId: "atelier-luce", fcmTokens: [] }),
   db.doc(`users/${hairClientUid}`).set({ nome: "Giulia Ferri", email: "cliente.hair@barberia.local", sesso: "femminile", dataNascita: "1993-10-21", ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }),
   db.doc(`salons/atelier-luce/loyaltyAccounts/${hairClientUid}`).set({ clientId: hairClientUid, codice: "CARD-AL000001", nome: "Giulia Ferri", email: "cliente.hair@barberia.local", punti: 86, puntiTotali: 206, puntiRiscattati: 120, visite: 7, createdAt: Timestamp.fromDate(new Date(Date.now() - 150 * 86_400_000)), updatedAt: Timestamp.now() }),
@@ -202,9 +206,11 @@ await Promise.all([
 
 for (const [salonIndex, salon] of platformSalons.entries()) {
   const ownerUid = await ensureUser(salon.email, "OwnerBarber26!", salon.owner);
+  const codiceAccesso = `DEMO${String(salonIndex + 1).padStart(2, "0")}SALON`;
   await Promise.all([
     db.doc(`salons/${salon.id}`).set({
       nome: salon.nome,
+      codiceAccesso,
       tipo: "barberia",
       dominio: salon.dominio,
       timezone: "Europe/Rome",
@@ -213,6 +219,7 @@ for (const [salonIndex, salon] of platformSalons.entries()) {
       licenza: { stato: salon.stato, piano: salon.piano, scadenza: salon.scadenza, prezzoMensile: salon.prezzo },
       createdAt: Timestamp.fromDate(new Date(Date.now() - (40 + salonIndex * 37) * 86_400_000)),
     }),
+    db.doc(`salonAccessCodes/${codiceAccesso}`).set({ salonId: salon.id, attivo: true, createdAt: new Date().toISOString() }),
     db.doc(`users/${ownerUid}`).set({ nome: salon.owner, email: salon.email, ruolo: "owner", salonId: salon.id, fcmTokens: [] }),
     db.doc(`salons/${salon.id}/operators/barber-1`).set({ nome: "Operatore principale", attivo: true }),
     db.doc(`salons/${salon.id}/operators/barber-2`).set({ nome: "Secondo operatore", attivo: salonIndex !== 1 }),

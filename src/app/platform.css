@@ -64,6 +64,21 @@
 .platform-salon__identity em,
 .platform-salon__license small { color: #59645d; }
 .platform-salon__numbers span { color: #536058; }
+
+.salon-access-studio { display:grid; gap:24px; padding:24px; border-radius:18px; background:#18211b; color:#fff; }
+.salon-access-studio__copy>span { color:#9eaa9d; font-size:.58rem; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+.salon-access-studio__copy h3 { margin:8px 0; color:#fff; font-size:1.45rem; }
+.salon-access-studio__copy>p { max-width:650px; color:#aeb7b0; font-size:.68rem; line-height:1.6; }
+.salon-access-studio__code { display:flex; margin:20px 0 15px; flex-direction:column; gap:3px; }
+.salon-access-studio__code small { color:#879289; font-size:.52rem; letter-spacing:.12em; }
+.salon-access-studio__code strong { color:#fff; font-size:clamp(1.6rem,5vw,2.8rem); letter-spacing:.12em; }
+.salon-access-studio__actions { display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+.salon-access-studio__actions .platform-button { background:#eaf0eb; color:#18211b; }
+.salon-access-studio__actions a { display:flex; align-items:center; gap:7px; color:#dce5dd; font-size:.65rem; font-weight:750; text-decoration:none; }
+.salon-access-studio__qr { display:flex; min-height:190px; flex-direction:column; align-items:center; justify-content:center; gap:10px; border:1px solid #39453c; color:#8e9a90; }
+.salon-access-studio__qr img { width:min(170px,70%); aspect-ratio:1; object-fit:contain; }
+.salon-access-studio__qr small { color:#929d94; font-size:.54rem; }
+@media (min-width:720px) { .salon-access-studio { grid-template-columns:1fr 250px; align-items:stretch; padding:30px; }.salon-access-studio__qr { min-height:230px; } }
 .platform-brand small,
 .platform-profile small,
 .platform-profile button { color: #5d6760; }

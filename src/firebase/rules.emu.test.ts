@@ -32,10 +32,12 @@ beforeEach(async () => {
     const d = ctx.firestore();
     await setDoc(doc(d, "salons/salonA"), { nome: "Salone A", timezone: "Europe/Rome" });
     await setDoc(doc(d, "salons/salonB"), { nome: "Salone B", timezone: "Europe/Rome" });
+    await setDoc(doc(d, "salonAccessCodes/SALONA1234"), { salonId: "salonA", attivo: true });
     // staffA appartiene a salonA.
     await setDoc(doc(d, "users/staffA"), { ruolo: "staff", salonId: "salonA" });
     // staffB appartiene a salonB (per i test di isolamento cross-tenant).
     await setDoc(doc(d, "users/staffB"), { ruolo: "staff", salonId: "salonB" });
+    await setDoc(doc(d, "users/admin"), { ruolo: "superadmin" });
     // un servizio di salonA.
     await setDoc(doc(d, "salons/salonA/services/s1"), {
       titolo: "Taglio", descrizione: "", prezzo: 2000, durataMin: 30, attivo: true,
@@ -68,6 +70,22 @@ describe("lettura salone", () => {
   it("consente la lettura del salone e dei servizi agli autenticati", async () => {
     await assertSucceeds(getDoc(doc(client("cli1"), "salons/salonA")));
     await assertSucceeds(getDoc(doc(client("cli1"), "salons/salonA/services/s1")));
+  });
+});
+
+describe("codici accesso salone", () => {
+  it("consente la risoluzione esatta ma non espone l'elenco", async () => {
+    await assertSucceeds(getDoc(doc(anon(), "salonAccessCodes/SALONA1234")));
+    await assertFails(getDocs(collection(anon(), "salonAccessCodes")));
+  });
+
+  it("non consente a client o staff di creare o cambiare un codice", async () => {
+    await assertFails(setDoc(doc(anon(), "salonAccessCodes/NUOVO12345"), { salonId: "salonA", attivo: true }));
+    await assertFails(setDoc(doc(client("staffA"), "salonAccessCodes/NUOVO12345"), { salonId: "salonA", attivo: true }));
+  });
+
+  it("consente al super admin di assegnare il codice", async () => {
+    await assertSucceeds(setDoc(doc(client("admin"), "salonAccessCodes/NUOVO12345"), { salonId: "salonA", attivo: true }));
   });
 });
 

@@ -14,7 +14,7 @@ const EMPTY_PROFILE: Pick<UserProfile, "nome" | "email" | "sesso" | "dataNascita
 
 export function CustomerProfilePage() {
   const { user } = useAuth();
-  const { salon } = useSalonTenant();
+  const { salon, clearSalonSelection } = useSalonTenant();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,8 @@ export function CustomerProfilePage() {
 
   async function logout() {
     await signOutUser();
-    navigate("/accedi", { replace: true });
+    clearSalonSelection();
+    navigate("/", { replace: true });
   }
 
   if (loading) return <section className="customer-page profile-page"><div className="customer-empty">Caricamento profilo…</div></section>;
@@ -73,7 +74,7 @@ export function CustomerProfilePage() {
         <button className="customer-button" type="submit" disabled={saving}>{saving ? "Salvataggio…" : "Salva modifiche"}</button>
       </form>
 
-      <button className="profile-logout" type="button" onClick={() => void logout()}><AppIcon name="logout" size={19} /> Esci dall’account</button>
+      <button className="profile-logout" type="button" onClick={() => void logout()}><AppIcon name="logout" size={19} /> Esci e cambia salone</button>
     </section>
   );
 }

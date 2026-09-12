@@ -17,7 +17,7 @@ async function newUser() {
 const call = () =>
   httpsCallable<
     { nome: string; timezone: string; orariApertura: Record<string, { start: number; end: number }[]> },
-    { salonId: string }
+    { salonId: string; codiceAccesso: string }
   >(functions, "createSalon");
 
 describe("createSalon", () => {
@@ -35,6 +35,9 @@ describe("createSalon", () => {
     expect(salonSnap.exists()).toBe(true);
     expect(salonSnap.data()?.nome).toBe("Salone Mario");
     expect(salonSnap.data()?.impostazioni?.passoMinuti).toBe(15);
+    expect(salonSnap.data()?.codiceAccesso).toBe(res.data.codiceAccesso);
+    const codeSnap = await getDoc(doc(db, "salonAccessCodes", res.data.codiceAccesso));
+    expect(codeSnap.data()?.salonId).toBe(salonId);
 
     const userSnap = await getDoc(doc(db, "users", uid));
     expect(userSnap.data()?.ruolo).toBe("owner");

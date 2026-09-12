@@ -91,12 +91,19 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /salonAccessCodes/{accessCode} {
+      // Il codice individua il tenant, ma non autentica né autorizza operazioni.
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if isSuperAdmin();
+    }
+
     match /salons/{salonId} {
       // Il documento identità del tenant è pubblico e viene risolto dal dominio.
       // La lista completa dei saloni non è mai esposta al client white-label.
       allow get: if true;
       allow list: if isSuperAdmin();
-      allow write: if isStaffOf(salonId);
+      allow write: if isStaffOf(salonId) || isSuperAdmin();
 
       match /operators/{operatorId} {
         allow read: if isSignedIn() || isSuperAdmin();

@@ -1,0 +1,292 @@
+.salon-gate {
+  --gate-ink: #171715;
+  --gate-paper: #f3f0e9;
+  display: grid;
+  min-height: 100dvh;
+  background: var(--gate-paper);
+  color: var(--gate-ink);
+}
+.salon-gate__visual {
+  position: relative;
+  display: none;
+  overflow: hidden;
+  background: #191917;
+  color: #f5f1e9;
+}
+.salon-gate__visual::before {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 72% 30%,
+      rgba(181, 190, 166, 0.24),
+      transparent 24%
+    ),
+    linear-gradient(
+      135deg,
+      transparent 49.8%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 50.2%
+    );
+  content: "";
+}
+.salon-gate__visual::after {
+  position: absolute;
+  right: -13vw;
+  bottom: -18vw;
+  width: 38vw;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  content: "";
+}
+.salon-gate__visual > div:last-child {
+  position: absolute;
+  right: 9%;
+  bottom: 9%;
+  left: 9%;
+  z-index: 1;
+}
+.salon-gate__visual span,
+.salon-gate__copy > span {
+  color: #929a83;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.salon-gate__visual strong {
+  display: block;
+  max-width: 720px;
+  margin-top: 14px;
+  font-size: clamp(3.2rem, 6.5vw, 7.8rem);
+  font-weight: 760;
+  letter-spacing: -0.065em;
+  line-height: 0.9;
+}
+.salon-gate__mark {
+  position: absolute;
+  top: 7%;
+  left: 8%;
+  display: grid;
+  width: 62px;
+  height: 62px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+}
+.salon-gate__panel {
+  display: flex;
+  width: min(100%, 620px);
+  min-height: 100dvh;
+  margin: auto;
+  flex-direction: column;
+  padding: max(28px, env(safe-area-inset-top)) 22px
+    max(28px, env(safe-area-inset-bottom));
+}
+.salon-gate__panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.salon-gate__panel > header small {
+  color: #77766f;
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+}
+.salon-gate__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+.salon-gate__brand i {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gate-ink);
+  color: #fff;
+}
+.salon-gate__copy {
+  margin-top: auto;
+  padding-top: 68px;
+}
+.salon-gate__copy h1 {
+  max-width: 520px;
+  margin: 10px 0 17px;
+  font-size: clamp(3.1rem, 15vw, 5.8rem);
+  letter-spacing: -0.075em;
+  line-height: 0.88;
+}
+.salon-gate__copy p {
+  max-width: 490px;
+  color: #66635d;
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+.salon-gate form {
+  margin-top: 40px;
+}
+.salon-gate form label {
+  display: block;
+  margin-bottom: 8px;
+  color: #55534e;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.salon-gate__code {
+  display: grid;
+  gap: 8px;
+}
+.salon-gate__code input {
+  width: 100%;
+  min-height: 62px;
+  padding: 0 17px;
+  border: 1px solid #cbc7be;
+  border-radius: 0;
+  background: transparent;
+  color: var(--gate-ink);
+  font-size: 1.05rem;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.salon-gate__code button {
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 0;
+  background: var(--gate-ink);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+.salon-gate__divider {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 25px 0;
+  color: #8a877f;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
+.salon-gate__divider::before,
+.salon-gate__divider::after {
+  height: 1px;
+  flex: 1;
+  background: #d8d3ca;
+  content: "";
+}
+.salon-gate__scan {
+  display: grid;
+  width: 100%;
+  min-height: 72px;
+  grid-template-columns: 38px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid #cbc7be;
+  border-radius: 0;
+  background: transparent;
+  color: var(--gate-ink);
+  cursor: pointer;
+  text-align: left;
+}
+.salon-gate__scan > span {
+  display: flex;
+  flex-direction: column;
+}
+.salon-gate__scan strong {
+  font-size: 0.76rem;
+}
+.salon-gate__scan small {
+  color: #77746d;
+  font-size: 0.63rem;
+}
+.salon-gate__camera {
+  position: relative;
+  height: 240px;
+  overflow: hidden;
+  background: #111;
+}
+.salon-gate__camera video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.salon-gate__camera > div {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(17, 17, 16, 0.82);
+  color: #fff;
+  font-size: 0.65rem;
+}
+.salon-gate__camera button {
+  border: 0;
+  background: transparent;
+  color: #c9d0bb;
+  cursor: pointer;
+  font-weight: 750;
+}
+.salon-gate__error {
+  margin-top: 15px;
+  padding: 11px 13px;
+  border-left: 3px solid #a94738;
+  background: #efe2de;
+  color: #81362c;
+  font-size: 0.72rem;
+}
+.salon-gate__known {
+  margin-top: 18px;
+  color: #706d67;
+  font-size: 0.68rem;
+}
+.salon-gate__known a {
+  color: var(--gate-ink);
+  font-weight: 750;
+}
+.salon-gate__panel > footer {
+  margin-top: auto;
+  padding-top: 42px;
+  color: #8a877f;
+  font-size: 0.6rem;
+  line-height: 1.5;
+}
+@media (min-width: 560px) {
+  .salon-gate__code {
+    grid-template-columns: 1fr 150px;
+  }
+}
+@media (min-width: 1050px) {
+  .salon-gate {
+    grid-template-columns: minmax(0, 1.12fr) minmax(480px, 0.88fr);
+  }
+  .salon-gate__visual {
+    display: block;
+  }
+  .salon-gate__panel {
+    padding: 46px clamp(42px, 5vw, 86px);
+  }
+  .salon-gate__copy {
+    padding-top: 90px;
+  }
+}

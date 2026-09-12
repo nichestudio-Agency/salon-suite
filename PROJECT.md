@@ -4,7 +4,7 @@
 
 Salon Suite Platform è una piattaforma SaaS white-label per barberie e parrucchierie. Ogni attività acquista una licenza e distribuisce ai propri clienti un sito/app con identità e contenuti dedicati.
 
-Il cliente finale non vede un marketplace e non sceglie tra più saloni: accede direttamente all'app del salone di riferimento. La piattaforma multi-tenant rimane dietro le quinte e consente di riutilizzare la stessa infrastruttura per più attività.
+Il cliente finale non vede un marketplace né un elenco di attività: al primo avvio inserisce il codice ricevuto dal salone o inquadra il relativo QR e accede direttamente all'esperienza di quell'attività. La piattaforma multi-tenant rimane dietro le quinte.
 
 Lo stesso codice supporta due verticali, `barberia` e `parrucchieria`. Il campo `tipo` del salone seleziona automaticamente linguaggio, palette, immagini e contenuti, mantenendo separati dati e identità del tenant.
 
@@ -16,17 +16,11 @@ Il progetto comprende tre esperienze distinte:
 
 ## Modello white-label e multi-tenant
 
-Ogni installazione pubblica è associata a un solo documento `salons/{salonId}`.
+L'app pubblicata è unica. Ogni attività riceve un `codiceAccesso` non sequenziale e un deep link `/salone/{codice}` trasformabile in QR. La collezione `salonAccessCodes` consente soltanto la risoluzione puntuale `codice → salonId`: non è interrogabile come elenco e il codice non sostituisce l'autenticazione.
 
-In produzione il tenant viene configurato tramite:
+Il `SalonTenantProvider` memorizza sul dispositivo il salone scelto, poi rende identità e `salonId` disponibili a tutta l'area cliente. Dopo il login, il tenant associato all'account prevale sempre sulla selezione locale. Servizi, operatori, prodotti, prenotazioni e ordini vengono letti esclusivamente all'interno del tenant risolto.
 
-```bash
-VITE_SALON_ID=<id-del-salone>
-```
-
-Il `SalonTenantProvider` risolve il salone all'avvio e rende disponibili identità e `salonId` a tutta l'area cliente. Servizi, operatori, prodotti, prenotazioni e ordini vengono sempre letti all'interno del tenant risolto.
-
-In sviluppo locale il tenant predefinito è `salone-x`. Il cliente non può visualizzare l'elenco completo dei tenant e non trova selettori per cambiare salone.
+`VITE_SALON_ID` resta disponibile per installazioni dedicate e anteprime tecniche; in sviluppo locale il fallback è `salone-x`.
 
 ## Ruoli
 
@@ -75,6 +69,7 @@ Il gestore della piattaforma può:
 - scegliere il verticale barberia o parrucchieria;
 - configurare palette, logo e fotografie dell'esperienza white-label;
 - vedere un'anteprima mobile del brand prima della pubblicazione.
+- generare il codice cliente, copiare il deep link e scaricare/condividere il relativo QR.
 
 ### Identità white-label
 
@@ -88,6 +83,8 @@ L'area cliente è progettata come una vera app mobile. Anche quando viene aperta
 
 | Percorso | Funzione |
 | --- | --- |
+| `/` | Inserimento codice salone e scansione QR |
+| `/salone/:code` | Accesso diretto al salone tramite link o QR |
 | `/prenota` | Ricerca disponibilità e creazione prenotazioni |
 | `/servizi` | Catalogo dei servizi del salone |
 | `/operatori` | Presentazione dei barber/operatori |
@@ -219,6 +216,7 @@ Le regole Firestore applicano questi principi:
 - ogni utente può leggere e aggiornare solo il proprio profilo;
 - il ruolo e il tenant non possono essere modificati dal cliente;
 - il singolo documento pubblico del salone è leggibile per risolvere il tenant;
+- è consentita solo la lettura puntuale di un codice salone; elenco e scrittura sono vietati;
 - l'elenco completo dei saloni non è esposto al client white-label;
 - solo owner e staff del tenant possono modificare servizi, operatori e prodotti;
 - prenotazioni e ordini sono leggibili dal relativo cliente o dallo staff del salone;

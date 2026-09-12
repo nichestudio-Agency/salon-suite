@@ -19,10 +19,11 @@ export function RegisterClientPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!salon) { setError("Prima scegli il salone tramite il suo codice."); return; }
     setLoading(true);
     setError(null);
     try {
-      await registerClient({ email, password, nome, sesso, dataNascita, salonId: salon?.id });
+      await registerClient({ email, password, nome, sesso, dataNascita, salonId: salon.id });
       navigate("/home");
     } catch {
       setError("Registrazione non riuscita. Controlla i dati o prova un'altra email.");
@@ -36,6 +37,7 @@ export function RegisterClientPage() {
       <form className="booking-panel auth-panel" onSubmit={onSubmit}>
         <span className="customer-shell__eyebrow">Area clienti</span>
         <h1>Crea il tuo account</h1>
+        {!salon && <p className="customer-error" role="alert">Nessun salone selezionato. <Link to="/">Inserisci il codice salone</Link>.</p>}
 
         <div className="booking-field">
           <label htmlFor="client-name">Nome</label>
@@ -94,7 +96,7 @@ export function RegisterClientPage() {
         </div>
 
         {error && <p className="customer-error" role="alert">{error}</p>}
-        <button className="customer-button" type="submit" disabled={loading}>
+        <button className="customer-button" type="submit" disabled={loading || !salon}>
           {loading ? "Creazione account…" : "Registrati e prenota"}
         </button>
         <p>Hai già un account? <Link to="/accedi">Accedi</Link></p>
