@@ -730,6 +730,130 @@ form.card, .dashboard__content > section > .card:first-of-type { margin: 28px 0 
   flex: none;
   color: var(--accent);
 }
+.cash-card-link {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.8fr) minmax(460px, 1.2fr);
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 13px;
+  border: 1px solid #dfe3db;
+  border-radius: 14px;
+  background: #f6f7f3;
+}
+.cash-card-link__intro {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.cash-card-link__intro > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+}
+.cash-card-link__intro > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.cash-card-link__intro strong {
+  color: var(--ink);
+  font-size: 0.65rem;
+}
+.cash-card-link__intro small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.53rem;
+  line-height: 1.4;
+}
+.cash-card-link__controls {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+.cash-card-link__controls label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.cash-card-link__controls input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+.cash-card-link__controls .btn,
+.cash-card-link__scan {
+  min-height: 42px;
+  white-space: nowrap;
+}
+.cash-card-link__scan {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.cash-card-link__camera {
+  position: relative;
+  min-height: 150px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #111;
+}
+.cash-card-link__camera video {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+.cash-card-link__camera > span {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: rgb(16 18 16 / 78%);
+  color: #fff;
+  font-size: 0.53rem;
+  font-weight: 700;
+}
+.cash-card-link__camera > button {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.53rem;
+  font-weight: 750;
+  cursor: pointer;
+}
 .cash-manual-sale__fields {
   display: grid;
   grid-template-columns: 1.4fr 0.7fr 1fr 0.7fr;
@@ -931,6 +1055,14 @@ form.card, .dashboard__content > section > .card:first-of-type { margin: 28px 0 
   }
   .cash-manual-sale {
     padding: 17px;
+  }
+  .cash-card-link,
+  .cash-card-link__controls {
+    grid-template-columns: 1fr;
+  }
+  .cash-card-link__controls .btn,
+  .cash-card-link__scan {
+    width: 100%;
   }
   .cash-manual-sale__fields {
     grid-template-columns: 1fr;

@@ -5,6 +5,7 @@ import { CashIntegrationsPage } from "./CashIntegrationsPage";
 import * as cashRepo from "../firebase/cash-integration-repo";
 import * as ticketRepo from "../firebase/ticket-repo";
 import * as clientRepo from "../firebase/client-repo";
+import * as loyaltyRepo from "../firebase/loyalty-repo";
 
 vi.mock("../app/auth-context", () => ({
   useAuth: () => ({
@@ -53,6 +54,25 @@ beforeEach(() => {
     },
   ]);
   vi.spyOn(ticketRepo, "createTicket").mockResolvedValue("ticket-1");
+  vi.spyOn(loyaltyRepo, "lookupLoyaltyCard").mockResolvedValue({
+    account: {
+      clientId: "client-1",
+      nome: "Anna Verdi",
+      email: "anna@example.com",
+      codice: "CARD-ANNA",
+      punti: 42,
+      puntiTotali: 80,
+      puntiRiscattati: 0,
+      visite: 3,
+    },
+    config: {
+      attiva: true,
+      puntiPerEuro: 1,
+      sogliaPremio: 100,
+      premioNome: "Buono da 10 €",
+      premioValore: 1000,
+    },
+  });
 });
 
 describe("CashIntegrationsPage", () => {
@@ -112,5 +132,27 @@ describe("CashIntegrationsPage", () => {
       description: "Taglio diretto",
     })));
     expect(await screen.findByText(/24 punti fidelity accreditati/i)).toBeInTheDocument();
+  });
+
+  it("associa il cliente inserendo il codice della fidelity card", async () => {
+    const lookupCard = vi.spyOn(loyaltyRepo, "lookupLoyaltyCard");
+    render(<CashIntegrationsPage />);
+    await screen.findByText("Anna Verdi · account app");
+
+    await userEvent.type(
+      screen.getByLabelText("Codice fidelity"),
+      "salon-fidelity:salone-x:CARD-ANNA",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Associa card" }),
+    );
+
+    await waitFor(() =>
+      expect(lookupCard).toHaveBeenCalledWith("salone-x", "CARD-ANNA"),
+    );
+    expect(screen.getByLabelText("Cliente")).toHaveValue("client-1");
+    expect(
+      await screen.findByText("Card associata a Anna Verdi."),
+    ).toBeInTheDocument();
   });
 });

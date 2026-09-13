@@ -343,6 +343,8 @@ functions/
 
 Sono implementati i flussi principali per cliente e salone, il modello tenant white-label, le regole di sicurezza, gli emulatori e una copertura di test unitari e di integrazione.
 
+Il flusso di cassa manuale registra anche servizi senza prenotazione e vendite dirette di prodotti. Il cliente può essere associato selezionandolo dall’anagrafica, inserendo il codice fidelity oppure scansionando il QR della sua card; la visita e gli eventuali punti vengono quindi aggiornati insieme all’incasso.
+
 Prima della pubblicazione commerciale restano da definire per ogni installazione:
 
 - dominio e `VITE_SALON_ID` del cliente;

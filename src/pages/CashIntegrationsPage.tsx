@@ -1,10 +1,11 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "../app/auth-context";
 import { useSalonTenant } from "../app/salon-tenant-context";
 import { AppIcon } from "../components/AppIcon";
 import type {
   CashIntegrationConfig,
   CashIntegrationMode,
+  LoyaltyAccount,
 } from "../domain/models";
 import {
   DEFAULT_CASH_INTEGRATION,
@@ -15,6 +16,7 @@ import {
   type CashActivityItem,
 } from "../firebase/cash-integration-repo";
 import { listSalonClients, type SalonClient } from "../firebase/client-repo";
+import { lookupLoyaltyCard } from "../firebase/loyalty-repo";
 import { createTicket } from "../firebase/ticket-repo";
 
 const MODES: Array<{
@@ -60,8 +62,13 @@ export function CashIntegrationsPage() {
   const [clients, setClients] = useState<SalonClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cardBusy, setCardBusy] = useState(false);
+  const [cardCode, setCardCode] = useState("");
+  const [scanning, setScanning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [manualSale, setManualSale] = useState({
     clientId: "",
     itemType: "servizio" as "servizio" | "prodotto",
@@ -88,6 +95,120 @@ export function CashIntegrationsPage() {
       )
       .finally(() => setLoading(false));
   }, [salonId]);
+
+  useEffect(
+    () => () => {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+    },
+    [],
+  );
+
+  function stopScanner() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setScanning(false);
+  }
+
+  function selectCardAccount(account: LoyaltyAccount) {
+    const client = clients.find((item) => item.id === account.clientId);
+    if (!client) {
+      setError(
+        "La card è valida, ma il cliente non è presente nell’anagrafica del salone.",
+      );
+      return false;
+    }
+    setManualSale((current) => ({ ...current, clientId: client.id }));
+    setCardCode(account.codice);
+    setError(null);
+    setNotice(`Card associata a ${account.nome}.`);
+    return true;
+  }
+
+  async function findCard() {
+    if (!salonId || !cardCode.trim()) return;
+    setCardBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const raw = cardCode.trim();
+      const code = raw.startsWith("salon-fidelity:")
+        ? raw.split(":").at(-1) ?? raw
+        : raw;
+      const result = await lookupLoyaltyCard(salonId, code);
+      if (!result.account) {
+        setError("Card non trovata. Controlla il codice e riprova.");
+        return;
+      }
+      selectCardAccount(result.account);
+    } catch {
+      setError("Card non trovata. Controlla il codice e riprova.");
+    } finally {
+      setCardBusy(false);
+    }
+  }
+
+  async function startScanner() {
+    type DetectedCode = { rawValue?: string };
+    type Detector = {
+      detect(source: HTMLVideoElement): Promise<DetectedCode[]>;
+    };
+    type DetectorConstructor = new (options: {
+      formats: string[];
+    }) => Detector;
+    const DetectorClass = (
+      window as unknown as { BarcodeDetector?: DetectorConstructor }
+    ).BarcodeDetector;
+    if (!DetectorClass) {
+      setError(
+        "Questo browser non supporta la scansione diretta. Inserisci il codice stampato sotto al QR.",
+      );
+      return;
+    }
+    try {
+      setError(null);
+      setNotice(null);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setScanning(true);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const video = videoRef.current;
+      if (!video) {
+        stopScanner();
+        return;
+      }
+      video.srcObject = stream;
+      await video.play();
+      const detector = new DetectorClass({ formats: ["qr_code"] });
+      const scan = async () => {
+        if (!streamRef.current || !videoRef.current || !salonId) return;
+        const codes = await detector.detect(videoRef.current).catch(() => []);
+        const raw = codes[0]?.rawValue;
+        if (raw) {
+          const code = raw.startsWith("salon-fidelity:")
+            ? raw.split(":").at(-1) ?? raw
+            : raw;
+          const result = await lookupLoyaltyCard(salonId, code).catch(
+            () => null,
+          );
+          if (result?.account) {
+            selectCardAccount(result.account);
+            stopScanner();
+            return;
+          }
+        }
+        requestAnimationFrame(() => void scan());
+      };
+      void scan();
+    } catch {
+      stopScanner();
+      setError(
+        "Non è stato possibile usare la fotocamera. Puoi inserire il codice manualmente.",
+      );
+    }
+  }
 
   function chooseMode(mode: CashIntegrationMode) {
     setNotice(null);
@@ -175,9 +296,11 @@ export function CashIntegrationsPage() {
       });
       setManualSale((current) => ({
         ...current,
+        clientId: "",
         description: "",
         amount: "",
       }));
+      setCardCode("");
       setActivity(await listCashActivity(salonId));
       setNotice(
         result.puntiAccreditati > 0
@@ -428,17 +551,73 @@ export function CashIntegrationsPage() {
           </div>
           <AppIcon name="orders" size={23} />
         </header>
+        <div className={`cash-card-link${scanning ? " is-scanning" : ""}`}>
+          <div className="cash-card-link__intro">
+            <span><AppIcon name="scan" size={20} /></span>
+            <div>
+              <strong>Identifica con la fidelity card</strong>
+              <small>Scansiona il QR oppure inserisci il codice della card.</small>
+            </div>
+          </div>
+          {scanning ? (
+            <div className="cash-card-link__camera">
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                aria-label="Anteprima fotocamera per scansione QR"
+              />
+              <span>Inquadra il QR del cliente</span>
+              <button type="button" onClick={stopScanner}>
+                Chiudi fotocamera
+              </button>
+            </div>
+          ) : (
+            <div className="cash-card-link__controls">
+              <label htmlFor="cash-card-code">Codice fidelity</label>
+              <input
+                id="cash-card-code"
+                value={cardCode}
+                onChange={(event) => setCardCode(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void findCard();
+                  }
+                }}
+                placeholder="CARD-…"
+              />
+              <button
+                className="btn btn--ghost"
+                type="button"
+                disabled={cardBusy || !cardCode.trim()}
+                onClick={() => void findCard()}
+              >
+                {cardBusy ? "Ricerca…" : "Associa card"}
+              </button>
+              <button
+                className="cash-card-link__scan"
+                type="button"
+                onClick={() => void startScanner()}
+              >
+                <AppIcon name="scan" size={17} />
+                Scansiona QR
+              </button>
+            </div>
+          )}
+        </div>
         <div className="cash-manual-sale__fields">
           <label>
             Cliente
             <select
               value={manualSale.clientId}
-              onChange={(event) =>
+              onChange={(event) => {
                 setManualSale((current) => ({
                   ...current,
                   clientId: event.target.value,
-                }))
-              }
+                }));
+                setCardCode("");
+              }}
             >
               <option value="">Cliente di passaggio</option>
               {clients.map((client) => (
