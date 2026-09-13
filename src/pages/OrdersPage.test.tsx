@@ -10,6 +10,7 @@ beforeEach(() => {
   vi.spyOn(authCtx, "useAuth").mockReturnValue({
     loading: false, user: {} as never, role: "owner", salonId: "s1",
   });
+  vi.spyOn(repo, "completeOrder").mockResolvedValue({ orderId: "o1", saleId: "order_o1", alreadyProcessed: false, puntiAccreditati: 30 });
 });
 
 describe("OrdersPage", () => {
@@ -33,5 +34,17 @@ describe("OrdersPage", () => {
     expect(await screen.findByText(/Mario/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /pronto/i }));
     expect(await screen.findByRole("alert")).toBeInTheDocument();
+  });
+
+  it("conferma ritiro, incasso e punti tramite il server", async () => {
+    vi.spyOn(repo, "listSalonOrders")
+      .mockResolvedValueOnce([{ id: "o1", clientId: "c", clientNome: "Mario", items: [{ productId: "p1", titolo: "Cera", prezzo: 1500, qta: 2 }], totale: 3000, stato: "pronto" }])
+      .mockResolvedValueOnce([]);
+    const complete = vi.spyOn(repo, "completeOrder");
+    render(<OrdersPage />);
+    await userEvent.click(await screen.findByRole("button", { name: /Mario/i }));
+    await userEvent.click(screen.getByRole("button", { name: /conferma ritiro e incasso/i }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith("s1", "o1"));
+    expect(await screen.findByText(/30 punti fidelity accreditati/i)).toBeInTheDocument();
   });
 });

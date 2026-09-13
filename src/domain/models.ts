@@ -353,6 +353,8 @@ export interface Order {
   createdAt?: Timestamp;
   pointsEarned?: number;
   paymentMethod?: "in_salone";
+  saleId?: string;
+  paidAt?: Timestamp;
   couponId?: string;
   couponCode?: string;
 }

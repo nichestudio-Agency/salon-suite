@@ -12,5 +12,6 @@ export { runBirthdayGreetings, birthdayNotifications } from "./birthdayNotificat
 export { listSalonClients } from "./listSalonClients.js";
 export { createLoyaltyCardForNewClient, loyaltyProgram } from "./loyaltyProgram.js";
 export { manageBookingOutcome } from "./manageBookingOutcome.js";
+export { completeOrder } from "./completeOrder.js";
 export { manageWaitlist } from "./manageWaitlist.js";
 export { notifyWaitlistSlot } from "./notifyWaitlistSlot.js";
