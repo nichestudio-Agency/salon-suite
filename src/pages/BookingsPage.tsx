@@ -52,6 +52,7 @@ export function BookingsPage() {
   const [view, setView] = useState<AgendaView>("giorno");
   const [anchor, setAnchor] = useState(dateKey(new Date()));
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busyBookingId, setBusyBookingId] = useState<string | null>(null);
   const [performedBy, setPerformedBy] = useState<Record<string, string>>({});
 
@@ -107,14 +108,19 @@ export function BookingsPage() {
   }
   async function closeBooking(booking: BookingWithId, outcome: "completata" | "no_show") {
     if (!salonId) return;
-    setError(null); setBusyBookingId(booking.id);
+    setError(null); setNotice(null); setBusyBookingId(booking.id);
     try {
-      await manageBookingOutcome({
+      const result = await manageBookingOutcome({
         salonId,
         bookingId: booking.id,
         outcome,
         ...(outcome === "completata" ? { performedByOperatorId: performedBy[booking.id] ?? booking.operatorId } : {}),
       });
+      setNotice(outcome === "completata"
+        ? result.puntiAccreditati > 0
+          ? `Incasso registrato e ${result.puntiAccreditati} punti fidelity accreditati.`
+          : "Incasso registrato correttamente."
+        : "No-show registrato correttamente.");
       await reload(salonId);
     } catch {
       setError(outcome === "completata" ? "Non è stato possibile chiudere e contabilizzare l’appuntamento." : "Non è stato possibile registrare il no-show.");
@@ -123,6 +129,7 @@ export function BookingsPage() {
 
   return <section className="agenda-page">
     <header className="dashboard-page-header"><div><span>Agenda</span><h2>Calendario</h2><p>Giornata, carico e richieste in un’unica vista.</p></div><div className="dashboard-alert" aria-label={`${pendingCount} richieste in attesa`}>{pendingCount}</div></header>
+    {notice && <p className="owner-home__notice" role="status">{notice}</p>}
     <div className="agenda-toolbar"><div className="agenda-view-switch" aria-label="Vista agenda">{(["giorno", "tre-giorni", "settimana"] as AgendaView[]).map((item) => <button className={view === item ? "is-active" : ""} type="button" onClick={() => setView(item)} key={item}>{item === "giorno" ? "Giorno" : item === "tre-giorni" ? "3 giorni" : "Settimana"}</button>)}</div><div className="agenda-date-nav"><button type="button" aria-label="Periodo precedente" onClick={() => move(-1)}>‹</button><input type="date" value={anchor} onChange={(event) => setAnchor(event.target.value)} /><button type="button" aria-label="Periodo successivo" onClick={() => move(1)}>›</button><button type="button" onClick={() => setAnchor(dateKey(new Date()))}>Oggi</button></div></div>
     <nav className="agenda-date-strip" aria-label="Seleziona il giorno">
       {dateStrip.map((date) => <button className={date === anchor ? "is-active" : ""} type="button" onClick={() => setAnchor(date)} key={date} aria-current={date === anchor ? "date" : undefined}><small>{new Intl.DateTimeFormat("it-IT", { weekday: "short" }).format(parseDate(date))}</small><strong>{parseDate(date).getDate()}</strong></button>)}

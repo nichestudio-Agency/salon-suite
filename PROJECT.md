@@ -150,6 +150,8 @@ Ogni cliente registrato riceve automaticamente una card virtuale con codice opac
 
 Il programma non richiede pagamenti in-app: dopo il pagamento tramite cassa o POS, lo staff scansiona il QR, conferma l'importo e accredita i punti. Lo stesso flusso copre appuntamenti, clienti di passaggio e acquisti di prodotti. Solo owner e staff possono modificare il saldo; la Cloud Function usa transazioni Firestore e impedisce che una stessa operazione venga registrata due volte.
 
+Quando l'accredito automatico è abilitato in **Cassa e integrazioni**, il comando **Completa e incassa** aggiorna nella stessa transazione la prenotazione, la vendita, l'origine dell'incasso e il saldo fidelity del cliente. Una vendita già elaborata non può quindi generare un secondo accredito.
+
 Il titolare può scegliere punti per euro, soglia, nome e valore indicativo del premio. Il cliente vede saldo disponibile, punti mancanti, visite premiate e storico di accrediti e riscatti.
 
 ## Stack tecnologico

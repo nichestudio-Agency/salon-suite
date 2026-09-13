@@ -31,7 +31,7 @@ beforeEach(() => {
     { id: "op1", nome: "Marco", attivo: true },
   ]);
   vi.spyOn(salonRepo, "getSalon").mockResolvedValue(null);
-  vi.spyOn(salesRepo, "manageBookingOutcome").mockResolvedValue({ bookingId: "b1", stato: "completata", saleId: "booking_b1", alreadyProcessed: false });
+  vi.spyOn(salesRepo, "manageBookingOutcome").mockResolvedValue({ bookingId: "b1", stato: "completata", saleId: "booking_b1", alreadyProcessed: false, puntiAccreditati: 20 });
 });
 
 describe("BookingsPage", () => {
@@ -78,5 +78,6 @@ describe("BookingsPage", () => {
     await waitFor(() => expect(salesRepo.manageBookingOutcome).toHaveBeenCalledWith({
       salonId: "s1", bookingId: "b1", outcome: "completata", performedByOperatorId: "op1",
     }));
+    expect(await screen.findByText(/20 punti fidelity accreditati/i)).toBeInTheDocument();
   });
 });

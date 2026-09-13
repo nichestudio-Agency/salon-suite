@@ -17,6 +17,7 @@ export interface ManageBookingOutcomeResult {
   stato: BookingOutcome;
   saleId: string | null;
   alreadyProcessed: boolean;
+  puntiAccreditati: number;
 }
 
 export interface OperatorStats {

@@ -47,7 +47,13 @@ export const manageBookingOutcome = onCall<ManageBookingOutcomeData>(async (requ
     const booking = bookingSnap.data()!;
 
     if (booking.stato === outcome) {
-      return { bookingId, stato: outcome, saleId: outcome === "completata" ? saleRef.id : null, alreadyProcessed: true };
+      return {
+        bookingId,
+        stato: outcome,
+        saleId: outcome === "completata" ? saleRef.id : null,
+        alreadyProcessed: true,
+        puntiAccreditati: Number(booking.loyaltyPointsCredited) || 0,
+      };
     }
     if (booking.stato !== "confermata") {
       throw new HttpsError("failed-precondition", "Puoi chiudere soltanto un appuntamento confermato.");
@@ -71,7 +77,9 @@ export const manageBookingOutcome = onCall<ManageBookingOutcomeData>(async (requ
     const serviceIds = snapshotItems.length
       ? snapshotItems.map((item) => requireId(item.serviceId, "serviceId"))
       : [requireId(booking.serviceId, "serviceId")];
-    const [operatorSnap, existingSale, ...serviceSnaps] = await Promise.all([
+    const salonRef = db.doc(`salons/${salonId}`);
+    const [salonSnap, operatorSnap, existingSale, ...serviceSnaps] = await Promise.all([
+      transaction.get(salonRef),
       transaction.get(db.doc(`salons/${salonId}/operators/${operatorId}`)),
       transaction.get(saleRef),
       ...serviceIds.map((serviceId) => transaction.get(db.doc(`salons/${salonId}/services/${serviceId}`))),
@@ -97,6 +105,43 @@ export const manageBookingOutcome = onCall<ManageBookingOutcomeData>(async (requ
     const totale = Number.isInteger(booking.prezzoFinale)
       ? Math.max(0, Number(booking.prezzoFinale))
       : Math.max(0, prezzoOriginale - sconto);
+
+    const salon = salonSnap.data() ?? {};
+    const cashIntegration = salon.cashIntegration && typeof salon.cashIntegration === "object"
+      ? salon.cashIntegration as Record<string, unknown>
+      : {};
+    const fidelity = salon.fidelity && typeof salon.fidelity === "object"
+      ? salon.fidelity as Record<string, unknown>
+      : {};
+    const clientId = typeof booking.clientId === "string" && booking.clientId.trim()
+      ? requireId(booking.clientId, "clientId")
+      : null;
+    const shouldCreditLoyalty = Boolean(
+      clientId
+      && cashIntegration.creditLoyaltyFromReceipts === true
+      && fidelity.attiva !== false,
+    );
+    const pointsPerEuro = Number.isInteger(fidelity.puntiPerEuro) && Number(fidelity.puntiPerEuro) > 0
+      ? Number(fidelity.puntiPerEuro)
+      : 1;
+    const loyaltyPoints = shouldCreditLoyalty
+      ? Math.floor(totale / 100) * pointsPerEuro
+      : 0;
+    const loyaltyAccountRef = clientId
+      ? db.doc(`salons/${salonId}/loyaltyAccounts/${clientId}`)
+      : null;
+    const loyaltyTransactionRef = loyaltyAccountRef
+      ? loyaltyAccountRef.collection("transactions").doc(saleRef.id)
+      : null;
+    const [loyaltyAccountSnap, loyaltyTransactionSnap] = shouldCreditLoyalty && loyaltyAccountRef && loyaltyTransactionRef
+      ? await Promise.all([
+          transaction.get(loyaltyAccountRef),
+          transaction.get(loyaltyTransactionRef),
+        ])
+      : [null, null];
+    const creditedPoints = loyaltyPoints > 0 && loyaltyAccountSnap?.exists && !loyaltyTransactionSnap?.exists
+      ? loyaltyPoints
+      : 0;
 
     let remainingDiscount = sconto;
     let remainingSubtotal = itemSubtotal;
@@ -124,15 +169,45 @@ export const manageBookingOutcome = onCall<ManageBookingOutcomeData>(async (requ
       createdByUserId: uid,
       createdAt: FieldValue.serverTimestamp(),
       paidAt: FieldValue.serverTimestamp(),
+      cashRegister: {
+        source: "salon_suite",
+        syncedAt: FieldValue.serverTimestamp(),
+      },
+      loyaltyPointsCredited: creditedPoints,
     });
+    if (creditedPoints > 0 && loyaltyAccountRef && loyaltyTransactionRef && loyaltyAccountSnap) {
+      const currentPoints = Number(loyaltyAccountSnap.data()?.punti) || 0;
+      transaction.update(loyaltyAccountRef, {
+        punti: currentPoints + creditedPoints,
+        puntiTotali: FieldValue.increment(creditedPoints),
+        visite: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      transaction.create(loyaltyTransactionRef, {
+        tipo: "accredito",
+        punti: creditedPoints,
+        importo: totale,
+        descrizione: "Appuntamento completato",
+        operatorId: uid,
+        saleId: saleRef.id,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
     transaction.update(bookingRef, {
       stato: "completata",
       performedByOperatorId: operatorId,
       saleId: saleRef.id,
       completedAt: FieldValue.serverTimestamp(),
+      loyaltyPointsCredited: creditedPoints,
       updatedByUserId: uid,
     });
 
-    return { bookingId, stato: outcome, saleId: saleRef.id, alreadyProcessed: false };
+    return {
+      bookingId,
+      stato: outcome,
+      saleId: saleRef.id,
+      alreadyProcessed: false,
+      puntiAccreditati: creditedPoints,
+    };
   });
 });

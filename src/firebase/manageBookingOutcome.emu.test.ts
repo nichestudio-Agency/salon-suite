@@ -22,12 +22,12 @@ async function confirmedBooking(multiService = false) {
   await setDoc(doc(db, `salons/${salonId}/services/svc1`), { titolo: "Taglio", descrizione: "", prezzo: 2500, durataMin: 30, attivo: true });
   await setDoc(doc(db, `salons/${salonId}/services/svc2`), { titolo: "Barba", descrizione: "", prezzo: 1000, durataMin: 15, attivo: true });
   await signOut(auth);
-  await registerClient({ email: `client_${suffix}@ex.com`, password: "password123", nome: "Cliente", sesso: "altro", dataNascita: "1990-01-01", salonId });
+  const client = await registerClient({ email: `client_${suffix}@ex.com`, password: "password123", nome: "Cliente", sesso: "altro", dataNascita: "1990-01-01", salonId });
   const created = await createBooking({ salonId, operatorId: "op1", serviceId: "svc1", ...(multiService ? { serviceIds: ["svc1", "svc2"] } : {}), date: "2026-08-24", startMin: 600 });
   await signOut(auth);
   await signInWithEmailAndPassword(auth, ownerEmail, "password123");
   await updateBookingStatus(salonId, created.bookingId, "confermata");
-  return { salonId, bookingId: created.bookingId };
+  return { salonId, bookingId: created.bookingId, clientId: client.uid };
 }
 
 describe("manageBookingOutcome", () => {
@@ -56,5 +56,18 @@ describe("manageBookingOutcome", () => {
     expect(sale).toMatchObject({ subtotale: 3500, totale: 3500 });
     expect(sale?.items).toHaveLength(2);
     expect(sale?.items.map((item: { referenceId: string }) => item.referenceId)).toEqual(["svc1", "svc2"]);
+  });
+
+  it("accredita la fidelity insieme alla vendita quando l'automazione è attiva", async () => {
+    const { salonId, bookingId, clientId } = await confirmedBooking();
+    await setDoc(doc(db, `salons/${salonId}`), {
+      cashIntegration: { creditLoyaltyFromReceipts: true },
+      fidelity: { attiva: true, puntiPerEuro: 2 },
+    }, { merge: true });
+
+    const result = await manageBookingOutcome({ salonId, bookingId, outcome: "completata", performedByOperatorId: "op1" });
+    expect(result.puntiAccreditati).toBe(50);
+    expect((await getDoc(doc(db, `salons/${salonId}/loyaltyAccounts/${clientId}`))).data()).toMatchObject({ punti: 50, puntiTotali: 50, visite: 1 });
+    expect((await getDoc(doc(db, `salons/${salonId}/loyaltyAccounts/${clientId}/transactions/booking_${bookingId}`))).data()).toMatchObject({ tipo: "accredito", punti: 50, importo: 2500 });
   });
 });

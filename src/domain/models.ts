@@ -324,6 +324,7 @@ export interface Sale {
     externalReceiptId?: string;
     syncedAt?: Timestamp;
   };
+  loyaltyPointsCredited?: number;
 }
 
 export type SaleWithId = Sale & { id: string };
