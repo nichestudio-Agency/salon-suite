@@ -9,11 +9,14 @@ import type {
 } from "../domain/models";
 import {
   DEFAULT_CASH_INTEGRATION,
+  getCashWebhookUrl,
   getCashIntegration,
   listCashActivity,
+  manageCashConnector,
   recordManualSale,
   saveCashIntegration,
   type CashActivityItem,
+  type CashConnectorStatus,
 } from "../firebase/cash-integration-repo";
 import { listSalonClients, type SalonClient } from "../firebase/client-repo";
 import { lookupLoyaltyCard } from "../firebase/loyalty-repo";
@@ -53,7 +56,7 @@ function euro(value: number) {
 }
 
 export function CashIntegrationsPage() {
-  const { salonId, user } = useAuth();
+  const { salonId, user, role } = useAuth();
   const { salon } = useSalonTenant();
   const [config, setConfig] = useState<CashIntegrationConfig>(
     DEFAULT_CASH_INTEGRATION,
@@ -65,6 +68,11 @@ export function CashIntegrationsPage() {
   const [cardBusy, setCardBusy] = useState(false);
   const [cardCode, setCardCode] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [connector, setConnector] = useState<CashConnectorStatus>({
+    enabled: false,
+    lastFour: "",
+  });
+  const [generatedSecret, setGeneratedSecret] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -83,10 +91,15 @@ export function CashIntegrationsPage() {
       getCashIntegration(salonId),
       listCashActivity(salonId),
       listSalonClients(salonId).catch(() => []),
-    ]).then(([next, rows, nextClients]) => {
+      manageCashConnector(salonId, "status").catch(() => ({
+        enabled: false,
+        lastFour: "",
+      })),
+    ]).then(([next, rows, nextClients, connectorStatus]) => {
         setConfig(next);
         setActivity(rows);
         setClients(nextClients);
+        setConnector(connectorStatus);
       })
       .catch(() =>
         setError(
@@ -263,6 +276,38 @@ export function CashIntegrationsPage() {
       );
     } catch {
       setError("Non siamo riusciti a inviare la richiesta tecnica.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function changeConnector(action: "issue" | "revoke") {
+    if (!salonId || role !== "owner") return;
+    setSaving(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const result = await manageCashConnector(salonId, action);
+      setConnector(result);
+      setGeneratedSecret(result.secret ?? "");
+      if (action === "issue") {
+        setConfig((current) => ({
+          ...current,
+          mode: "api_webhook",
+          status: "operativa",
+        }));
+        setNotice(
+          "Chiave creata. Copiala adesso: per sicurezza non verrà mostrata di nuovo.",
+        );
+      } else {
+        setConfig((current) => ({
+          ...current,
+          status: "da_configurare",
+        }));
+        setNotice("Chiave revocata. Il connettore non può più inviare ricevute.");
+      }
+    } catch {
+      setError("Non è stato possibile aggiornare la chiave del connettore.");
     } finally {
       setSaving(false);
     }
@@ -452,6 +497,64 @@ export function CashIntegrationsPage() {
                 />
               </label>
             </div>
+          )}
+          {config.mode === "api_webhook" && (
+            <section className="cash-connector-key">
+              <header>
+                <span><AppIcon name="key" size={18} /></span>
+                <div>
+                  <strong>Endpoint protetto</strong>
+                  <small>
+                    Il gestionale invia ogni ricevuta con una chiave privata.
+                  </small>
+                </div>
+                <b className={connector.enabled ? "is-active" : ""}>
+                  {connector.enabled
+                    ? `Attivo · ••••${connector.lastFour}`
+                    : "Non configurato"}
+                </b>
+              </header>
+              <label>
+                URL webhook
+                <input value={getCashWebhookUrl()} readOnly />
+              </label>
+              {generatedSecret && (
+                <label className="is-secret">
+                  Chiave da copiare ora
+                  <span>
+                    <input value={generatedSecret} readOnly />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void navigator.clipboard?.writeText(generatedSecret)
+                      }
+                    >
+                      Copia
+                    </button>
+                  </span>
+                </label>
+              )}
+              <footer>
+                <small>
+                  Usa l’header <code>Authorization: Bearer CHIAVE</code>. La
+                  stessa ricevuta può essere ritrasmessa senza creare duplicati.
+                </small>
+                {role === "owner" ? (
+                  <button
+                    className={connector.enabled ? "btn btn--danger" : "btn"}
+                    type="button"
+                    disabled={saving}
+                    onClick={() =>
+                      void changeConnector(connector.enabled ? "revoke" : "issue")
+                    }
+                  >
+                    {connector.enabled ? "Revoca chiave" : "Genera chiave"}
+                  </button>
+                ) : (
+                  <small>Solo il titolare può gestire la chiave.</small>
+                )}
+              </footer>
+            </section>
           )}
           <div className="cash-switches">
             <label>

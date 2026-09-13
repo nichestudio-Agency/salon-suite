@@ -10,6 +10,7 @@ import * as loyaltyRepo from "../firebase/loyalty-repo";
 vi.mock("../app/auth-context", () => ({
   useAuth: () => ({
     salonId: "salone-x",
+    role: "owner",
     user: { displayName: "Titolare Test" },
   }),
 }));
@@ -32,6 +33,10 @@ beforeEach(() => {
     },
   ]);
   vi.spyOn(cashRepo, "saveCashIntegration").mockResolvedValue();
+  vi.spyOn(cashRepo, "manageCashConnector").mockResolvedValue({
+    enabled: false,
+    lastFour: "",
+  });
   vi.spyOn(cashRepo, "recordManualSale").mockResolvedValue({
     saleId: "manual-1",
     alreadyProcessed: false,
@@ -114,6 +119,30 @@ describe("CashIntegrationsPage", () => {
       ),
     );
     expect(await screen.findByText(/Richiesta inviata/)).toBeInTheDocument();
+  });
+
+  it("genera una chiave privata per il webhook", async () => {
+    const manageConnector = vi
+      .spyOn(cashRepo, "manageCashConnector")
+      .mockImplementation(async (_salonId, action) =>
+        action === "issue"
+          ? { enabled: true, lastFour: "X7K2", secret: "ss_live_demoX7K2" }
+          : { enabled: false, lastFour: "" },
+      );
+    render(<CashIntegrationsPage />);
+    await screen.findByText("Mario Rossi");
+    await userEvent.click(
+      screen.getByRole("button", { name: /API \/ Webhook/ }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Genera chiave" }),
+    );
+
+    await waitFor(() =>
+      expect(manageConnector).toHaveBeenCalledWith("salone-x", "issue"),
+    );
+    expect(screen.getByDisplayValue("ss_live_demoX7K2")).toBeInTheDocument();
+    expect(screen.getByText(/non verrà mostrata di nuovo/i)).toBeInTheDocument();
   });
 
   it("registra un incasso rapido associato al cliente", async () => {

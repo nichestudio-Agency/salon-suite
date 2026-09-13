@@ -45,6 +45,31 @@ export interface RecordManualSaleResult {
   puntiAccreditati: number;
 }
 
+export interface CashConnectorStatus {
+  enabled: boolean;
+  lastFour: string;
+  secret?: string;
+}
+
+export function getCashWebhookUrl(): string {
+  const projectId = String(import.meta.env?.VITE_FIREBASE_PROJECT_ID ?? "demo-barbershop");
+  if (import.meta.env?.VITE_USE_EMULATOR === "true") {
+    return `http://127.0.0.1:5001/${projectId}/us-central1/cashReceiptWebhook`;
+  }
+  return `https://us-central1-${projectId}.cloudfunctions.net/cashReceiptWebhook`;
+}
+
+export async function manageCashConnector(
+  salonId: string,
+  action: "status" | "issue" | "revoke",
+): Promise<CashConnectorStatus> {
+  const callable = httpsCallable<
+    { salonId: string; action: "status" | "issue" | "revoke" },
+    CashConnectorStatus
+  >(functions, "manageCashConnector");
+  return (await callable({ salonId, action })).data;
+}
+
 export async function getCashIntegration(
   salonId: string,
 ): Promise<CashIntegrationConfig> {

@@ -154,6 +154,23 @@ Quando l'accredito automatico è abilitato in **Cassa e integrazioni**, i comand
 
 La stessa area permette di registrare un incasso rapido per servizi senza prenotazione, acquisti diretti e clienti di passaggio. Se viene selezionato un cliente, l'operazione aggiorna anche la sua ultima visita; gli account app ricevono gli eventuali punti previsti dalle regole attive.
 
+Per i gestionali compatibili è disponibile anche un webhook server-to-server. Il titolare genera dalla dashboard una chiave privata mostrata una sola volta; sul server viene conservato esclusivamente l'hash. Ogni ricevuta usa il proprio identificativo esterno come chiave di idempotenza, quindi un nuovo tentativo di invio non duplica né la vendita né i punti fidelity. La chiave può essere revocata in qualsiasi momento.
+
+Esempio del corpo JSON inviato a `cashReceiptWebhook` con header `Authorization: Bearer CHIAVE`:
+
+```json
+{
+  "salonId": "salone-x",
+  "receiptId": "SCONTRINO-1042",
+  "date": "2026-09-13",
+  "total": 2400,
+  "fidelityCode": "CARD-ABC123",
+  "items": [
+    { "type": "servizio", "title": "Taglio", "quantity": 1, "unitAmount": 2400 }
+  ]
+}
+```
+
 Il titolare può scegliere punti per euro, soglia, nome e valore indicativo del premio. Il cliente vede saldo disponibile, punti mancanti, visite premiate e storico di accrediti e riscatti.
 
 ## Stack tecnologico
