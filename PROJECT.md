@@ -152,6 +152,8 @@ Il programma non richiede pagamenti in-app: dopo il pagamento tramite cassa o PO
 
 Quando l'accredito automatico è abilitato in **Cassa e integrazioni**, i comandi **Completa e incassa** e **Conferma ritiro e incasso** aggiornano nella stessa transazione appuntamento o ordine, vendita, origine dell'incasso e saldo fidelity del cliente. Una vendita già elaborata non può quindi generare un secondo accredito.
 
+La stessa area permette di registrare un incasso rapido per servizi senza prenotazione, acquisti diretti e clienti di passaggio. Se viene selezionato un cliente, l'operazione aggiorna anche la sua ultima visita; gli account app ricevono gli eventuali punti previsti dalle regole attive.
+
 Il titolare può scegliere punti per euro, soglia, nome e valore indicativo del premio. Il cliente vede saldo disponibile, punti mancanti, visite premiate e storico di accrediti e riscatti.
 
 ## Stack tecnologico

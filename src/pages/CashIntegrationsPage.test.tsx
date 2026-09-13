@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CashIntegrationsPage } from "./CashIntegrationsPage";
 import * as cashRepo from "../firebase/cash-integration-repo";
 import * as ticketRepo from "../firebase/ticket-repo";
+import * as clientRepo from "../firebase/client-repo";
 
 vi.mock("../app/auth-context", () => ({
   useAuth: () => ({
@@ -30,6 +31,27 @@ beforeEach(() => {
     },
   ]);
   vi.spyOn(cashRepo, "saveCashIntegration").mockResolvedValue();
+  vi.spyOn(cashRepo, "recordManualSale").mockResolvedValue({
+    saleId: "manual-1",
+    alreadyProcessed: false,
+    puntiAccreditati: 24,
+  });
+  vi.spyOn(clientRepo, "listSalonClients").mockResolvedValue([
+    {
+      id: "client-1",
+      nome: "Anna Verdi",
+      email: "anna@example.com",
+      sesso: "femminile",
+      dataNascita: "1990-02-03",
+      hasPush: true,
+      bookingCount: 1,
+      lastBookingDate: "2026-09-01",
+      orderCount: 0,
+      lastOrderDate: null,
+      totalSpent: 0,
+      source: "account",
+    },
+  ]);
   vi.spyOn(ticketRepo, "createTicket").mockResolvedValue("ticket-1");
 });
 
@@ -72,5 +94,23 @@ describe("CashIntegrationsPage", () => {
       ),
     );
     expect(await screen.findByText(/Richiesta inviata/)).toBeInTheDocument();
+  });
+
+  it("registra un incasso rapido associato al cliente", async () => {
+    const recordSale = vi.spyOn(cashRepo, "recordManualSale");
+    render(<CashIntegrationsPage />);
+    await screen.findByText("Anna Verdi · account app");
+    await userEvent.selectOptions(screen.getByLabelText("Cliente"), "client-1");
+    await userEvent.type(screen.getByLabelText("Descrizione"), "Taglio diretto");
+    await userEvent.type(screen.getByLabelText("Importo (€)"), "24");
+    await userEvent.click(screen.getByRole("button", { name: "Registra incasso" }));
+    await waitFor(() => expect(recordSale).toHaveBeenCalledWith(expect.objectContaining({
+      salonId: "salone-x",
+      clientId: "client-1",
+      clientSource: "account",
+      amount: 2400,
+      description: "Taglio diretto",
+    })));
+    expect(await screen.findByText(/24 punti fidelity accreditati/i)).toBeInTheDocument();
   });
 });

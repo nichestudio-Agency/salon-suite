@@ -5,8 +5,9 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import type { CashIntegrationConfig, Sale } from "../domain/models";
-import { db } from "./app";
+import { db, functions } from "./app";
 
 export const DEFAULT_CASH_INTEGRATION: CashIntegrationConfig = {
   mode: "manuale",
@@ -25,6 +26,23 @@ export interface CashActivityItem {
   total: number;
   source: "salon_suite" | "external";
   externalReceiptId?: string;
+}
+
+export interface RecordManualSaleInput {
+  salonId: string;
+  sourceId: string;
+  clientId?: string;
+  clientSource?: "account" | "manual";
+  amount: number;
+  description: string;
+  itemType: "servizio" | "prodotto";
+  date: string;
+}
+
+export interface RecordManualSaleResult {
+  saleId: string;
+  alreadyProcessed: boolean;
+  puntiAccreditati: number;
 }
 
 export async function getCashIntegration(
@@ -64,4 +82,9 @@ export async function listCashActivity(
     })
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 8);
+}
+
+export async function recordManualSale(input: RecordManualSaleInput): Promise<RecordManualSaleResult> {
+  const callable = httpsCallable<RecordManualSaleInput, RecordManualSaleResult>(functions, "recordManualSale");
+  return (await callable(input)).data;
 }

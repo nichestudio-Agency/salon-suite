@@ -10,9 +10,11 @@ import {
   DEFAULT_CASH_INTEGRATION,
   getCashIntegration,
   listCashActivity,
+  recordManualSale,
   saveCashIntegration,
   type CashActivityItem,
 } from "../firebase/cash-integration-repo";
+import { listSalonClients, type SalonClient } from "../firebase/client-repo";
 import { createTicket } from "../firebase/ticket-repo";
 
 const MODES: Array<{
@@ -55,17 +57,29 @@ export function CashIntegrationsPage() {
     DEFAULT_CASH_INTEGRATION,
   );
   const [activity, setActivity] = useState<CashActivityItem[]>([]);
+  const [clients, setClients] = useState<SalonClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [manualSale, setManualSale] = useState({
+    clientId: "",
+    itemType: "servizio" as "servizio" | "prodotto",
+    description: "",
+    amount: "",
+    date: new Date().toISOString().slice(0, 10),
+  });
 
   useEffect(() => {
     if (!salonId) return;
-    Promise.all([getCashIntegration(salonId), listCashActivity(salonId)])
-      .then(([next, rows]) => {
+    Promise.all([
+      getCashIntegration(salonId),
+      listCashActivity(salonId),
+      listSalonClients(salonId).catch(() => []),
+    ]).then(([next, rows, nextClients]) => {
         setConfig(next);
         setActivity(rows);
+        setClients(nextClients);
       })
       .catch(() =>
         setError(
@@ -128,6 +142,50 @@ export function CashIntegrationsPage() {
       );
     } catch {
       setError("Non siamo riusciti a inviare la richiesta tecnica.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function registerManualSale(event: FormEvent) {
+    event.preventDefault();
+    if (!salonId) return;
+    const amount = Math.round(
+      Number(manualSale.amount.replace(",", ".")) * 100,
+    );
+    if (!Number.isInteger(amount) || amount <= 0) {
+      setError("Inserisci un importo valido.");
+      return;
+    }
+    const client = clients.find((item) => item.id === manualSale.clientId);
+    setSaving(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const result = await recordManualSale({
+        salonId,
+        sourceId: crypto.randomUUID(),
+        amount,
+        description: manualSale.description.trim(),
+        itemType: manualSale.itemType,
+        date: manualSale.date,
+        ...(client
+          ? { clientId: client.id, clientSource: client.source ?? "account" }
+          : {}),
+      });
+      setManualSale((current) => ({
+        ...current,
+        description: "",
+        amount: "",
+      }));
+      setActivity(await listCashActivity(salonId));
+      setNotice(
+        result.puntiAccreditati > 0
+          ? `Incasso registrato e ${result.puntiAccreditati} punti fidelity accreditati.`
+          : "Incasso registrato correttamente.",
+      );
+    } catch {
+      setError("Non è stato possibile registrare l’incasso.");
     } finally {
       setSaving(false);
     }
@@ -346,21 +404,125 @@ export function CashIntegrationsPage() {
               </button>
             )}
           </div>
-          {(notice || error) && (
-            <p
-              className={`cash-message${error ? " is-error" : ""}`}
-              role={error ? "alert" : "status"}
-            >
-              {error ?? notice}
-            </p>
-          )}
         </section>
+      </form>
+
+      {(notice || error) && (
+        <p
+          className={`cash-message${error ? " is-error" : ""}`}
+          role={error ? "alert" : "status"}
+        >
+          {error ?? notice}
+        </p>
+      )}
+
+      <form className="cash-manual-sale" onSubmit={registerManualSale}>
+        <header>
+          <div>
+            <span>03 / Incasso rapido</span>
+            <h3>Registra un passaggio in cassa</h3>
+            <p>
+              Per servizi senza prenotazione, prodotti acquistati direttamente
+              o clienti di passaggio.
+            </p>
+          </div>
+          <AppIcon name="orders" size={23} />
+        </header>
+        <div className="cash-manual-sale__fields">
+          <label>
+            Cliente
+            <select
+              value={manualSale.clientId}
+              onChange={(event) =>
+                setManualSale((current) => ({
+                  ...current,
+                  clientId: event.target.value,
+                }))
+              }
+            >
+              <option value="">Cliente di passaggio</option>
+              {clients.map((client) => (
+                <option value={client.id} key={client.id}>
+                  {client.nome} · {client.source === "manual" ? "anagrafica salone" : "account app"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Tipo
+            <select
+              value={manualSale.itemType}
+              onChange={(event) =>
+                setManualSale((current) => ({
+                  ...current,
+                  itemType: event.target.value as "servizio" | "prodotto",
+                }))
+              }
+            >
+              <option value="servizio">Servizio</option>
+              <option value="prodotto">Prodotto</option>
+            </select>
+          </label>
+          <label className="is-wide">
+            Descrizione
+            <input
+              value={manualSale.description}
+              onChange={(event) =>
+                setManualSale((current) => ({
+                  ...current,
+                  description: event.target.value,
+                }))
+              }
+              placeholder="Es. piega, taglio o prodotto venduto"
+              required
+            />
+          </label>
+          <label>
+            Importo (€)
+            <input
+              inputMode="decimal"
+              value={manualSale.amount}
+              onChange={(event) =>
+                setManualSale((current) => ({
+                  ...current,
+                  amount: event.target.value,
+                }))
+              }
+              placeholder="0,00"
+              required
+            />
+          </label>
+          <label>
+            Data
+            <input
+              type="date"
+              value={manualSale.date}
+              onChange={(event) =>
+                setManualSale((current) => ({
+                  ...current,
+                  date: event.target.value,
+                }))
+              }
+              required
+            />
+          </label>
+        </div>
+        <footer>
+          <small>
+            {manualSale.clientId
+              ? "La visita aggiorna lo storico cliente; la fidelity segue le regole attive."
+              : "L’incasso entra nel registro senza associare dati personali."}
+          </small>
+          <button className="btn" disabled={saving}>
+            {saving ? "Registrazione…" : "Registra incasso"}
+          </button>
+        </footer>
       </form>
 
       <section className="cash-ledger">
         <header>
           <div>
-            <span>03 / Registro</span>
+            <span>04 / Registro</span>
             <h3>Ultimi incassi</h3>
           </div>
           <small>
