@@ -11,7 +11,7 @@ import { DashboardCommandBar } from "../components/DashboardCommandBar";
 type DashboardSection = {
   to: string;
   label: string;
-  icon: "home" | "calendar" | "scissors" | "users" | "clock" | "bag" | "orders" | "gift" | "card" | "ticket";
+  icon: "home" | "calendar" | "scissors" | "users" | "clock" | "bag" | "orders" | "gift" | "card" | "ticket" | "key";
   end?: boolean;
 };
 
@@ -26,6 +26,7 @@ const SECTIONS: DashboardSection[] = [
   { to: "/dashboard/ordini", label: "Ordini", icon: "orders" as const },
   { to: "/dashboard/notifiche", label: "Marketing", icon: "gift" as const },
   { to: "/dashboard/fidelity", label: "Fidelity", icon: "card" as const },
+  { to: "/dashboard/integrazioni", label: "Cassa e integrazioni", icon: "key" as const },
   { to: "/dashboard/importa", label: "Importa dati", icon: "orders" as const },
   { to: "/dashboard/assistenza", label: "Assistenza", icon: "ticket" as const },
 ];

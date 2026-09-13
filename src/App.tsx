@@ -37,6 +37,7 @@ import { SalonSupportPage } from "./pages/SalonSupportPage";
 import { PlatformSupportPage } from "./pages/PlatformSupportPage";
 import { DataImportPage } from "./pages/DataImportPage";
 import { SalonAccessPage } from "./pages/SalonAccessPage";
+import { CashIntegrationsPage } from "./pages/CashIntegrationsPage";
 
 export default function App() {
   return (
@@ -83,6 +84,7 @@ export default function App() {
               <Route path="fidelity" element={<LoyaltyManagementPage />} />
               <Route path="assistenza" element={<SalonSupportPage />} />
               <Route path="importa" element={<DataImportPage />} />
+              <Route path="integrazioni" element={<CashIntegrationsPage />} />
             </Route>
             <Route path="/admin" element={<RequireSuperAdmin><PlatformLayout /></RequireSuperAdmin>}>
               <Route index element={<PlatformDashboardPage />} />

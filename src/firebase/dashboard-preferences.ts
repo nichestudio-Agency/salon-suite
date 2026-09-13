@@ -1,7 +1,7 @@
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "./app";
 
-export type DashboardShortcutId = "agenda" | "nuovo_cliente" | "nuovo_prodotto" | "nuovo_coupon" | "nuovo_operatore" | "assistenza";
+export type DashboardShortcutId = "agenda" | "nuovo_cliente" | "nuovo_prodotto" | "nuovo_coupon" | "nuovo_operatore" | "integrazioni" | "assistenza";
 export interface DashboardPreferences { shortcuts: DashboardShortcutId[]; lastNotificationsReadAt: number; }
 export const DEFAULT_SHORTCUTS: DashboardShortcutId[] = ["agenda", "nuovo_cliente", "nuovo_prodotto", "nuovo_coupon"];
 

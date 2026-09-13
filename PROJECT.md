@@ -110,6 +110,7 @@ La dashboard del titolare è invece completamente responsive: su smartphone usa 
 | `/dashboard/notifiche` | Coupon, campagne segmentate e automazioni |
 | `/dashboard/fidelity` | Scanner QR, accrediti, riscatti, KPI e regole del programma |
 | `/dashboard/importa` | Importazione CSV di clienti, servizi, operatori e prodotti |
+| `/dashboard/integrazioni` | Modalità di cassa, richiesta connettore e registro incassi |
 
 ## Console di piattaforma
 

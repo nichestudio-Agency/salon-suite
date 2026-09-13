@@ -74,9 +74,25 @@ export interface Salon {
   };
   compleanno?: CompleannoConfig;
   fidelity?: FidelityConfig;
+  cashIntegration?: CashIntegrationConfig;
   licenza?: SalonLicense;
   dominio?: string;
   createdAt?: Timestamp;
+}
+
+export type CashIntegrationMode = "manuale" | "api_webhook" | "gestionale";
+export type CashIntegrationStatus = "operativa" | "da_configurare" | "richiesta" | "errore";
+
+/** Configurazione non sensibile del collegamento cassa. Token e segreti restano lato server. */
+export interface CashIntegrationConfig {
+  mode: CashIntegrationMode;
+  status: CashIntegrationStatus;
+  providerName: string;
+  storeReference: string;
+  closeBookingsFromReceipts: boolean;
+  creditLoyaltyFromReceipts: boolean;
+  syncProductCatalog: boolean;
+  updatedAtMs?: number;
 }
 
 export interface FidelityConfig {
@@ -303,6 +319,11 @@ export interface Sale {
   createdByUserId: string;
   createdAt?: Timestamp;
   paidAt?: Timestamp;
+  cashRegister?: {
+    source: "salon_suite" | "external";
+    externalReceiptId?: string;
+    syncedAt?: Timestamp;
+  };
 }
 
 export type SaleWithId = Sale & { id: string };

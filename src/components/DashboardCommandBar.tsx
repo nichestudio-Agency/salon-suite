@@ -15,7 +15,7 @@ type Shortcut = {
   id: DashboardShortcutId;
   label: string;
   to: string;
-  icon: "calendar" | "users" | "bag" | "gift" | "plus" | "ticket";
+  icon: "calendar" | "users" | "bag" | "gift" | "plus" | "ticket" | "key";
   target?: string;
 };
 
@@ -25,6 +25,7 @@ const ACTIONS: Shortcut[] = [
   { id: "nuovo_prodotto", label: "Nuovo prodotto", to: "/dashboard/prodotti", icon: "bag", target: ".entity-create" },
   { id: "nuovo_coupon", label: "Nuovo coupon", to: "/dashboard/notifiche", icon: "gift", target: "#nuovo-coupon" },
   { id: "nuovo_operatore", label: "Nuovo operatore", to: "/dashboard/operatori", icon: "plus", target: ".entity-create" },
+  { id: "integrazioni", label: "Cassa e integrazioni", to: "/dashboard/integrazioni", icon: "key" },
   { id: "assistenza", label: "Apri ticket", to: "/dashboard/assistenza", icon: "ticket" },
 ];
 
