@@ -60,11 +60,26 @@ describe("BookingsPage", () => {
     expect((await screen.findAllByText("Giulia")).length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Agenda di Marco")).toBeInTheDocument();
     expect(screen.getByText(/Taglio con Marco/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Riepilogo della giornata selezionata")).toHaveTextContent(/1\s*prenotazione/);
     await userEvent.click(screen.getByRole("button", { name: /conferma/i }));
 
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith("s1", "b1", "confermata"),
     );
+  });
+
+  it("rende la settimana più sintetica e mostra il carico per giornata", async () => {
+    vi.spyOn(bookingRepo, "listBookings").mockResolvedValue([
+      { id: "b1", clientId: "c1", clientNome: "Giulia", operatorId: "op1", serviceId: "svc1", date: "2026-08-25", startMin: 600, endMin: 630, stato: "confermata" },
+      { id: "b2", clientId: "c2", clientNome: "Marta", operatorId: "op1", serviceId: "svc1", date: "2026-08-25", startMin: 660, endMin: 690, stato: "confermata" },
+    ]);
+
+    render(<BookingsPage />);
+    await screen.findAllByText("Giulia");
+    await userEvent.click(screen.getByRole("button", { name: "Settimana" }));
+
+    expect(screen.getByText("2 app.")).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/Giulia/)[0]).toHaveClass("is-compact");
   });
 
   it("chiude un appuntamento confermato attribuendolo all'operatore effettivo", async () => {

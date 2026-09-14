@@ -21,6 +21,8 @@ Per la demo commerciale questi elementi sono completi. Intervalli personalizzati
 
 ## Agenda
 
+Aggiornamento demo: il riepilogo della data selezionata è ora una fascia compatta separata dal titolo; le giornate mostrano il proprio carico, gli spazi completamente liberi sono riconoscibili e la vista settimanale riduce i dettagli visibili mantenendoli accessibili. Restano da validare eventuali sovrapposizioni reali quando saranno disponibili dati operativi del primo salone.
+
 ### Vista giorno
 
 - Migliorare gerarchia e leggibilità degli appuntamenti.
@@ -34,14 +36,14 @@ Per la demo commerciale questi elementi sono completi. Intervalli personalizzati
 
 ### Vista settimana
 
-- Ridisegnare la vista, attualmente troppo confusionaria.
-- Ridurre il rumore visivo quando sono presenti molte prenotazioni.
+- Ridisegnare la vista, inizialmente troppo confusionaria. **Completato per la demo.**
+- Ridurre il rumore visivo quando sono presenti molte prenotazioni. **Completato per la demo.**
 - Valutare raggruppamenti, livelli di dettaglio progressivi o apertura del dettaglio su richiesta.
 
 ### Riepilogo delle prenotazioni di oggi
 
 - L'informazione principale, per esempio “5 prenotazioni · lunedì 14 settembre”, deve rimanere evidente.
-- Ridurre però lo spazio verticale occupato dall'attuale blocco.
+- Ridurre però lo spazio verticale occupato dall'attuale blocco. **Completato per la demo.**
 - Cercare una soluzione più compatta e distintiva: riepilogo orizzontale, fascia contestuale o KPI integrato nella testata dell'agenda.
 
 ## Clienti
