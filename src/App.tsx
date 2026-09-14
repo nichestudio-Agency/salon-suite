@@ -38,6 +38,7 @@ import { PlatformSupportPage } from "./pages/PlatformSupportPage";
 import { DataImportPage } from "./pages/DataImportPage";
 import { SalonAccessPage } from "./pages/SalonAccessPage";
 import { CashIntegrationsPage } from "./pages/CashIntegrationsPage";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
 
 export default function App() {
   return (
@@ -74,6 +75,7 @@ export default function App() {
             >
               <Route index element={<DashboardHomePage />} />
               <Route path="prenotazioni" element={<BookingsPage />} />
+              <Route path="statistiche" element={<AnalyticsPage />} />
               <Route path="clienti" element={<ClientsPage />} />
               <Route path="servizi" element={<ServicesPage />} />
               <Route path="operatori" element={<OperatorsPage />} />

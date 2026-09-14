@@ -48,6 +48,30 @@ const demoClients = [
   { email: "simone.ricci@barberia.local", password: "TestBarber26!", nome: "Simone Ricci", sesso: "maschile", dataNascita: "1985-12-03" },
 ];
 
+const DEMO_FIRST_NAMES = ["Andrea", "Matteo", "Federico", "Gabriele", "Nicola", "Emanuele", "Tommaso", "Daniele", "Michele", "Roberto", "Stefano", "Pietro", "Francesco", "Giacomo", "Riccardo", "Salvatore", "Vincenzo", "Cristian", "Fabio", "Massimo"];
+const DEMO_LAST_NAMES = ["Esposito", "Ferrari", "Marino", "Greco", "Bruno", "Gallo", "Costa", "Fontana", "Rizzo", "Lombardi", "Barbieri", "Morelli", "Santoro", "Caruso", "Leone", "Serra", "De Luca", "Fabbri", "Martini", "Vitale"];
+
+function generatedDemoClients(count) {
+  return Array.from({ length: count }, (_, index) => {
+    const firstName = DEMO_FIRST_NAMES[index % DEMO_FIRST_NAMES.length];
+    const lastName = DEMO_LAST_NAMES[(index * 7 + Math.floor(index / DEMO_FIRST_NAMES.length)) % DEMO_LAST_NAMES.length];
+    const suffix = String(index + 7).padStart(3, "0");
+    return {
+      id: `demo-salone-x-client-${suffix}`,
+      nome: `${firstName} ${lastName}`,
+      email: `${firstName}.${lastName}.${suffix}@salonex.demo`.toLowerCase().replaceAll(" ", ""),
+      sesso: "maschile",
+      dataNascita: `${1973 + (index * 11) % 28}-${String(1 + (index * 5) % 12).padStart(2, "0")}-${String(1 + (index * 7) % 27).padStart(2, "0")}`,
+    };
+  });
+}
+
+async function commitInChunks(writes, size = 350) {
+  for (let offset = 0; offset < writes.length; offset += size) {
+    await Promise.all(writes.slice(offset, offset + size));
+  }
+}
+
 const platformSalons = [
   { id: "officina-27", nome: "Officina 27", dominio: "officina27.barberia.app", owner: "Riccardo Serra", email: "riccardo@officina27.demo", piano: "pro", stato: "attiva", prezzo: 12900, scadenza: dateOffset(142), clienti: 18, prenotazioni: 11 },
   { id: "barbieri-navigli", nome: "Barbieri Navigli", dominio: "navigli.barberia.app", owner: "Matteo Villa", email: "matteo@navigli.demo", piano: "start", stato: "trial", prezzo: 4900, scadenza: dateOffset(9), clienti: 9, prenotazioni: 5 },
@@ -62,6 +86,11 @@ const [adminUid, ownerUid, hairOwnerUid, hairClientUid, ...clientUids] = await P
   ensureUser("cliente.hair@barberia.local", "HairStudio26!", "Giulia Ferri"),
   ...demoClients.map((client) => ensureUser(client.email, client.password, client.nome)),
 ]);
+
+const salonClients = [
+  ...demoClients.map((client, index) => ({ id: clientUids[index], ...client })),
+  ...generatedDemoClients(94),
+];
 
 await Promise.all([
   db.doc("salons/salone-x").set({
@@ -203,6 +232,174 @@ await Promise.all([
   db.doc("salons/salone-x/orders/demo-order-02").set({ clientId: clientUids[3], clientNome: "Paolo Romano", clientEmail: demoClients[3].email, items: [{ productId: "olio-barba", titolo: "Olio barba", prezzo: 2200, qta: 2 }], totale: 4400, stato: "pronto", createdAt: Timestamp.fromDate(new Date(Date.now() - 95 * 86_400_000)) }),
   db.doc("salons/salone-x/orders/demo-order-03").set({ clientId: clientUids[4], clientNome: "Davide Russo", clientEmail: demoClients[4].email, items: [{ productId: "shampoo-daily", titolo: "Shampoo daily", prezzo: 1600, qta: 1 }], totale: 1600, stato: "in_attesa", createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 86_400_000)) }),
 ]);
+
+// Uno storico ampio e deterministico rende la demo leggibile anche nelle viste
+// statistiche: ogni numero resta riconducibile a clienti, appuntamenti e vendite.
+const serviceCatalog = [
+  { id: "taglio-sartoriale", titolo: "Taglio sartoriale", prezzo: 3200, durataMin: 45 },
+  { id: "rituale-barba", titolo: "Rituale barba", prezzo: 2400, durataMin: 30 },
+  { id: "combo-signature", titolo: "Combo signature", prezzo: 5200, durataMin: 75 },
+  { id: "styling-express", titolo: "Styling express", prezzo: 1800, durataMin: 20 },
+];
+const productCatalog = [
+  { id: "cera-opaca", titolo: "Cera opaca", prezzo: 1800 },
+  { id: "olio-barba", titolo: "Olio barba", prezzo: 2200 },
+  { id: "shampoo-daily", titolo: "Shampoo daily", prezzo: 1600 },
+  { id: "pomata-lucida", titolo: "Pomata lucida", prezzo: 1950 },
+];
+const operatorIds = ["marco-rinaldi", "lorenzo-bassi", "giuseppe-moretti"];
+const demoWrites = [];
+
+for (const [index, client] of salonClients.entries()) {
+  demoWrites.push(db.doc(`users/${client.id}`).set({
+    nome: client.nome,
+    email: client.email,
+    sesso: client.sesso,
+    dataNascita: client.dataNascita,
+    ruolo: "cliente",
+    salonId: "salone-x",
+    fcmTokens: [],
+  }, { merge: true }));
+  if (index >= demoClients.length) {
+    const totalPoints = 70 + (index * 37) % 520;
+    const redeemedPoints = index % 4 === 0 ? 100 : index % 9 === 0 ? 160 : 0;
+    demoWrites.push(db.doc(`salons/salone-x/loyaltyAccounts/${client.id}`).set({
+      clientId: client.id,
+      codice: `CARD-SX${String(index + 1).padStart(6, "0")}`,
+      nome: client.nome,
+      email: client.email,
+      punti: Math.max(0, totalPoints - redeemedPoints),
+      puntiTotali: totalPoints,
+      puntiRiscattati: redeemedPoints,
+      visite: 2 + (index * 5) % 15,
+      createdAt: Timestamp.fromDate(new Date(Date.now() - (40 + index % 140) * 86_400_000)),
+      updatedAt: Timestamp.fromDate(new Date(Date.now() - (index * 13) % 75 * 86_400_000)),
+    }));
+  }
+}
+
+let historyIndex = 0;
+for (let daysAgo = 1; daysAgo <= 180; daysAgo++) {
+  const appointmentDate = dateOffset(-daysAgo);
+  const weekday = new Date(`${appointmentDate}T12:00:00`).getDay();
+  if (weekday === 0 || weekday === 1) continue;
+  const dailyVolume = 2 + (daysAgo * 7) % 5;
+  for (let slot = 0; slot < dailyVolume; slot++) {
+    const client = salonClients[(daysAgo * 9 + slot * 17) % salonClients.length];
+    const service = serviceCatalog[(daysAgo + slot * 3) % serviceCatalog.length];
+    const operatorId = operatorIds[(daysAgo + slot) % operatorIds.length];
+    const startMin = 555 + slot * 95 + (daysAgo % 3) * 10;
+    const bookingId = `history-booking-${String(historyIndex).padStart(4, "0")}`;
+    const isNoShow = historyIndex % 31 === 0;
+    const isCancelled = historyIndex % 47 === 0;
+    const status = isCancelled ? "annullata" : isNoShow ? "no_show" : "completata";
+    const occurredAt = new Date(Date.now() - daysAgo * 86_400_000 + startMin * 60_000);
+    demoWrites.push(db.doc(`salons/salone-x/bookings/${bookingId}`).set({
+      clientId: client.id,
+      clientNome: client.nome,
+      clientEmail: client.email,
+      operatorId,
+      performedByOperatorId: operatorId,
+      serviceId: service.id,
+      serviceItems: [{ serviceId: service.id, titolo: service.titolo, durataMin: service.durataMin, prezzo: service.prezzo, offsetStartMin: 0, offsetEndMin: service.durataMin }],
+      date: appointmentDate,
+      startMin,
+      endMin: startMin + service.durataMin,
+      stato: status,
+      prezzoOriginale: service.prezzo,
+      sconto: 0,
+      prezzoFinale: service.prezzo,
+      createdAt: Timestamp.fromDate(new Date(occurredAt.getTime() - (3 + historyIndex % 18) * 86_400_000)),
+      ...(status === "completata" ? { saleId: `history-sale-${String(historyIndex).padStart(4, "0")}`, completedAt: Timestamp.fromDate(occurredAt) } : {}),
+    }));
+    if (status === "completata") {
+      const includeProduct = historyIndex % 4 === 0;
+      const product = productCatalog[(historyIndex + daysAgo) % productCatalog.length];
+      const saleItems = [
+        { tipo: "servizio", referenceId: service.id, titolo: service.titolo, qta: 1, prezzoUnitario: service.prezzo, totale: service.prezzo, performedByOperatorId: operatorId },
+        ...(includeProduct ? [{ tipo: "prodotto", referenceId: product.id, titolo: product.titolo, qta: 1, prezzoUnitario: product.prezzo, totale: product.prezzo, soldByOperatorId: operatorId }] : []),
+      ];
+      const total = saleItems.reduce((sum, item) => sum + item.totale, 0);
+      demoWrites.push(db.doc(`salons/salone-x/sales/history-sale-${String(historyIndex).padStart(4, "0")}`).set({
+        clientId: client.id,
+        clientNome: client.nome,
+        bookingId,
+        date: appointmentDate,
+        stato: "pagata",
+        items: saleItems,
+        subtotale: total,
+        sconto: 0,
+        totale: total,
+        paymentMethod: "in_salone",
+        performedByOperatorId: operatorId,
+        createdByUserId: ownerUid,
+        loyaltyPointsCredited: Math.floor(total / 100),
+        createdAt: Timestamp.fromDate(occurredAt),
+        paidAt: Timestamp.fromDate(occurredAt),
+      }));
+    }
+    historyIndex++;
+  }
+}
+
+for (let index = 0; index < 58; index++) {
+  const client = salonClients[(index * 11 + 3) % salonClients.length];
+  const product = productCatalog[index % productCatalog.length];
+  const quantity = index % 8 === 0 ? 2 : 1;
+  const createdAt = new Date(Date.now() - (2 + index * 3) * 86_400_000);
+  demoWrites.push(db.doc(`salons/salone-x/orders/history-order-${String(index).padStart(3, "0")}`).set({
+    clientId: client.id,
+    clientNome: client.nome,
+    clientEmail: client.email,
+    items: [{ productId: product.id, titolo: product.titolo, prezzo: product.prezzo, qta: quantity }],
+    totale: product.prezzo * quantity,
+    stato: index < 3 ? "in_attesa" : index < 7 ? "pronto" : "ritirato",
+    pointsEarned: Math.floor(product.prezzo * quantity / 100),
+    paymentMethod: "in_salone",
+    createdAt: Timestamp.fromDate(createdAt),
+    ...(index >= 7 ? { paidAt: Timestamp.fromDate(createdAt) } : {}),
+  }));
+}
+
+const ritornaRecipients = salonClients.filter((_, index) => index % 2 === 0).map((client) => client.id);
+const estateRecipients = salonClients.slice(0, 82).map((client) => client.id);
+demoWrites.push(
+  db.doc("salons/salone-x/campaigns/demo-ritorna").set({ filtri: { bookingInactiveDays: 60 }, titolo: "Ci manchi", testo: "Torna a trovarci.", couponId: "ritorna-20", recipientCount: ritornaRecipients.length, recipientIds: ritornaRecipients, sentAt: Timestamp.fromDate(new Date(Date.now() - 34 * 86_400_000)) }),
+  db.doc("salons/salone-x/campaigns/demo-estate").set({ filtri: {}, titolo: "Estate", testo: "Un nuovo look per l'estate.", couponId: "estate-scaduto", recipientCount: estateRecipients.length, recipientIds: estateRecipients, sentAt: Timestamp.fromDate(new Date(Date.now() - 96 * 86_400_000)) }),
+);
+for (let index = 0; index < 37; index++) {
+  const couponId = index < 23 ? "ritorna-20" : "estate-scaduto";
+  const client = salonClients[(index * 4 + 1) % salonClients.length];
+  const daysAgo = couponId === "ritorna-20" ? 31 - index : 93 - index;
+  demoWrites.push(db.doc(`salons/salone-x/couponRedemptions/demo-${couponId}-${String(index).padStart(3, "0")}`).set({
+    couponId,
+    couponCode: couponId === "ritorna-20" ? "RITORNA20" : "ESTATE15",
+    clientId: client.id,
+    appointmentDate: dateOffset(-daysAgo),
+    discountAmount: couponId === "ritorna-20" ? 640 : 480,
+    redeemedAt: Timestamp.fromDate(new Date(Date.now() - daysAgo * 86_400_000)),
+  }));
+}
+const rewardIds = ["reward-buono-10", "reward-cera", "reward-barba"];
+const rewardNames = ["Buono da 10 €", "Cera opaca omaggio", "Rituale barba"];
+for (let index = 0; index < 32; index++) {
+  const rewardIndex = index % 5 === 0 ? 2 : index % 3 === 0 ? 1 : 0;
+  const client = salonClients[(index * 7) % salonClients.length];
+  const used = index % 6 !== 0;
+  demoWrites.push(db.doc(`salons/salone-x/rewardRedemptions/demo-reward-${String(index).padStart(3, "0")}`).set({
+    clientId: client.id,
+    clientNome: client.nome,
+    rewardId: rewardIds[rewardIndex],
+    rewardNome: rewardNames[rewardIndex],
+    punti: [100, 160, 220][rewardIndex],
+    codice: `PREMIO-DEMO${String(index).padStart(4, "0")}`,
+    stato: used ? "utilizzato" : "emesso",
+    createdAt: new Date(Date.now() - (8 + index * 4) * 86_400_000).toISOString(),
+    ...(used ? { usedAt: new Date(Date.now() - (6 + index * 4) * 86_400_000).toISOString() } : {}),
+  }));
+}
+
+await commitInChunks(demoWrites);
 
 for (const [salonIndex, salon] of platformSalons.entries()) {
   const ownerUid = await ensureUser(salon.email, "OwnerBarber26!", salon.owner);

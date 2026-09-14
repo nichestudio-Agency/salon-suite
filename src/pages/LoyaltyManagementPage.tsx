@@ -5,6 +5,7 @@ import { AppIcon } from "../components/AppIcon";
 import type { FidelityConfig, FidelityReward, FidelityRewardType, LoyaltyAccount } from "../domain/models";
 import { formatEuro } from "../domain/money";
 import { creditLoyaltyPoints, listLoyaltyAccounts, lookupLoyaltyCard, redeemLoyaltyReward, updateFidelityConfig, validateRewardRedemption } from "../firebase/loyalty-repo";
+import { getSalonAnalytics, type RewardMetric } from "../firebase/analytics-repo";
 
 const DEFAULT_CONFIG: FidelityConfig = { attiva: true, puntiPerEuro: 1, sogliaPremio: 100, premioNome: "Buono da 10 €", premioValore: 1000 };
 
@@ -30,23 +31,26 @@ export function LoyaltyManagementPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [rewardStats, setRewardStats] = useState<RewardMetric[]>([]);
   const [rewardName, setRewardName] = useState(""); const [rewardDescription, setRewardDescription] = useState(""); const [rewardPoints, setRewardPoints] = useState("100"); const [rewardValue, setRewardValue] = useState("10"); const [rewardType, setRewardType] = useState<FidelityRewardType>("buono"); const [redemptionCode, setRedemptionCode] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   async function reload(id: string) {
-    const result = await listLoyaltyAccounts(id);
+    const [result, insights] = await Promise.all([listLoyaltyAccounts(id), getSalonAnalytics(id).catch(() => null)]);
     setAccounts(result.accounts ?? []);
     setConfig(result.config);
+    setRewardStats(insights?.rewards ?? []);
     if (selected) setSelected((result.accounts ?? []).find((item) => item.clientId === selected.clientId) ?? null);
   }
 
   useEffect(() => {
     if (!salonId) return;
-    void listLoyaltyAccounts(salonId)
-      .then((result) => {
+    void Promise.all([listLoyaltyAccounts(salonId), getSalonAnalytics(salonId).catch(() => null)])
+      .then(([result, insights]) => {
         setAccounts(result.accounts ?? []);
         setConfig(result.config);
+        setRewardStats(insights?.rewards ?? []);
       })
       .catch(() => setError("Non è stato possibile caricare il programma fidelity."))
       .finally(() => setLoading(false));
@@ -183,6 +187,7 @@ export function LoyaltyManagementPage() {
         <article className="is-highlight"><span>Premi disponibili</span><strong>{rewardsAvailable}</strong><small>da proporre alla cassa</small></article>
         <article><span>Punti in circolo</span><strong>{circulatingPoints}</strong><small>saldo complessivo</small></article>
       </div>
+      <section className="loyalty-insights"><header><div><span>Utilizzo premi</span><h3>Cosa scelgono i clienti</h3></div><small>Riscatti emessi e convalidati</small></header><div>{rewardStats.map((reward, index) => <article key={reward.id}><b>{String(index + 1).padStart(2, "0")}</b><div><strong>{reward.label}</strong><span>{reward.issued} richiesti</span></div><div><strong>{reward.used}</strong><span>utilizzati</span></div><i style={{ width: `${reward.issued ? Math.round(reward.used / reward.issued * 100) : 0}%` }} /></article>)}</div>{rewardStats.length === 0 && <p>Nessun premio riscattato nel periodo demo.</p>}</section>
 
       <div className="loyalty-admin__workspace">
         <section className="loyalty-scanner">

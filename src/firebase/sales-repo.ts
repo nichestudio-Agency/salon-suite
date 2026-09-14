@@ -31,6 +31,8 @@ export interface OperatorStats {
   productsSold: number;
   averageTicket: number;
   noShowCount: number;
+  recentTrend: number;
+  dailyBookings: Array<{ date: string; count: number }>;
 }
 
 export async function manageBookingOutcome(input: ManageBookingOutcomeInput): Promise<ManageBookingOutcomeResult> {
@@ -55,12 +57,12 @@ export function calculateOperatorStats(bookings: Booking[], sales: Sale[], fromD
     if (sale.clientId && !firstSaleByClient.has(sale.clientId)) firstSaleByClient.set(sale.clientId, sale);
   }
 
-  const rows = new Map<string, OperatorStats & { clients: Set<string> }>();
+  const rows = new Map<string, OperatorStats & { clients: Set<string>; bookingDates: Map<string, number> }>();
   const rowFor = (operatorId: string) => {
     const current = rows.get(operatorId) ?? {
       operatorId, bookingCount: 0, servedCount: 0, uniqueClients: 0, acquiredClients: 0,
       serviceRevenue: 0, productRevenue: 0, productsSold: 0, averageTicket: 0, noShowCount: 0,
-      clients: new Set<string>(),
+      recentTrend: 0, dailyBookings: [], clients: new Set<string>(), bookingDates: new Map<string, number>(),
     };
     rows.set(operatorId, current);
     return current;
@@ -71,6 +73,7 @@ export function calculateOperatorStats(bookings: Booking[], sales: Sale[], fromD
     if (["annullata", "rifiutata"].includes(booking.stato)) continue;
     const row = rowFor(booking.performedByOperatorId ?? booking.operatorId);
     row.bookingCount++;
+    row.bookingDates.set(booking.date, (row.bookingDates.get(booking.date) ?? 0) + 1);
     if (booking.stato === "no_show") row.noShowCount++;
   }
 
@@ -99,11 +102,22 @@ export function calculateOperatorStats(bookings: Booking[], sales: Sale[], fromD
     }
   }
 
-  return [...rows.values()].map(({ clients, ...row }) => ({
-    ...row,
-    uniqueClients: clients.size,
-    averageTicket: row.servedCount > 0
-      ? Math.round((row.serviceRevenue + row.productRevenue) / row.servedCount)
-      : 0,
-  }));
+  const dateAt = (daysAgo: number) => { const date = new Date(); date.setDate(date.getDate() - daysAgo); return date.toISOString().slice(0, 10); };
+  return [...rows.values()].map(({ clients, bookingDates, ...row }) => {
+    const dailyBookings = Array.from({ length: 14 }, (_, index) => {
+      const date = dateAt(13 - index);
+      return { date, count: bookingDates.get(date) ?? 0 };
+    });
+    const previous = dailyBookings.slice(0, 7).reduce((sum, item) => sum + item.count, 0);
+    const recent = dailyBookings.slice(7).reduce((sum, item) => sum + item.count, 0);
+    return {
+      ...row,
+      dailyBookings,
+      recentTrend: previous ? Math.round(((recent - previous) / previous) * 100) : recent ? 100 : 0,
+      uniqueClients: clients.size,
+      averageTicket: row.servedCount > 0
+        ? Math.round((row.serviceRevenue + row.productRevenue) / row.servedCount)
+        : 0,
+    };
+  });
 }

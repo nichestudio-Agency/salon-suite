@@ -1,5 +1,5 @@
 import "./dashboard.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { signOutUser } from "../firebase/auth";
 import { AppIcon } from "../components/AppIcon";
@@ -11,13 +11,14 @@ import { DashboardCommandBar } from "../components/DashboardCommandBar";
 type DashboardSection = {
   to: string;
   label: string;
-  icon: "home" | "calendar" | "scissors" | "users" | "clock" | "bag" | "orders" | "gift" | "card" | "ticket" | "key";
+  icon: "home" | "calendar" | "scissors" | "users" | "clock" | "bag" | "orders" | "gift" | "card" | "ticket" | "key" | "chart";
   end?: boolean;
 };
 
 const SECTIONS: DashboardSection[] = [
   { to: "/dashboard", label: "Dashboard", icon: "home" as const, end: true },
   { to: "/dashboard/prenotazioni", label: "Agenda", icon: "calendar" as const },
+  { to: "/dashboard/statistiche", label: "Statistiche", icon: "chart" as const },
   { to: "/dashboard/clienti", label: "Clienti", icon: "users" as const },
   { to: "/dashboard/servizi", label: "Servizi", icon: "scissors" as const },
   { to: "/dashboard/operatori", label: "Team", icon: "users" as const },
@@ -31,13 +32,14 @@ const SECTIONS: DashboardSection[] = [
   { to: "/dashboard/assistenza", label: "Assistenza", icon: "ticket" as const },
 ];
 
-const MOBILE_SECTIONS = [SECTIONS[0], SECTIONS[1], SECTIONS[2], SECTIONS[8]];
+const MOBILE_SECTIONS = [SECTIONS[0], SECTIONS[1], SECTIONS[3], SECTIONS[9]];
 
 export function DashboardLayout() {
   const { user } = useAuth();
   const { salon } = useSalonTenant();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const contentRef = useRef<HTMLElement>(null);
   const today = new Date();
   const todayLabel = new Intl.DateTimeFormat("it-IT", { weekday: "long", day: "numeric", month: "long" }).format(today);
   const monthLabel = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(today);
@@ -48,6 +50,7 @@ export function DashboardLayout() {
   const secondarySectionActive = !MOBILE_SECTIONS.some((section) => section.to === location.pathname);
   const ownerInitial = (user?.displayName || salon?.nome || "S").slice(0, 1).toUpperCase();
   useEffect(() => { if (!salon?.id || !salon.compleanno?.attivo) return; const key = `birthday-run-${salon.id}-${new Date().toLocaleDateString("sv-SE")}`; if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); void runBirthdayGreetings(salon.id).catch(() => sessionStorage.removeItem(key)); }, [salon]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); contentRef.current?.scrollTo({ top: 0, behavior: "auto" }); }, [location.pathname]);
 
   return (
     <div className="dashboard dashboard--neutral">
@@ -87,7 +90,7 @@ export function DashboardLayout() {
       </nav>
       <div className="dashboard__main">
         <DashboardCommandBar />
-        <main className="dashboard__content">
+        <main className="dashboard__content" ref={contentRef}>
           <Outlet />
         </main>
       </div>

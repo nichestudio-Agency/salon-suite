@@ -13,6 +13,7 @@ export interface CouponAnalytics {
   scaduti: number;
   recipientIds: string[];
   usedClientIds: string[];
+  redemptionSeries: Array<{ label: string; count: number }>;
 }
 
 const couponsCol = (salonId: string) =>
@@ -61,10 +62,14 @@ export async function getCouponAnalytics(
       }
     }
     const usedClients = new Set<string>();
+    const redemptionDates: Date[] = [];
     for (const redemptionDoc of redemptionsSnap.docs) {
       const redemption = redemptionDoc.data();
       if (redemption.couponId === coupon.id && typeof redemption.clientId === "string") {
         usedClients.add(redemption.clientId);
+        const raw = redemption.redeemedAt;
+        const date = raw?.toDate?.() instanceof Date ? raw.toDate() : raw ? new Date(raw) : null;
+        if (date && !Number.isNaN(date.getTime())) redemptionDates.push(date);
       }
     }
     const inviati = recipients.size + legacyRecipients;
@@ -72,6 +77,12 @@ export async function getCouponAnalytics(
     const nonUtilizzati = Math.max(inviati - utilizzati, 0);
     const expired = (coupon.scadenza && coupon.scadenza < today)
       || (coupon.dataAppuntamento && coupon.dataAppuntamento < today);
+    const redemptionSeries = Array.from({ length: 8 }, (_, index) => {
+      const endDaysAgo = (7 - index) * 7;
+      const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - endDaysAgo - 6);
+      const end = new Date(); end.setHours(23, 59, 59, 999); end.setDate(end.getDate() - endDaysAgo);
+      return { label: `${start.getDate()}/${start.getMonth() + 1}`, count: redemptionDates.filter((date) => date >= start && date <= end).length };
+    });
     return {
       couponId: coupon.id,
       inviati,
@@ -80,6 +91,7 @@ export async function getCouponAnalytics(
       scaduti: expired ? nonUtilizzati : 0,
       recipientIds: [...recipients],
       usedClientIds: [...usedClients],
+      redemptionSeries,
     };
   });
 }

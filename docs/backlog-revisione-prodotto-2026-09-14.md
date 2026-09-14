@@ -1,9 +1,21 @@
 # Backlog revisione prodotto
 
 Data raccolta: 14 settembre 2026  
-Stato: idee annotate, da progettare e sviluppare in una fase successiva
+Stato: prima versione demo implementata il 14 settembre 2026
 
-Queste note derivano da una revisione rapida della demo. Non rappresentano ancora specifiche definitive: prima dell'implementazione andranno trasformate in wireframe, requisiti dati e criteri di accettazione.
+Queste note derivano da una revisione rapida della demo. Il primo ciclo è stato implementato con dati dimostrativi coerenti; i drill-down più profondi restano indicati come evoluzione successiva, quando saranno disponibili dati reali.
+
+## Risultato del ciclo demo
+
+- anagrafica portata a 100 clienti, con circa sei mesi di appuntamenti, vendite, ordini, campagne e riscatti collegati;
+- riepilogo agenda compatto e vista settimanale a piena larghezza;
+- trend a 14 giorni e confronto tra settimane nelle card operatore;
+- nuova sezione **Statistiche** con KPI, confronti sui 30 giorni, ranking di servizi e prodotti e mappa di calore giorno × ora;
+- andamento settimanale dei riscatti coupon e ricerca nelle liste di inviati, utilizzati, non utilizzati e scaduti;
+- classifica dei premi emessi e convalidati nella sezione Fidelity;
+- correzione della command bar desktop: quattro scorciatoie sempre visibili, hover non tagliato e pulsante di chiusura mobile nascosto su desktop.
+
+Per la demo commerciale questi elementi sono completi. Intervalli personalizzati, drill-down di ogni KPI, occupazione sulle ore lavorabili e analisi di coorte fidelity vengono mantenuti come sviluppo successivo basato sui primi dati reali.
 
 ## Agenda
 
@@ -132,4 +144,3 @@ Ogni KPI dovrà poter aprire il dettaglio dei dati sorgente che lo compongono.
 3. Approfondimento della scheda operatore con trend temporali.
 4. Analisi temporale dei coupon e ricerca nelle liste destinatari.
 5. Statistiche dei riscatti fidelity e mappa di calore di giorni e fasce orarie.
-
