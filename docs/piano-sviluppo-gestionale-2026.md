@@ -30,6 +30,8 @@ Completato nel secondo incremento del 12 settembre 2026:
 
 Prossimo incremento previsto: completamento Agenda 2.0 con modifica serie, drag-and-drop, coda walk-in, risorse e stati operativi; a seguire comunicazioni WhatsApp/SMS.
 
+Le osservazioni emerse dalla revisione della demo del 14 settembre 2026 sono raccolte in [`backlog-revisione-prodotto-2026-09-14.md`](./backlog-revisione-prodotto-2026-09-14.md). Comprendono il redesign delle viste agenda e nuovi approfondimenti statistici per operatori, prodotti, servizi, coupon e fidelity.
+
 ## 1. Obiettivo
 
 Portare Salon Suite dall'attuale combinazione di app cliente, prenotazioni, marketing e fidelity a un sistema che possa diventare il gestionale principale di una barberia o di un salone.
