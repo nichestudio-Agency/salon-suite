@@ -11,6 +11,8 @@ Queste note derivano da una revisione rapida della demo. Il primo ciclo è stato
 - riepilogo agenda compatto e vista settimanale a piena larghezza;
 - trend a 14 giorni e confronto tra settimane nelle card operatore;
 - nuova sezione **Statistiche** con KPI, confronti sui 30 giorni, ranking di servizi e prodotti e mappa di calore giorno × ora;
+- selezione analitica a 30, 90 o 180 giorni, occupazione stimata e fascia più richiesta;
+- drill-down di servizi e prodotti fino ai singoli movimenti con data, cliente, quantità e ricavo;
 - andamento settimanale dei riscatti coupon e ricerca nelle liste di inviati, utilizzati, non utilizzati e scaduti;
 - classifica dei premi emessi e convalidati nella sezione Fidelity;
 - correzione della command bar desktop: quattro scorciatoie sempre visibili, hover non tagliato e pulsante di chiusura mobile nascosto su desktop.

@@ -9,6 +9,7 @@ export interface RankedMetric {
   previous: number;
   trend: number;
   revenue: number;
+  details: Array<{ date: string; client: string; quantity: number; revenue: number }>;
 }
 
 export interface DemandCell {
@@ -31,6 +32,7 @@ export interface SalonAnalytics {
   previousRevenue: number;
   averageTicket: number;
   noShowRate: number;
+  occupancyRate: number;
   services: RankedMetric[];
   products: RankedMetric[];
   demand: DemandCell[];
@@ -49,7 +51,7 @@ function trend(current: number, previous: number) {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-export async function getSalonAnalytics(salonId: string): Promise<SalonAnalytics> {
+export async function getSalonAnalytics(salonId: string, periodDays = 30): Promise<SalonAnalytics> {
   const [bookingsSnap, salesSnap, redemptionsSnap] = await Promise.all([
     getDocs(collection(db, `salons/${salonId}/bookings`)),
     getDocs(collection(db, `salons/${salonId}/sales`)),
@@ -59,13 +61,14 @@ export async function getSalonAnalytics(salonId: string): Promise<SalonAnalytics
     bookingsSnap.docs.map((item) => item.data() as Booking),
     salesSnap.docs.map((item) => item.data() as Sale),
     redemptionsSnap.docs.map((item) => ({ id: item.id, ...item.data() } as RewardRedemption)),
+    periodDays,
   );
 }
 
-export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], redemptions: RewardRedemption[]): SalonAnalytics {
-  const currentFrom = isoOffset(-29);
-  const previousFrom = isoOffset(-59);
-  const previousTo = isoOffset(-30);
+export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], redemptions: RewardRedemption[], periodDays = 30): SalonAnalytics {
+  const currentFrom = isoOffset(-(periodDays - 1));
+  const previousFrom = isoOffset(-(periodDays * 2 - 1));
+  const previousTo = isoOffset(-periodDays);
   const paidSales = sales.filter((sale) => sale.stato === "pagata");
   const completed = bookings.filter((booking) => booking.stato === "completata");
   const currentBookings = completed.filter((booking) => booking.date >= currentFrom);
@@ -84,9 +87,12 @@ export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], rede
       if (!period) continue;
       for (const item of sale.items ?? []) {
         if (item.tipo !== type) continue;
-        const row = rows.get(item.referenceId) ?? { id: item.referenceId, label: item.titolo, current: 0, previous: 0, revenue: 0 };
+        const row = rows.get(item.referenceId) ?? { id: item.referenceId, label: item.titolo, current: 0, previous: 0, revenue: 0, details: [] };
         row[period] += Number(item.qta) || 0;
-        if (period === "current") row.revenue += Number(item.totale) || 0;
+        if (period === "current") {
+          row.revenue += Number(item.totale) || 0;
+          row.details.push({ date: sale.date, client: sale.clientNome || "Cliente al banco", quantity: Number(item.qta) || 0, revenue: Number(item.totale) || 0 });
+        }
         rows.set(item.referenceId, row);
       }
     }
@@ -113,6 +119,10 @@ export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], rede
     rewardRows.set(redemption.rewardId, row);
   }
 
+  const activeOperators = new Set(currentBookings.map((booking) => booking.performedByOperatorId ?? booking.operatorId)).size || 1;
+  const workingDays = Array.from({ length: periodDays }, (_, index) => new Date(`${isoOffset(-index)}T12:00:00`)).filter((date) => date.getDay() !== 0 && date.getDay() !== 1).length;
+  const bookedMinutes = currentBookings.reduce((sum, booking) => sum + Math.max(0, booking.endMin - booking.startMin), 0);
+
   return {
     completedBookings: currentBookings.length,
     previousCompletedBookings: previousBookings.length,
@@ -120,6 +130,7 @@ export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], rede
     previousRevenue,
     averageTicket: currentSales.length ? Math.round(currentRevenue / currentSales.length) : 0,
     noShowRate: recentBookings.length ? Math.round((noShows / recentBookings.length) * 100) : 0,
+    occupancyRate: workingDays ? Math.min(100, Math.round((bookedMinutes / (workingDays * activeOperators * 10 * 60)) * 100)) : 0,
     services: rank("servizio"),
     products: rank("prodotto"),
     demand,

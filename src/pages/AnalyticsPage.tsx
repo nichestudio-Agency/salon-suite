@@ -4,35 +4,49 @@ import { AppIcon } from "../components/AppIcon";
 import { formatEuro } from "../domain/money";
 import { getSalonAnalytics, type RankedMetric, type SalonAnalytics } from "../firebase/analytics-repo";
 
+type Period = 30 | 90 | 180;
+type SelectedMetric = { kind: "servizio" | "prodotto"; metric: RankedMetric };
 const WEEKDAYS = ["Mar", "Mer", "Gio", "Ven", "Sab"];
 const change = (current: number, previous: number) => previous ? Math.round(((current - previous) / previous) * 100) : current ? 100 : 0;
 const trendText = (value: number) => `${value > 0 ? "+" : ""}${value}%`;
 
-function Ranking({ title, items, unit }: { title: string; items: RankedMetric[]; unit: string }) {
+function Ranking({ title, items, unit, period, onSelect }: { title: string; items: RankedMetric[]; unit: string; period: number; onSelect: (metric: RankedMetric) => void }) {
   const max = Math.max(...items.map((item) => item.current), 1);
-  return <section className="analytics-ranking"><header><span>Ultimi 30 giorni</span><h3>{title}</h3></header><div>{items.map((item, index) => <article key={item.id}><b>{String(index + 1).padStart(2, "0")}</b><div><strong>{item.label}</strong><span><i style={{ width: `${Math.max(7, item.current / max * 100)}%` }} /></span></div><div><strong>{item.current} {unit}</strong><small className={item.trend < 0 ? "is-down" : "is-up"}>{trendText(item.trend)} vs periodo prima</small></div></article>)}</div>{items.length === 0 && <p className="analytics-empty">Lo storico comparirà dopo le prime vendite.</p>}</section>;
+  return <section className="analytics-ranking"><header><span>Ultimi {period} giorni</span><h3>{title}</h3></header><div>{items.map((item, index) => <button className="analytics-ranking__row" type="button" onClick={() => onSelect(item)} key={item.id}><b>{String(index + 1).padStart(2, "0")}</b><div><strong>{item.label}</strong><span><i style={{ width: `${Math.max(7, item.current / max * 100)}%` }} /></span></div><div><strong>{item.current} {unit}</strong><small className={item.trend < 0 ? "is-down" : "is-up"}>{trendText(item.trend)} vs periodo prima</small></div><AppIcon name="arrow" size={15} /></button>)}</div>{items.length === 0 && <p className="analytics-empty">Lo storico comparirà dopo le prime vendite.</p>}</section>;
 }
 
 export function AnalyticsPage() {
   const { salonId } = useAuth();
   const [data, setData] = useState<SalonAnalytics | null>(null);
+  const [period, setPeriod] = useState<Period>(30);
+  const [selected, setSelected] = useState<SelectedMetric | null>(null);
   const [error, setError] = useState(false);
-  useEffect(() => { if (salonId) void getSalonAnalytics(salonId).then(setData).catch(() => setError(true)); }, [salonId]);
+  useEffect(() => {
+    if (!salonId) return;
+    let active = true;
+    void getSalonAnalytics(salonId, period).then((result) => { if (active) { setData(result); setError(false); } }).catch(() => { if (active) setError(true); });
+    return () => { active = false; };
+  }, [salonId, period]);
+  function selectPeriod(value: Period) { setData(null); setError(false); setSelected(null); setPeriod(value); }
   const maxDemand = useMemo(() => Math.max(...(data?.demand.map((cell) => cell.count) ?? [1]), 1), [data]);
+  const busiest = useMemo(() => data?.demand.reduce((best, cell) => cell.count > best.count ? cell : best, data.demand[0]), [data]);
   const bookingTrend = data ? change(data.completedBookings, data.previousCompletedBookings) : 0;
   const revenueTrend = data ? change(data.revenue, data.previousRevenue) : 0;
+  const loadingClass = data ? "" : " is-loading";
 
   return <section className="analytics-page">
-    <header className="dashboard-page-header"><div><span>Controllo attività</span><h2>Statistiche</h2><p>Capisci cosa cresce, cosa rallenta e dove c’è spazio da riempire.</p></div><span className="analytics-period">Ultimi 30 giorni</span></header>
+    <header className="dashboard-page-header analytics-header"><div><span>Controllo attività</span><h2>Statistiche</h2><p>Capisci cosa cresce, cosa rallenta e dove c’è spazio da riempire.</p></div><div className="analytics-period" aria-label="Periodo statistiche">{([30, 90, 180] as Period[]).map((value) => <button className={period === value ? "is-active" : ""} type="button" onClick={() => selectPeriod(value)} key={value}>{value} gg</button>)}</div></header>
     {error && <p className="owner-home__error">Non è stato possibile caricare le statistiche.</p>}
-    <div className="analytics-kpis">
-      <article><span>Prenotazioni concluse</span><strong>{data?.completedBookings ?? "—"}</strong><small className={bookingTrend < 0 ? "is-down" : "is-up"}>{trendText(bookingTrend)} sul periodo precedente</small></article>
-      <article><span>Incasso registrato</span><strong>{data ? `€ ${formatEuro(data.revenue)}` : "—"}</strong><small className={revenueTrend < 0 ? "is-down" : "is-up"}>{trendText(revenueTrend)} sul periodo precedente</small></article>
-      <article><span>Ticket medio</span><strong>{data ? `€ ${formatEuro(data.averageTicket)}` : "—"}</strong><small>servizi e prodotti pagati</small></article>
-      <article><span>Tasso no-show</span><strong>{data ? `${data.noShowRate}%` : "—"}</strong><small>degli appuntamenti recenti</small></article>
+    <div className={`analytics-kpis${loadingClass}`}>
+      <article><span>Prenotazioni concluse</span><strong>{data?.completedBookings ?? ""}</strong><small className={bookingTrend < 0 ? "is-down" : "is-up"}>{data ? `${trendText(bookingTrend)} sul periodo precedente` : "Caricamento dati"}</small></article>
+      <article><span>Incasso registrato</span><strong>{data ? `€ ${formatEuro(data.revenue)}` : ""}</strong><small className={revenueTrend < 0 ? "is-down" : "is-up"}>{data ? `${trendText(revenueTrend)} sul periodo precedente` : "Caricamento dati"}</small></article>
+      <article><span>Ticket medio</span><strong>{data ? `€ ${formatEuro(data.averageTicket)}` : ""}</strong><small>servizi e prodotti pagati</small></article>
+      <article><span>Tasso no-show</span><strong>{data ? `${data.noShowRate}%` : ""}</strong><small>degli appuntamenti recenti</small></article>
     </div>
-    <div className="analytics-rankings"><Ranking title="Servizi più richiesti" items={data?.services ?? []} unit="visite" /><Ranking title="Prodotti più venduti" items={data?.products ?? []} unit="pezzi" /></div>
+    <section className="analytics-signal-strip"><div><span>Occupazione stimata</span><strong>{data ? `${data.occupancyRate}%` : "—"}</strong><small>sulle ore disponibili del team</small></div><div><span>Fascia più richiesta</span><strong>{busiest ? `${WEEKDAYS[busiest.weekday - 2]} · ${busiest.hour}:00` : "—"}</strong><small>{busiest?.count ?? 0} appuntamenti conclusi</small></div><p><AppIcon name="spark" size={18} /> Usa i periodi più tranquilli per programmare una campagna “Riempi agenda”.</p></section>
+    <div className="analytics-rankings"><Ranking title="Servizi più richiesti" items={data?.services ?? []} unit="visite" period={period} onSelect={(metric) => setSelected({ kind: "servizio", metric })} /><Ranking title="Prodotti più venduti" items={data?.products ?? []} unit="pezzi" period={period} onSelect={(metric) => setSelected({ kind: "prodotto", metric })} /></div>
     <section className="analytics-demand"><header><div><span>Domanda reale</span><h3>Giorni e fasce orarie</h3><p>Più il colore è intenso, maggiore è il numero di appuntamenti conclusi negli ultimi 120 giorni.</p></div><AppIcon name="chart" size={26} /></header><div className="analytics-heatmap"><span />{Array.from({ length: 10 }, (_, index) => <b key={index}>{index + 9}</b>)}{WEEKDAYS.flatMap((day, dayIndex) => [<strong key={`${day}-label`}>{day}</strong>, ...Array.from({ length: 10 }, (_, hourIndex) => { const cell = data?.demand.find((item) => item.weekday === dayIndex + 2 && item.hour === hourIndex + 9); const intensity = (cell?.count ?? 0) / maxDemand; return <i title={`${day} ${hourIndex + 9}:00 · ${cell?.count ?? 0} appuntamenti`} style={{ "--heat": intensity } as CSSProperties} key={`${day}-${hourIndex}`}>{cell?.count || ""}</i>; })])}</div></section>
     <section className="analytics-rewards"><header><span>Fidelity</span><h3>Premi più riscattati</h3></header><div>{(data?.rewards ?? []).map((reward) => <article key={reward.id}><span><AppIcon name="gift" size={18} /></span><div><strong>{reward.label}</strong><small>{reward.issued} richiesti · {reward.used} convalidati</small></div><b>{reward.issued ? Math.round(reward.used / reward.issued * 100) : 0}%</b></article>)}</div>{data?.rewards.length === 0 && <p className="analytics-empty">I riscatti compariranno qui.</p>}</section>
+    {selected && <><button className="analytics-detail__backdrop" type="button" aria-label="Chiudi dettaglio" onClick={() => setSelected(null)} /><aside className="analytics-detail" aria-label={`Dettaglio ${selected.metric.label}`}><header><div><span>{selected.kind}</span><h3>{selected.metric.label}</h3><p>Movimenti inclusi negli ultimi {period} giorni.</p></div><button type="button" aria-label="Chiudi" onClick={() => setSelected(null)}>×</button></header><div className="analytics-detail__summary"><div><span>Quantità</span><strong>{selected.metric.current}</strong></div><div><span>Ricavi</span><strong>€ {formatEuro(selected.metric.revenue)}</strong></div><div><span>Variazione</span><strong className={selected.metric.trend < 0 ? "is-down" : "is-up"}>{trendText(selected.metric.trend)}</strong></div></div><div className="analytics-detail__list"><header><span>Data</span><span>Cliente</span><span>Qtà</span><span>Valore</span></header>{selected.metric.details.sort((a, b) => b.date.localeCompare(a.date)).map((detail, index) => <article key={`${detail.date}-${detail.client}-${index}`}><time>{new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "short" }).format(new Date(`${detail.date}T12:00:00`))}</time><strong>{detail.client}</strong><span>{detail.quantity}</span><b>€ {formatEuro(detail.revenue)}</b></article>)}</div></aside></>}
   </section>;
 }

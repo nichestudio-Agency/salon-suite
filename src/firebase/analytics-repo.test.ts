@@ -19,8 +19,18 @@ describe("calculateSalonAnalytics", () => {
     expect(result.completedBookings).toBe(1);
     expect(result.previousCompletedBookings).toBe(1);
     expect(result.revenue).toBe(4800);
+    expect(result.occupancyRate).toEqual(expect.any(Number));
     expect(result.services[0]).toMatchObject({ label: "Taglio", current: 1, previous: 1, trend: 0 });
     expect(result.products[0]).toMatchObject({ label: "Cera", current: 1, previous: 1 });
     expect(result.rewards[0]).toMatchObject({ label: "Buono", issued: 1, used: 1 });
+  });
+
+  it("rispetta il periodo selezionato e confronta una finestra equivalente", () => {
+    const makeSale = (date: string): Sale => ({ clientId: "c1", clientNome: "Mario Rossi", date, stato: "pagata", subtotale: 3000, sconto: 0, totale: 3000, paymentMethod: "in_salone", createdByUserId: "owner", items: [{ tipo: "servizio", referenceId: "taglio", titolo: "Taglio", qta: 1, prezzoUnitario: 3000, totale: 3000 }] });
+    const result = calculateSalonAnalytics([], [makeSale(dateOffset(-65)), makeSale(dateOffset(-120))], [], 90);
+
+    expect(result.revenue).toBe(3000);
+    expect(result.previousRevenue).toBe(3000);
+    expect(result.services[0].details[0]).toMatchObject({ client: "Mario Rossi", revenue: 3000 });
   });
 });
