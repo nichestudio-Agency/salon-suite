@@ -35,12 +35,32 @@ function requireId(value: unknown, field: string): string {
 
 function normalizeConfig(value: unknown) {
   const data = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const rewards = Array.isArray(data.rewards)
+    ? data.rewards.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const reward = item as Record<string, unknown>;
+      const tipo = reward.tipo;
+      if (typeof reward.id !== "string" || !reward.id.trim()
+        || typeof reward.nome !== "string" || !reward.nome.trim()
+        || !["servizio", "prodotto", "buono"].includes(String(tipo))) return [];
+      return [{
+        id: reward.id.trim(),
+        nome: reward.nome.trim(),
+        descrizione: typeof reward.descrizione === "string" ? reward.descrizione.trim() : "",
+        tipo,
+        punti: Number.isInteger(reward.punti) && Number(reward.punti) > 0 ? Number(reward.punti) : 1,
+        valore: Number.isInteger(reward.valore) && Number(reward.valore) >= 0 ? Number(reward.valore) : 0,
+        attivo: reward.attivo !== false,
+      }];
+    })
+    : [];
   return {
     attiva: data.attiva !== false,
     puntiPerEuro: Number.isInteger(data.puntiPerEuro) && Number(data.puntiPerEuro) > 0 ? Number(data.puntiPerEuro) : DEFAULT_CONFIG.puntiPerEuro,
     sogliaPremio: Number.isInteger(data.sogliaPremio) && Number(data.sogliaPremio) > 0 ? Number(data.sogliaPremio) : DEFAULT_CONFIG.sogliaPremio,
     premioNome: typeof data.premioNome === "string" && data.premioNome.trim() ? data.premioNome.trim() : DEFAULT_CONFIG.premioNome,
     premioValore: Number.isInteger(data.premioValore) && Number(data.premioValore) >= 0 ? Number(data.premioValore) : DEFAULT_CONFIG.premioValore,
+    rewards,
   };
 }
 

@@ -15,9 +15,12 @@ Queste note derivano da una revisione rapida della demo. Il primo ciclo è stato
 - drill-down di servizi e prodotti fino ai singoli movimenti con data, cliente, quantità e ricavo;
 - andamento settimanale dei riscatti coupon e ricerca nelle liste di inviati, utilizzati, non utilizzati e scaduti;
 - classifica dei premi emessi e convalidati nella sezione Fidelity;
+- analisi operatori su 7, 30, 90 giorni o intervallo personalizzato, con occupazione, annullamenti, no-show, servizi e prodotti attribuiti;
+- analisi del ciclo coupon con conversione, tempo medio, fasi di utilizzo e filtri per stato e segmento;
+- analisi fidelity con punti emessi, riscattati e circolanti, tempo medio al premio e abitudini di prenotazione;
 - correzione della command bar desktop: quattro scorciatoie sempre visibili, hover non tagliato e pulsante di chiusura mobile nascosto su desktop.
 
-Per la demo commerciale questi elementi sono completi. Intervalli personalizzati, drill-down di ogni KPI, occupazione sulle ore lavorabili e analisi di coorte fidelity vengono mantenuti come sviluppo successivo basato sui primi dati reali.
+Per la demo commerciale questi elementi sono completi. L'occupazione utilizza una giornata standard di dieci ore nei giorni lavorativi; il collegamento puntuale agli orari reali di ciascun operatore e le analisi di coorte avanzate restano sviluppi successivi basati sui primi dati operativi.
 
 ## Agenda
 
@@ -55,7 +58,7 @@ Aggiornamento demo: il riepilogo della data selezionata è ora una fascia compat
 
 La scheda attuale mostra clienti serviti, fatturato e ticket medio, ma non permette di capire l'andamento nel tempo.
 
-Da aggiungere:
+Completato per la demo:
 
 - selezione del periodo: giorno, settimana, mese, intervallo personalizzato;
 - prenotazioni e clienti serviti per giorno;
@@ -101,7 +104,7 @@ Creare un'area generale dedicata all'andamento del salone, con filtri temporali 
 
 Ampliare il monitoraggio già presente per passare da conteggi complessivi a un'analisi temporale.
 
-Da aggiungere:
+Completato per la demo:
 
 - andamento degli utilizzi dalla data di invio alla scadenza;
 - distribuzione degli utilizzi nei primi giorni, nella fase centrale e vicino alla scadenza;
@@ -109,17 +112,17 @@ Da aggiungere:
 - confronto tra coupon e campagne differenti;
 - ricerca per nome, email o telefono nelle liste degli utenti;
 - ricerca disponibile nelle tab “Inviati”, “Utilizzati”, “Non utilizzati” e “Scaduti”;
-- filtri per data di invio, data di utilizzo, stato e segmento destinatario.
+- data di utilizzo visibile nel dettaglio, filtri per stato e segmento destinatario. Il filtro per intervallo data resta un affinamento successivo.
 
 Obiettivo: capire se un coupon genera una risposta immediata, distribuita nel tempo oppure soltanto vicino alla scadenza.
 
 ## Fidelity
 
-Da aggiungere:
+Completato per la demo:
 
 - premi e prodotti del catalogo più riscattati;
 - premi meno riscattati o mai riscattati;
-- punti emessi, utilizzati e scaduti nel periodo;
+- punti emessi, utilizzati e circolanti; la scadenza punti richiede prima la relativa regola commerciale;
 - tempo medio necessario per raggiungere un premio;
 - andamento dei riscatti nel tempo;
 - confronto tra clienti con fidelity attiva e comportamento di prenotazione;

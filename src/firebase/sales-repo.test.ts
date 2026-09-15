@@ -25,8 +25,12 @@ describe("calculateOperatorStats", () => {
 
     expect(result).toEqual([expect.objectContaining({
       operatorId: "op1", bookingCount: 2, noShowCount: 1, servedCount: 2,
+      cancelledCount: 1,
       uniqueClients: 2, acquiredClients: 2, serviceRevenue: 4000,
       productRevenue: 1000, productsSold: 2, averageTicket: 2500,
+      occupancyRate: expect.any(Number),
+      topServices: [expect.objectContaining({ label: "Taglio", quantity: 2, revenue: 4000 })],
+      topProducts: [expect.objectContaining({ label: "Cera", quantity: 2, revenue: 1000 })],
     })]);
   });
 
@@ -37,5 +41,19 @@ describe("calculateOperatorStats", () => {
     ], "2026-09-01");
 
     expect(result[0]).toEqual(expect.objectContaining({ operatorId: "op1", acquiredClients: 0 }));
+  });
+
+  it("rispetta anche la fine di un intervallo personalizzato", () => {
+    const result = calculateOperatorStats(
+      [
+        { ...booking("completata"), date: "2026-09-08" },
+        { ...booking("completata"), date: "2026-09-12" },
+      ],
+      [sale("2026-09-08", "c1"), sale("2026-09-12", "c2")],
+      "2026-09-01",
+      "2026-09-10",
+    );
+
+    expect(result[0]).toEqual(expect.objectContaining({ bookingCount: 1, servedCount: 1, serviceRevenue: 2000 }));
   });
 });

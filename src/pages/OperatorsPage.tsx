@@ -17,6 +17,11 @@ import {
   type OperatorWithId,
 } from "../firebase/operator-repo";
 
+function PerformanceMix({ title, empty, rows }: { title: string; empty: string; rows: Array<{ id: string; label: string; quantity: number; revenue: number }> }) {
+  const max = Math.max(...rows.map((row) => row.quantity), 1);
+  return <section><header><strong>{title}</strong><span>{rows.reduce((sum, row) => sum + row.quantity, 0)} totali</span></header>{rows.slice(0, 4).map((row) => <article key={row.id}><div><strong>{row.label}</strong><span>{row.quantity} · € {formatEuro(row.revenue)}</span></div><i><b style={{ width: `${Math.max(8, row.quantity / max * 100)}%` }} /></i></article>)}{rows.length === 0 && <p>{empty}</p>}</section>;
+}
+
 export function OperatorsPage() {
   const { salonId } = useAuth();
   const [items, setItems] = useState<OperatorWithId[]>([]);
@@ -31,9 +36,12 @@ export function OperatorsPage() {
   const [storeHours, setStoreHours] = useState<WeeklyHours>({});
   const [busy, setBusy] = useState(false);
   const [stats, setStats] = useState<OperatorStats[]>([]);
-  const [statsPeriod, setStatsPeriod] = useState<"30" | "90" | "all">("30");
+  const [statsPeriod, setStatsPeriod] = useState<"7" | "30" | "90" | "all" | "custom">("30");
+  const [customFrom, setCustomFrom] = useState(() => { const date = new Date(); date.setDate(date.getDate() - 29); return date.toISOString().slice(0, 10); });
+  const [customTo, setCustomTo] = useState(() => new Date().toISOString().slice(0, 10));
 
   function periodStart(period = statsPeriod) {
+    if (period === "custom") return customFrom;
     if (period === "all") return undefined;
     const date = new Date();
     date.setDate(date.getDate() - Number(period) + 1);
@@ -43,7 +51,7 @@ export function OperatorsPage() {
   async function reload(id: string, period = statsPeriod) {
     const [operators, operatorStats] = await Promise.all([
       listOperators(id),
-      listOperatorStats(id, periodStart(period)).catch(() => []),
+      listOperatorStats(id, periodStart(period), period === "custom" ? customTo : undefined).catch(() => []),
     ]);
     setItems(operators);
     setStats(operatorStats);
@@ -56,7 +64,7 @@ export function OperatorsPage() {
     }
   }, [salonId]);
 
-  async function changeStatsPeriod(period: "30" | "90" | "all") {
+  async function changeStatsPeriod(period: "7" | "30" | "90" | "all" | "custom") {
     setStatsPeriod(period);
     if (salonId) await reload(salonId, period);
   }
@@ -153,7 +161,7 @@ export function OperatorsPage() {
 
   return (
     <section>
-      <div className="dashboard-page-header"><div><span>Team</span><h2>Operatori</h2><p>Disponibilità, clienti serviti e contributo commerciale.</p></div><label className="operator-period"><span>Periodo statistiche</span><select value={statsPeriod} onChange={(event) => void changeStatsPeriod(event.target.value as "30" | "90" | "all")}><option value="30">Ultimi 30 giorni</option><option value="90">Ultimi 90 giorni</option><option value="all">Tutto il periodo</option></select></label></div>
+      <div className="dashboard-page-header"><div><span>Team</span><h2>Operatori</h2><p>Disponibilità, clienti serviti e contributo commerciale.</p></div><div className="operator-period"><label><span>Periodo statistiche</span><select value={statsPeriod} onChange={(event) => void changeStatsPeriod(event.target.value as "7" | "30" | "90" | "all" | "custom")}><option value="7">Ultimi 7 giorni</option><option value="30">Ultimi 30 giorni</option><option value="90">Ultimi 90 giorni</option><option value="all">Tutto il periodo</option><option value="custom">Intervallo personalizzato</option></select></label>{statsPeriod === "custom" && <div className="operator-period__custom"><input aria-label="Statistiche dal" type="date" value={customFrom} max={customTo} onChange={(event) => setCustomFrom(event.target.value)} /><input aria-label="Statistiche al" type="date" value={customTo} min={customFrom} onChange={(event) => setCustomTo(event.target.value)} /><button type="button" onClick={() => salonId && void reload(salonId, "custom")}>Applica</button></div>}</div></div>
       <div className="operator-card-grid">{items.map((operator) => (
         <article className={`entity-card operator-profile-card ${operator.attivo ? "" : "is-inactive"}`} key={operator.id}>
           <div className="entity-card__media operator-profile-card__media">
@@ -181,7 +189,7 @@ export function OperatorsPage() {
           <button className="btn btn--danger" type="button" onClick={() => void onDelete(selectedOperator.id)}>Elimina operatore</button>
         </div>
         <section className="operator-performance" aria-label={`Statistiche di ${selectedOperator.nome}`}>
-          <header><span>Performance commerciale</span><strong>{statsPeriod === "all" ? "Intero periodo" : `Ultimi ${statsPeriod} giorni`}</strong></header>
+          <header><span>Performance commerciale</span><strong>{statsPeriod === "all" ? "Intero periodo" : statsPeriod === "custom" ? `${customFrom} → ${customTo}` : `Ultimi ${statsPeriod} giorni`}</strong></header>
           <div className="operator-performance__grid">
             <article><span>Prenotazioni</span><strong>{selectedStats?.bookingCount ?? 0}</strong><small>{selectedStats?.noShowCount ?? 0} no-show</small></article>
             <article><span>Visite concluse</span><strong>{selectedStats?.servedCount ?? 0}</strong><small>{selectedStats?.uniqueClients ?? 0} clienti unici</small></article>
@@ -189,8 +197,11 @@ export function OperatorsPage() {
             <article><span>Fatturato servizi</span><strong>€ {formatEuro(selectedStats?.serviceRevenue ?? 0)}</strong><small>Vendite pagate</small></article>
             <article><span>Prodotti venduti</span><strong>{selectedStats?.productsSold ?? 0}</strong><small>€ {formatEuro(selectedStats?.productRevenue ?? 0)}</small></article>
             <article><span>Ticket medio</span><strong>€ {formatEuro(selectedStats?.averageTicket ?? 0)}</strong><small>Per visita conclusa</small></article>
+            <article><span>Occupazione stimata</span><strong>{selectedStats?.occupancyRate ?? 0}%</strong><small>sulle ore lavorabili</small></article>
+            <article><span>Annullamenti</span><strong>{selectedStats?.cancelledCount ?? 0}</strong><small>oltre a {selectedStats?.noShowCount ?? 0} no-show</small></article>
           </div>
           <div className="operator-performance__timeline"><div><strong>Ritmo prenotazioni</strong><span>Ultimi 14 giorni · confronto tra le due settimane</span></div><b className={(selectedStats?.recentTrend ?? 0) < 0 ? "is-down" : "is-up"}>{(selectedStats?.recentTrend ?? 0) > 0 ? "+" : ""}{selectedStats?.recentTrend ?? 0}%</b><div className="operator-performance__bars">{(selectedStats?.dailyBookings ?? []).map((day) => <span key={day.date}><i style={{ height: `${Math.max(6, day.count / Math.max(...(selectedStats?.dailyBookings.map((item) => item.count) ?? [1]), 1) * 100)}%` }} /><small>{new Intl.DateTimeFormat("it-IT", { weekday: "narrow" }).format(new Date(`${day.date}T12:00:00`))}</small></span>)}</div></div>
+          <div className="operator-performance__mix"><PerformanceMix title="Servizi eseguiti" empty="Nessun servizio attribuito" rows={selectedStats?.topServices ?? []} /><PerformanceMix title="Prodotti venduti" empty="Nessun prodotto attribuito" rows={selectedStats?.topProducts ?? []} /></div>
         </section>
         {(selectedOperator.indisponibilita?.length ?? 0) > 0 && <div className="operator-unavailability-list">{selectedOperator.indisponibilita!.map((period) => <div key={period.id}><span><strong>{period.dal === period.al ? period.dal : `${period.dal} → ${period.al}`}</strong>{period.motivo && ` · ${period.motivo}`}</span><button className="btn btn--ghost" type="button" onClick={() => void removeUnavailability(selectedOperator, period.id)}>Rendi disponibile</button></div>)}</div>}
         {openAvailability === selectedOperator.id && <form className="operator-unavailability-panel" onSubmit={(event) => void addUnavailability(event, selectedOperator)}><div><span>Programma indisponibilità</span><h3>Scegli il periodo</h3></div><div className="operator-unavailability-fields"><div className="field"><label htmlFor={`from-${selectedOperator.id}`}>Dal</label><input id={`from-${selectedOperator.id}`} type="date" value={unavailableFrom} onChange={(event) => { setUnavailableFrom(event.target.value); if (!unavailableTo || event.target.value > unavailableTo) setUnavailableTo(event.target.value); }} required /></div><div className="field"><label htmlFor={`to-${selectedOperator.id}`}>Al</label><input id={`to-${selectedOperator.id}`} type="date" min={unavailableFrom} value={unavailableTo} onChange={(event) => setUnavailableTo(event.target.value)} required /></div><div className="field"><label htmlFor={`reason-${selectedOperator.id}`}>Motivo (opzionale)</label><input id={`reason-${selectedOperator.id}`} value={unavailableReason} onChange={(event) => setUnavailableReason(event.target.value)} placeholder="Ferie, permesso…" /></div></div><div className="row"><button className="btn" type="submit">Programma periodo</button><button className="btn btn--ghost" type="button" onClick={() => setOpenAvailability(null)}>Annulla</button></div></form>}

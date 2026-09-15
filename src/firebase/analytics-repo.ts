@@ -23,6 +23,17 @@ export interface RewardMetric {
   label: string;
   issued: number;
   used: number;
+  averageDaysToUse: number;
+}
+
+export interface LoyaltyAnalytics {
+  pointsIssued: number;
+  pointsRedeemed: number;
+  pointsCirculating: number;
+  averageDaysToReward: number;
+  bookingShare: number;
+  favoriteWeekday: string;
+  favoriteHour: string;
 }
 
 export interface SalonAnalytics {
@@ -37,6 +48,7 @@ export interface SalonAnalytics {
   products: RankedMetric[];
   demand: DemandCell[];
   rewards: RewardMetric[];
+  loyalty: LoyaltyAnalytics;
 }
 
 const isoOffset = (days: number) => {
@@ -52,20 +64,22 @@ function trend(current: number, previous: number) {
 }
 
 export async function getSalonAnalytics(salonId: string, periodDays = 30): Promise<SalonAnalytics> {
-  const [bookingsSnap, salesSnap, redemptionsSnap] = await Promise.all([
+  const [bookingsSnap, salesSnap, redemptionsSnap, accountsSnap] = await Promise.all([
     getDocs(collection(db, `salons/${salonId}/bookings`)),
     getDocs(collection(db, `salons/${salonId}/sales`)),
     getDocs(collection(db, `salons/${salonId}/rewardRedemptions`)),
+    getDocs(collection(db, `salons/${salonId}/loyaltyAccounts`)),
   ]);
   return calculateSalonAnalytics(
     bookingsSnap.docs.map((item) => item.data() as Booking),
     salesSnap.docs.map((item) => item.data() as Sale),
     redemptionsSnap.docs.map((item) => ({ id: item.id, ...item.data() } as RewardRedemption)),
     periodDays,
+    accountsSnap.docs.map((item) => ({ clientId: item.id, ...item.data() } as { clientId: string; punti?: number; puntiTotali?: number; puntiRiscattati?: number })),
   );
 }
 
-export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], redemptions: RewardRedemption[], periodDays = 30): SalonAnalytics {
+export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], redemptions: RewardRedemption[], periodDays = 30, loyaltyAccounts: Array<{ clientId: string; punti?: number; puntiTotali?: number; puntiRiscattati?: number }> = []): SalonAnalytics {
   const currentFrom = isoOffset(-(periodDays - 1));
   const previousFrom = isoOffset(-(periodDays * 2 - 1));
   const previousTo = isoOffset(-periodDays);
@@ -111,13 +125,28 @@ export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], rede
     Array.from({ length: 10 }, (_, index) => ({ weekday, hour: index + 9, count: demandMap.get(`${weekday}-${index + 9}`) ?? 0 })),
   );
 
-  const rewardRows = new Map<string, RewardMetric>();
+  const rewardRows = new Map<string, RewardMetric & { totalDays: number }>();
+  const dateValue = (value: unknown) => { const raw = value as { toDate?: () => Date } | string | undefined; const date = typeof raw === "string" ? new Date(raw) : raw?.toDate?.(); return date && !Number.isNaN(date.getTime()) ? date : null; };
   for (const redemption of redemptions) {
-    const row = rewardRows.get(redemption.rewardId) ?? { id: redemption.rewardId, label: redemption.rewardNome, issued: 0, used: 0 };
+    const row = rewardRows.get(redemption.rewardId) ?? { id: redemption.rewardId, label: redemption.rewardNome, issued: 0, used: 0, averageDaysToUse: 0, totalDays: 0 };
     row.issued++;
-    if (redemption.stato === "utilizzato") row.used++;
+    if (redemption.stato === "utilizzato") {
+      row.used++;
+      const created = dateValue(redemption.createdAt); const used = dateValue(redemption.usedAt);
+      if (created && used) row.totalDays += Math.max(0, Math.round((used.getTime() - created.getTime()) / 86_400_000));
+    }
     rewardRows.set(redemption.rewardId, row);
   }
+  const rewards = [...rewardRows.values()].map(({ totalDays, ...row }) => ({ ...row, averageDaysToUse: row.used ? Math.round(totalDays / row.used) : 0 })).sort((a, b) => b.used - a.used);
+
+  const loyaltyIds = new Set(loyaltyAccounts.map((account) => account.clientId));
+  const loyaltyBookings = currentBookings.filter((booking) => loyaltyIds.has(booking.clientId));
+  const weekdayNames = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+  const loyaltyWeekdays = new Map<number, number>(); const loyaltyHours = new Map<number, number>();
+  for (const booking of loyaltyBookings) { const weekday = new Date(`${booking.date}T12:00:00`).getDay(); const hour = Math.floor(booking.startMin / 60); loyaltyWeekdays.set(weekday, (loyaltyWeekdays.get(weekday) ?? 0) + 1); loyaltyHours.set(hour, (loyaltyHours.get(hour) ?? 0) + 1); }
+  const favoriteWeekdayIndex = [...loyaltyWeekdays.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const favoriteHourValue = [...loyaltyHours.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const allUsedRewards = rewards.reduce((sum, reward) => sum + reward.used, 0);
 
   const activeOperators = new Set(currentBookings.map((booking) => booking.performedByOperatorId ?? booking.operatorId)).size || 1;
   const workingDays = Array.from({ length: periodDays }, (_, index) => new Date(`${isoOffset(-index)}T12:00:00`)).filter((date) => date.getDay() !== 0 && date.getDay() !== 1).length;
@@ -134,6 +163,15 @@ export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], rede
     services: rank("servizio"),
     products: rank("prodotto"),
     demand,
-    rewards: [...rewardRows.values()].sort((a, b) => b.used - a.used),
+    rewards,
+    loyalty: {
+      pointsIssued: loyaltyAccounts.reduce((sum, account) => sum + (Number(account.puntiTotali) || 0), 0),
+      pointsRedeemed: loyaltyAccounts.reduce((sum, account) => sum + (Number(account.puntiRiscattati) || 0), 0),
+      pointsCirculating: loyaltyAccounts.reduce((sum, account) => sum + (Number(account.punti) || 0), 0),
+      averageDaysToReward: allUsedRewards ? Math.round(rewards.reduce((sum, reward) => sum + reward.averageDaysToUse * reward.used, 0) / allUsedRewards) : 0,
+      bookingShare: currentBookings.length ? Math.round((loyaltyBookings.length / currentBookings.length) * 100) : 0,
+      favoriteWeekday: favoriteWeekdayIndex === undefined ? "—" : weekdayNames[favoriteWeekdayIndex],
+      favoriteHour: favoriteHourValue === undefined ? "—" : `${String(favoriteHourValue).padStart(2, "0")}:00`,
+    },
   };
 }

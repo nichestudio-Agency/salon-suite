@@ -23,6 +23,7 @@ describe("calculateSalonAnalytics", () => {
     expect(result.services[0]).toMatchObject({ label: "Taglio", current: 1, previous: 1, trend: 0 });
     expect(result.products[0]).toMatchObject({ label: "Cera", current: 1, previous: 1 });
     expect(result.rewards[0]).toMatchObject({ label: "Buono", issued: 1, used: 1 });
+    expect(result.loyalty).toMatchObject({ pointsIssued: 0, pointsRedeemed: 0, pointsCirculating: 0, bookingShare: 0 });
   });
 
   it("rispetta il periodo selezionato e confronta una finestra equivalente", () => {
@@ -32,5 +33,33 @@ describe("calculateSalonAnalytics", () => {
     expect(result.revenue).toBe(3000);
     expect(result.previousRevenue).toBe(3000);
     expect(result.services[0].details[0]).toMatchObject({ client: "Mario Rossi", revenue: 3000 });
+  });
+
+  it("misura il ciclo fidelity e il comportamento dei clienti iscritti", () => {
+    const createdAt = new Date(); createdAt.setDate(createdAt.getDate() - 8);
+    const usedAt = new Date(); usedAt.setDate(usedAt.getDate() - 3);
+    const bookingDate = dateOffset(-2);
+    const bookings: Booking[] = [
+      { clientId: "c1", operatorId: "op1", serviceId: "taglio", date: bookingDate, startMin: 600, endMin: 645, stato: "completata" },
+      { clientId: "c2", operatorId: "op1", serviceId: "taglio", date: bookingDate, startMin: 660, endMin: 705, stato: "completata" },
+    ];
+    const rewards: RewardRedemption[] = [{
+      id: "r1", clientId: "c1", clientNome: "Cliente fidelity", rewardId: "buono", rewardNome: "Buono",
+      punti: 100, codice: "X", stato: "utilizzato", createdAt: createdAt.toISOString(), usedAt: usedAt.toISOString(),
+    }];
+
+    const result = calculateSalonAnalytics(bookings, [], rewards, 30, [
+      { clientId: "c1", punti: 40, puntiTotali: 180, puntiRiscattati: 140 },
+    ]);
+
+    expect(result.loyalty).toMatchObject({
+      pointsIssued: 180,
+      pointsRedeemed: 140,
+      pointsCirculating: 40,
+      averageDaysToReward: 5,
+      bookingShare: 50,
+      favoriteHour: "10:00",
+    });
+    expect(result.loyalty.favoriteWeekday).not.toBe("—");
   });
 });
