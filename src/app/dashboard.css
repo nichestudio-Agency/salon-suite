@@ -1219,8 +1219,228 @@ form.card, .dashboard__content > section > .card:first-of-type { margin: 28px 0 
     grid-template-columns: 1fr;
   }
   .cash-config,
-  .cash-settings,
+.cash-settings,
   .cash-ledger {
     padding: 17px;
+  }
+}
+
+/* 2026 vitality pass — a warmer, more expressive owner workspace. */
+.dashboard--neutral {
+  --panel: #ebe3d7;
+  --panel-strong: #fffdf9;
+  --surface: #f3eadf;
+  --ink: #20302a;
+  --muted: #65716b;
+  --border: #ded4c7;
+  --border-strong: #c7b9a8;
+  --accent: #e45f3a;
+  --accent-hover: #c94b2a;
+  --accent-soft: #fbe1d7;
+  --danger: #b84235;
+  background: #ebe3d7;
+}
+.dashboard--neutral .dashboard__content {
+  background:
+    radial-gradient(circle at 96% 3%, rgba(228, 95, 58, .14), transparent 30rem),
+    radial-gradient(circle at 4% 88%, rgba(77, 126, 105, .11), transparent 28rem),
+    #f8f4ed;
+}
+.dashboard--neutral .dashboard__sidebar,
+.dashboard--neutral .dashboard__mobile-nav {
+  background: rgba(255, 253, 249, .96);
+  box-shadow: 10px 0 36px rgba(77, 57, 38, .06);
+}
+.dashboard--neutral .dashboard__sidebar a:hover,
+.dashboard--neutral .dashboard__sidebar a.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.dashboard--neutral .dashboard__sidebar a.active { box-shadow: inset 3px 0 var(--accent); }
+.dashboard--neutral .dashboard__mobile-nav a.active .app-icon,
+.dashboard--neutral .dashboard__mobile-nav button.is-active .app-icon {
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+.dashboard--neutral .dashboard-commandbar {
+  border-color: rgba(199, 185, 168, .76);
+  background: rgba(255, 253, 249, .9);
+  box-shadow: 0 8px 28px rgba(77, 57, 38, .06);
+}
+.dashboard--neutral .dashboard-commandbar>nav button:hover,
+.dashboard--neutral .dashboard-commandbar__customize:hover {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: var(--accent-soft);
+  box-shadow: none;
+}
+.dashboard--neutral .dashboard-commandbar__bell {
+  background: #2b3a34;
+  box-shadow: 0 9px 22px rgba(32, 48, 42, .2);
+}
+.dashboard--neutral .dashboard-page-header>div>span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.dashboard--neutral .dashboard-page-header>div>span::before {
+  width: 18px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--accent);
+  content: "";
+}
+.dashboard--neutral .dashboard-page-header h2 {
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
+}
+.dashboard--neutral .btn { box-shadow: 0 9px 20px rgba(196, 73, 39, .18); }
+.dashboard--neutral .btn:hover {
+  box-shadow: 0 12px 26px rgba(196, 73, 39, .24);
+  transform: translateY(-1px);
+}
+.dashboard--neutral .btn--ghost { box-shadow: none; }
+.dashboard--neutral .card,
+.dashboard--neutral .entity-card,
+.dashboard--neutral .entity-create,
+.dashboard--neutral .agenda-calendar,
+.dashboard--neutral .agenda-list,
+.dashboard--neutral .client-toolbar,
+.dashboard--neutral .client-list-panel,
+.dashboard--neutral .order-detail,
+.dashboard--neutral .coupon-monitor-card,
+.dashboard--neutral .loyalty-insights,
+.dashboard--neutral .reward-store-admin {
+  border-color: rgba(199, 185, 168, .72);
+  box-shadow: 0 12px 34px rgba(77, 57, 38, .055);
+}
+.dashboard--neutral .owner-welcome {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, .42), transparent 16rem),
+    var(--accent);
+  box-shadow: 0 24px 48px rgba(171, 65, 36, .2);
+}
+.dashboard--neutral .owner-welcome h1,
+.dashboard--neutral .owner-welcome>div>span,
+.dashboard--neutral .owner-welcome p { color: #fffaf5; }
+.dashboard--neutral .owner-welcome p { opacity: .82; }
+.dashboard--neutral .owner-welcome__identity {
+  border-left-color: rgba(255, 255, 255, .24);
+  background: rgba(255, 248, 239, .9);
+}
+.dashboard--neutral .owner-kpis article,
+.dashboard--neutral .analytics-kpis article {
+  border-color: rgba(199, 185, 168, .7);
+  box-shadow: 0 10px 28px rgba(77, 57, 38, .055);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.dashboard--neutral .owner-kpis article:hover,
+.dashboard--neutral .analytics-kpis article:hover {
+  box-shadow: 0 16px 34px rgba(77, 57, 38, .1);
+  transform: translateY(-2px);
+}
+.dashboard--neutral .owner-kpis article:nth-child(1),
+.dashboard--neutral .analytics-kpis article:nth-child(1) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+.dashboard--neutral .owner-kpis article:nth-child(1) span,
+.dashboard--neutral .owner-kpis article:nth-child(1) small,
+.dashboard--neutral .analytics-kpis article:nth-child(1) span,
+.dashboard--neutral .analytics-kpis article:nth-child(1) small { color: rgba(255, 255, 255, .8); }
+.dashboard--neutral .owner-kpis article:nth-child(1) .app-icon {
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+}
+.dashboard--neutral .owner-kpis article:nth-child(2),
+.dashboard--neutral .analytics-kpis article:nth-child(2) {
+  border-color: #2b3a34;
+  background: #2b3a34;
+  color: #fff;
+}
+.dashboard--neutral .owner-kpis article:nth-child(2) span,
+.dashboard--neutral .owner-kpis article:nth-child(2) small,
+.dashboard--neutral .analytics-kpis article:nth-child(2) span,
+.dashboard--neutral .analytics-kpis article:nth-child(2) small { color: #c8d7cf; }
+.dashboard--neutral .owner-kpis article:nth-child(2) .app-icon {
+  background: rgba(255, 255, 255, .1);
+  color: #f2c963;
+}
+.dashboard--neutral .owner-kpis article:nth-child(3),
+.dashboard--neutral .analytics-kpis article:nth-child(3) {
+  border-color: #ead39c;
+  background: #f7dfa5;
+}
+.dashboard--neutral .owner-kpis article:nth-child(3) .app-icon {
+  background: rgba(255, 255, 255, .46);
+  color: #7f5e16;
+}
+.dashboard--neutral .analytics-period,
+.dashboard--neutral .agenda-view-switch,
+.dashboard--neutral .agenda-date-nav {
+  border-color: rgba(199, 185, 168, .75);
+  background: rgba(255, 253, 249, .84);
+  box-shadow: 0 7px 20px rgba(77, 57, 38, .045);
+}
+.dashboard--neutral .analytics-period button.is-active,
+.dashboard--neutral .agenda-view-switch button.is-active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 6px 15px rgba(196, 73, 39, .2);
+}
+.dashboard--neutral .analytics-ranking,
+.dashboard--neutral .analytics-demand,
+.dashboard--neutral .analytics-rewards {
+  border-color: rgba(199, 185, 168, .72);
+  background: rgba(255, 253, 249, .94);
+  box-shadow: 0 14px 38px rgba(77, 57, 38, .065);
+}
+.dashboard--neutral .analytics-ranking header::after,
+.dashboard--neutral .analytics-demand>header::after,
+.dashboard--neutral .analytics-rewards header::after {
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 99px;
+  background: var(--accent);
+  content: "";
+}
+.dashboard--neutral .analytics-signal-strip {
+  border-color: #2b3a34;
+  background: #2b3a34;
+  box-shadow: 0 16px 38px rgba(32, 48, 42, .16);
+}
+.dashboard--neutral .analytics-signal-strip>div { border-color: rgba(255, 255, 255, .12); }
+.dashboard--neutral .analytics-signal-strip strong,
+.dashboard--neutral .analytics-signal-strip>p .app-icon { color: #f2c963; }
+.dashboard--neutral .analytics-heatmap>i {
+  background: color-mix(in srgb, var(--accent) calc(8% + var(--heat) * 88%), #fff8ef);
+}
+.dashboard--neutral .analytics-rewards article { background: #f7eddf; }
+.dashboard--neutral .analytics-rewards article>span { background: var(--accent-soft); }
+.dashboard--neutral .agenda-date-strip button.is-active,
+.dashboard--neutral .agenda-calendar__head button.is-active {
+  background: var(--accent);
+  color: #fff;
+}
+.dashboard--neutral .entity-card__media { background: #eadfd1; }
+.dashboard--neutral .coupon-performance-summary article:first-child,
+.dashboard--neutral .loyalty-cycle__metrics article:first-child { background: var(--accent-soft); }
+
+@media(max-width:759px) {
+  .dashboard--neutral .dashboard__content {
+    background:
+      radial-gradient(circle at 110% 0, rgba(228, 95, 58, .16), transparent 18rem),
+      #f8f4ed;
+  }
+  .dashboard--neutral .analytics-kpis article:nth-child(1),
+  .dashboard--neutral .analytics-kpis article:nth-child(2),
+  .dashboard--neutral .analytics-kpis article:nth-child(3) { min-height: 106px; }
+  .dashboard--neutral .dashboard__mobile-nav {
+    border-color: rgba(199, 185, 168, .8);
+    box-shadow: 0 -10px 30px rgba(77, 57, 38, .08);
   }
 }
