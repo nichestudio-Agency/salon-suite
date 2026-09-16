@@ -112,7 +112,7 @@ export function calculateOperatorStats(bookings: Booking[], sales: Sale[], fromD
     }
   }
 
-  const dateAt = (daysAgo: number) => { const date = new Date(); date.setDate(date.getDate() - daysAgo); return date.toISOString().slice(0, 10); };
+  const dateAt = (daysAgo: number) => { const date = toDate ? new Date(`${toDate}T12:00:00`) : new Date(); date.setDate(date.getDate() - daysAgo); return date.toISOString().slice(0, 10); };
   const effectiveFrom = fromDate ?? bookings.map((booking) => booking.date).sort()[0] ?? dateAt(29);
   const start = new Date(`${effectiveFrom}T12:00:00`); const end = toDate ? new Date(`${toDate}T12:00:00`) : new Date(); end.setHours(12, 0, 0, 0);
   let workingDays = 0; for (const day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) if (![0, 1].includes(day.getDay())) workingDays++;

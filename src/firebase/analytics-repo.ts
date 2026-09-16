@@ -51,6 +51,11 @@ export interface SalonAnalytics {
   loyalty: LoyaltyAnalytics;
 }
 
+export interface AnalyticsDateRange {
+  from: string;
+  to: string;
+}
+
 const isoOffset = (days: number) => {
   const date = new Date();
   date.setHours(12, 0, 0, 0);
@@ -63,7 +68,7 @@ function trend(current: number, previous: number) {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-export async function getSalonAnalytics(salonId: string, periodDays = 30): Promise<SalonAnalytics> {
+export async function getSalonAnalytics(salonId: string, periodDays = 30, range?: AnalyticsDateRange): Promise<SalonAnalytics> {
   const [bookingsSnap, salesSnap, redemptionsSnap, accountsSnap] = await Promise.all([
     getDocs(collection(db, `salons/${salonId}/bookings`)),
     getDocs(collection(db, `salons/${salonId}/sales`)),
@@ -76,28 +81,35 @@ export async function getSalonAnalytics(salonId: string, periodDays = 30): Promi
     redemptionsSnap.docs.map((item) => ({ id: item.id, ...item.data() } as RewardRedemption)),
     periodDays,
     accountsSnap.docs.map((item) => ({ clientId: item.id, ...item.data() } as { clientId: string; punti?: number; puntiTotali?: number; puntiRiscattati?: number })),
+    range,
   );
 }
 
-export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], redemptions: RewardRedemption[], periodDays = 30, loyaltyAccounts: Array<{ clientId: string; punti?: number; puntiTotali?: number; puntiRiscattati?: number }> = []): SalonAnalytics {
-  const currentFrom = isoOffset(-(periodDays - 1));
-  const previousFrom = isoOffset(-(periodDays * 2 - 1));
-  const previousTo = isoOffset(-periodDays);
+export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], redemptions: RewardRedemption[], periodDays = 30, loyaltyAccounts: Array<{ clientId: string; punti?: number; puntiTotali?: number; puntiRiscattati?: number }> = [], range?: AnalyticsDateRange): SalonAnalytics {
+  const currentFrom = range?.from ?? isoOffset(-(periodDays - 1));
+  const currentTo = range?.to ?? isoOffset(0);
+  const rangeDays = Math.max(1, Math.round((new Date(`${currentTo}T12:00:00`).getTime() - new Date(`${currentFrom}T12:00:00`).getTime()) / 86_400_000) + 1);
+  const previousToDate = new Date(`${currentFrom}T12:00:00`);
+  previousToDate.setDate(previousToDate.getDate() - 1);
+  const previousFromDate = new Date(previousToDate);
+  previousFromDate.setDate(previousFromDate.getDate() - rangeDays + 1);
+  const previousTo = previousToDate.toISOString().slice(0, 10);
+  const previousFrom = previousFromDate.toISOString().slice(0, 10);
   const paidSales = sales.filter((sale) => sale.stato === "pagata");
   const completed = bookings.filter((booking) => booking.stato === "completata");
-  const currentBookings = completed.filter((booking) => booking.date >= currentFrom);
+  const currentBookings = completed.filter((booking) => booking.date >= currentFrom && booking.date <= currentTo);
   const previousBookings = completed.filter((booking) => booking.date >= previousFrom && booking.date <= previousTo);
-  const currentSales = paidSales.filter((sale) => sale.date >= currentFrom);
+  const currentSales = paidSales.filter((sale) => sale.date >= currentFrom && sale.date <= currentTo);
   const previousSales = paidSales.filter((sale) => sale.date >= previousFrom && sale.date <= previousTo);
   const currentRevenue = currentSales.reduce((sum, sale) => sum + sale.totale, 0);
   const previousRevenue = previousSales.reduce((sum, sale) => sum + sale.totale, 0);
-  const recentBookings = bookings.filter((booking) => booking.date >= currentFrom && !["annullata", "rifiutata"].includes(booking.stato));
+  const recentBookings = bookings.filter((booking) => booking.date >= currentFrom && booking.date <= currentTo && !["annullata", "rifiutata"].includes(booking.stato));
   const noShows = recentBookings.filter((booking) => booking.stato === "no_show").length;
 
   const rank = (type: "servizio" | "prodotto") => {
     const rows = new Map<string, Omit<RankedMetric, "trend">>();
     for (const sale of paidSales) {
-      const period = sale.date >= currentFrom ? "current" : sale.date >= previousFrom && sale.date <= previousTo ? "previous" : null;
+      const period = sale.date >= currentFrom && sale.date <= currentTo ? "current" : sale.date >= previousFrom && sale.date <= previousTo ? "previous" : null;
       if (!period) continue;
       for (const item of sale.items ?? []) {
         if (item.tipo !== type) continue;
@@ -114,7 +126,7 @@ export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], rede
   };
 
   const demandMap = new Map<string, number>();
-  for (const booking of completed.filter((item) => item.date >= isoOffset(-120))) {
+  for (const booking of completed.filter((item) => item.date >= currentFrom && item.date <= currentTo)) {
     const weekday = new Date(`${booking.date}T12:00:00`).getDay();
     if (weekday === 0 || weekday === 1) continue;
     const hour = Math.floor(booking.startMin / 60);
@@ -149,7 +161,7 @@ export function calculateSalonAnalytics(bookings: Booking[], sales: Sale[], rede
   const allUsedRewards = rewards.reduce((sum, reward) => sum + reward.used, 0);
 
   const activeOperators = new Set(currentBookings.map((booking) => booking.performedByOperatorId ?? booking.operatorId)).size || 1;
-  const workingDays = Array.from({ length: periodDays }, (_, index) => new Date(`${isoOffset(-index)}T12:00:00`)).filter((date) => date.getDay() !== 0 && date.getDay() !== 1).length;
+  const workingDays = Array.from({ length: rangeDays }, (_, index) => { const date = new Date(`${currentFrom}T12:00:00`); date.setDate(date.getDate() + index); return date; }).filter((date) => date.getDay() !== 0 && date.getDay() !== 1).length;
   const bookedMinutes = currentBookings.reduce((sum, booking) => sum + Math.max(0, booking.endMin - booking.startMin), 0);
 
   return {

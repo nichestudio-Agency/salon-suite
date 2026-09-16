@@ -46,11 +46,15 @@ export function NotificationsPage() {
   const [bdDiscount, setBdDiscount] = useState("15"); const [bdValidity, setBdValidity] = useState("14"); const [bdProductId, setBdProductId] = useState("");
   const [bdResult, setBdResult] = useState<string | null>(null);
   const [flashDiscount, setFlashDiscount] = useState("20");
+  const [flashOfferType, setFlashOfferType] = useState<"service_percent" | "product_percent" | "product_fixed" | "product_gift">("service_percent");
+  const [flashProduct, setFlashProduct] = useState("");
+  const [flashMinSpend, setFlashMinSpend] = useState("");
   const [flashBusy, setFlashBusy] = useState(false);
   const [flashResult, setFlashResult] = useState<string | null>(null);
   const [flashDate, setFlashDate] = useState(localToday()); const [flashFrom, setFlashFrom] = useState("14:00"); const [flashTo, setFlashTo] = useState("18:00"); const [flashService, setFlashService] = useState(""); const [flashText, setFlashText] = useState("Prenota nella fascia selezionata e approfitta dello sconto.");
   const [clients, setClients] = useState<SalonClient[]>([]); const [services, setServices] = useState<ServiceWithId[]>([]); const [products, setProducts] = useState<ProductWithId[]>([]); const [selectedClients, setSelectedClients] = useState<string[]>([]); const [openMetric, setOpenMetric] = useState<{ coupon: CouponWithId; kind: "inviati" | "utilizzati" | "nonUtilizzati" | "scaduti" } | null>(null); const [metricSearch, setMetricSearch] = useState("");
   const [couponSearch, setCouponSearch] = useState(""); const [couponStatus, setCouponStatus] = useState<"tutti" | "attivi" | "scaduti">("tutti"); const [couponSegment, setCouponSegment] = useState("");
+  const [clientQuery, setClientQuery] = useState("");
 
   async function reload(id: string) {
     const nextCoupons = await listCoupons(id);
@@ -108,24 +112,31 @@ export function NotificationsPage() {
     setFlashResult(null);
     try {
       const today = flashDate;
-      const discount = Math.min(Math.max(parseInt(flashDiscount, 10), 1), 100);
-      const code = `OGGI${discount}-${today.slice(5).replace("-", "")}`;
+      const numericDiscount = Number(flashDiscount) || 0;
+      const discount = flashOfferType === "product_fixed" ? Math.max(1, Math.round(numericDiscount * 100)) : Math.min(Math.max(Math.round(numericDiscount), 1), 100);
+      const product = products.find((item) => item.id === flashProduct);
+      if (flashOfferType !== "service_percent" && !product) throw new Error("product-required");
+      const code = `OGGI-${flashOfferType === "product_gift" ? "REGALO" : flashOfferType === "product_fixed" ? `EURO${Math.round(numericDiscount)}` : `${discount}P`}-${today.slice(5).replace("-", "")}`;
       const existing = coupons.find((coupon) => coupon.codice === code && coupon.dataAppuntamento === today);
       const couponId = existing?.id ?? await createCoupon(salonId, {
           codice: code,
-          tipo: "percentuale",
-          valore: discount,
+          tipo: flashOfferType === "product_gift" ? "prodotto_omaggio" : flashOfferType === "product_fixed" ? "fisso" : "percentuale",
+          valore: flashOfferType === "product_gift" ? 0 : discount,
           scadenza: today,
           dataAppuntamento: today,
-          fasciaDa: flashFrom, fasciaA: flashTo, ...(flashService ? { serviceId: flashService } : {}), origin: "riempi_agenda",
+          fasciaDa: flashFrom, fasciaA: flashTo,
+          ...(flashOfferType === "service_percent" && flashService ? { serviceId: flashService } : {}),
+          ...(product ? { productId: product.id, productTitle: product.titolo } : {}),
+          ...(flashOfferType === "product_gift" && product ? { giftProductId: product.id, giftProductTitle: product.titolo, spesaMinima: Math.round((Number(flashMinSpend) || 0) * 100) } : {}),
+          origin: "riempi_agenda",
           attivo: true,
         });
       if (existing && !existing.attivo) await updateCoupon(salonId, existing.id, { attivo: true });
       const result = await sendCampaign({
         salonId,
         filtri: selectedClients.length ? { recipientIds: selectedClients } : {},
-        titolo: `Agenda libera: -${discount}% il ${new Intl.DateTimeFormat("it-IT").format(new Date(today + "T12:00:00"))}`,
-        testo: `${flashText} Orario ${flashFrom}–${flashTo}.`,
+        titolo: `Offerta lampo del ${new Intl.DateTimeFormat("it-IT").format(new Date(today + "T12:00:00"))}`,
+        testo: `${flashText} ${flashOfferType === "product_gift" ? `${product?.titolo} in omaggio con almeno € ${flashMinSpend || "0"} di spesa.` : flashOfferType === "product_fixed" ? `€ ${numericDiscount.toFixed(2)} di sconto su ${product?.titolo}.` : `Sconto ${discount}%${product ? ` su ${product.titolo}` : ""}.`} Orario ${flashFrom}–${flashTo}.`,
         couponId,
       });
       setFlashResult(`Offerta ${code} inviata a ${result.recipientCount} clienti.`);
@@ -210,9 +221,10 @@ export function NotificationsPage() {
   });
   const bestCoupon = [...analytics].sort((a, b) => b.conversionRate - a.conversionRate)[0];
   const averageSpeed = analytics.filter((item) => item.utilizzati > 0).length ? Math.round(analytics.reduce((sum, item) => sum + item.averageDaysToUse, 0) / analytics.filter((item) => item.utilizzati > 0).length) : 0;
+  const clientMatches = clientQuery.trim().length >= 2 ? clients.filter((client) => `${client.nome} ${client.email} ${client.telefono ?? ""}`.toLowerCase().includes(clientQuery.trim().toLowerCase())).slice(0, 8) : [];
 
   return (
-    <section>
+    <section className="notifications-page">
       <div className="dashboard-page-header"><div><span>Comunicazione</span><h2>Marketing</h2><p>Coupon, segmenti comportamentali e automazioni.</p></div></div>
       <div className="notification-overview"><article><strong>Compleanni</strong><span>Parte ogni giorno in automatico con un codice personale monouso.</span><b className={bdAttivo ? "is-active" : ""}>{bdAttivo ? "Automatico" : "Da configurare"}</b></article><article><strong>Clienti da riattivare</strong><span>Invio manuale a chi non torna da un periodo scelto, incluse le visite registrate al banco.</span><b>Campagna manuale</b></article><article><strong>Prodotti</strong><span>Invio manuale a chi non acquista da un numero di giorni scelto.</span><b>Campagna manuale</b></article></div>
       <div className="coupon-section-heading"><div><span>Performance</span><h3>Monitor coupon</h3><p>Dal messaggio inviato alla prenotazione effettuata.</p></div></div>
@@ -229,8 +241,8 @@ export function NotificationsPage() {
       {coupons.length === 0 && <div className="card"><p>Nessun coupon creato.</p></div>}
 
       <form className="flash-campaign" onSubmit={onFlashCampaign}>
-        <div><span>Riempi l'agenda</span><h3>Offerta su una fascia libera</h3><p>Decidi esattamente giorno, orario, servizio, sconto e messaggio.</p></div>
-        <div className="flash-campaign__fields"><label>Giorno<input type="date" value={flashDate} onChange={(e) => setFlashDate(e.target.value)} /></label><label>Dalle<input type="time" value={flashFrom} onChange={(e) => setFlashFrom(e.target.value)} /></label><label>Alle<input type="time" value={flashTo} onChange={(e) => setFlashTo(e.target.value)} /></label><label>Servizio<select value={flashService} onChange={(e) => setFlashService(e.target.value)}><option value="">Tutti</option>{services.map((service) => <option value={service.id} key={service.id}>{service.titolo}</option>)}</select></label><label>Sconto %<input type="number" min="1" max="100" value={flashDiscount} onChange={(e) => setFlashDiscount(e.target.value)} /></label><label className="is-wide">Messaggio<input value={flashText} onChange={(e) => setFlashText(e.target.value)} /></label><button className="btn" type="submit" disabled={flashBusy}>{flashBusy ? "Invio…" : "Invia offerta"}</button></div>
+        <div><span>Riempi l'agenda</span><h3>Offerta su una fascia libera</h3><p>Combina servizi, prodotti e omaggi in una promozione valida nel giorno e nella fascia scelti.</p></div>
+        <div className="flash-campaign__fields"><label>Giorno<input type="date" value={flashDate} onChange={(e) => setFlashDate(e.target.value)} /></label><label>Dalle<input type="time" value={flashFrom} onChange={(e) => setFlashFrom(e.target.value)} /></label><label>Alle<input type="time" value={flashTo} onChange={(e) => setFlashTo(e.target.value)} /></label><label className="is-wide">Tipo di offerta<select value={flashOfferType} onChange={(e) => setFlashOfferType(e.target.value as typeof flashOfferType)}><option value="service_percent">Sconto percentuale su un servizio</option><option value="product_percent">Sconto percentuale su un prodotto</option><option value="product_fixed">Sconto fisso su un prodotto</option><option value="product_gift">Prodotto in omaggio con spesa minima</option></select></label>{flashOfferType === "service_percent" ? <label>Servizio<select value={flashService} onChange={(e) => setFlashService(e.target.value)}><option value="">Tutti</option>{services.map((service) => <option value={service.id} key={service.id}>{service.titolo}</option>)}</select></label> : <label>Prodotto<select value={flashProduct} onChange={(e) => setFlashProduct(e.target.value)} required><option value="">Seleziona prodotto</option>{products.map((product) => <option value={product.id} key={product.id}>{product.titolo}</option>)}</select></label>}{flashOfferType !== "product_gift" && <label>{flashOfferType === "product_fixed" ? "Sconto (€)" : "Sconto %"}<input type="number" min="1" max={flashOfferType === "product_fixed" ? undefined : "100"} step={flashOfferType === "product_fixed" ? "0.01" : "1"} value={flashDiscount} onChange={(e) => setFlashDiscount(e.target.value)} /></label>}{flashOfferType === "product_gift" && <label>Spesa minima (€)<input type="number" min="0" step="0.01" value={flashMinSpend} onChange={(e) => setFlashMinSpend(e.target.value)} required /></label>}<label className="is-wide">Messaggio<input value={flashText} onChange={(e) => setFlashText(e.target.value)} /></label><button className="btn" type="submit" disabled={flashBusy}>{flashBusy ? "Invio…" : "Invia offerta"}</button></div>
         {flashResult && <p className="flash-campaign__result" role="status">{flashResult}</p>}
       </form>
 
@@ -277,7 +289,7 @@ export function NotificationsPage() {
               .filter((c) => c.attivo && (!c.scadenza || c.scadenza >= new Date().toISOString().slice(0, 10)))
               .map((c) => <option key={c.id} value={c.id}>{c.codice}</option>)}
           </select></div>
-        <fieldset className="campaign-clients"><legend>Clienti specifici (opzionale)</legend><p>Se selezioni uno o più nomi, la campagna verrà inviata soltanto a loro.</p><div>{clients.map((client) => <label key={client.id}><input type="checkbox" checked={selectedClients.includes(client.id)} onChange={() => setSelectedClients((current) => current.includes(client.id) ? current.filter((id) => id !== client.id) : [...current, client.id])} /><span>{client.nome}<small>{client.email}</small></span></label>)}</div></fieldset>
+        <fieldset className="campaign-clients"><legend>Clienti specifici (opzionale)</legend><p>Cerca per nome, email o telefono. Se scegli dei clienti, la campagna sarà inviata soltanto a loro.</p>{selectedClients.length > 0 && <div className="campaign-clients__selected">{selectedClients.map((id) => { const client = clients.find((item) => item.id === id); return <button type="button" onClick={() => setSelectedClients((current) => current.filter((value) => value !== id))} key={id}>{client?.nome ?? "Cliente"} ×</button>; })}</div>}<label className="campaign-clients__search"><span>Cerca cliente</span><input value={clientQuery} onChange={(event) => setClientQuery(event.target.value)} placeholder="Scrivi almeno 2 caratteri" /></label>{clientQuery.trim().length >= 2 && <div className="campaign-clients__results">{clientMatches.map((client) => <button type="button" disabled={selectedClients.includes(client.id)} onClick={() => { setSelectedClients((current) => [...current, client.id]); setClientQuery(""); }} key={client.id}><span>{client.nome}<small>{client.email || client.telefono}</small></span><b>{selectedClients.includes(client.id) ? "Aggiunto" : "Aggiungi"}</b></button>)}{clientMatches.length === 0 && <p>Nessun cliente trovato.</p>}</div>}</fieldset>
         {campResult && <p role="status">{campResult}</p>}
         <button className="btn" type="submit" disabled={campBusy}>Invia campagna</button>
       </form>

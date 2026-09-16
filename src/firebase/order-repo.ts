@@ -25,6 +25,10 @@ export async function updateOrderStatus(
   await updateDoc(doc(db, "salons", salonId, "orders", orderId), { stato });
 }
 
+export async function updateOrderPickupDate(salonId: string, orderId: string, pickupDate: string): Promise<void> {
+  await updateDoc(doc(db, "salons", salonId, "orders", orderId), { pickupDate });
+}
+
 export interface CompleteOrderResult {
   orderId: string;
   saleId: string;

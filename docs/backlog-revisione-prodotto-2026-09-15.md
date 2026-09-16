@@ -1,7 +1,22 @@
 # Backlog revisione prodotto
 
 Data raccolta: 15 settembre 2026  
-Stato: osservazioni registrate, sviluppo non ancora avviato
+Stato: ciclo funzionale completato il 16 settembre 2026; tutorial e manuale restano pianificati per la fase successiva
+
+## Esito implementazione
+
+- [x] Spazio di sicurezza tra barre e valori nel grafico settimanale.
+- [x] Modalità compatta e dettaglio completo desktop/mobile per gli appuntamenti brevi.
+- [x] Periodo personalizzato nelle statistiche e collegamenti contestuali da Team, Servizi e Prodotti.
+- [x] Approfondimento degli operatori nella pagina Statistiche.
+- [x] Storico cliente filtrabile con visite, prenotazioni, vendite, ordini, coupon e Fidelity.
+- [x] Modifica, attivazione/disattivazione e riepilogo performance per servizi e prodotti.
+- [x] Periodo esplicito e collegamento alle statistiche nelle card del team.
+- [x] Data indicativa di ritiro negli ordini.
+- [x] Promozioni “Riempi agenda” estese a prodotti, importi fissi e omaggi con spesa minima.
+- [x] Ricerca scalabile e selezione multipla dei clienti nelle campagne.
+- [x] Revisione di contrasto, larghezze e allineamenti della pagina Marketing.
+- [ ] Tutorial guidato e manuale d'uso: confermati come fase separata, come richiesto.
 
 Queste note derivano da un controllo diretto della demo dopo il rinnovamento grafico. Le modifiche elencate in questo documento devono essere affrontate in un ciclo successivo. L'obiettivo è migliorare leggibilità, profondità dei dati e operatività senza cambiare la struttura generale già approvata.
 

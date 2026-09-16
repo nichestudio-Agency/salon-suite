@@ -210,6 +210,9 @@ export interface ManualClient {
 export interface ClientVisit {
   clientId: string;
   serviceId?: string;
+  /** Prodotto oggetto dello sconto, se la promozione è mirata al catalogo retail. */
+  productId?: string;
+  productTitle?: string;
   serviceTitle: string;
   date: string;
   importo: number;
@@ -357,6 +360,8 @@ export interface Order {
   paidAt?: Timestamp;
   couponId?: string;
   couponCode?: string;
+  /** Data indicativa concordata per il ritiro, "YYYY-MM-DD". */
+  pickupDate?: string;
 }
 
 export type OrderWithId = Order & { id: string };

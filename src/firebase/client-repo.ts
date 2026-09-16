@@ -21,6 +21,45 @@ export interface SalonClient {
   telefono?: string;
 }
 
+export type ClientHistoryKind = "prenotazione" | "acquisto" | "ordine" | "visita" | "coupon" | "fidelity";
+export interface ClientHistoryEntry {
+  id: string;
+  kind: ClientHistoryKind;
+  date: string;
+  title: string;
+  detail?: string;
+  amount?: number;
+  operatorId?: string;
+  couponCode?: string;
+  points?: number;
+  status?: string;
+}
+
+function timestampDate(value: unknown) {
+  const raw = value as { toDate?: () => Date } | string | undefined;
+  if (typeof raw === "string") return raw.slice(0, 10);
+  return raw?.toDate?.().toISOString().slice(0, 10) ?? "";
+}
+
+export async function getClientHistory(salonId: string, clientId: string): Promise<ClientHistoryEntry[]> {
+  const [bookings, sales, orders, visits, coupons, loyalty] = await Promise.all([
+    getDocs(collection(db, `salons/${salonId}/bookings`)),
+    getDocs(collection(db, `salons/${salonId}/sales`)),
+    getDocs(collection(db, `salons/${salonId}/orders`)),
+    getDocs(collection(db, `salons/${salonId}/clientVisits`)),
+    getDocs(collection(db, `salons/${salonId}/couponRedemptions`)),
+    getDocs(collection(db, `salons/${salonId}/loyaltyAccounts/${clientId}/transactions`)),
+  ]);
+  const rows: ClientHistoryEntry[] = [];
+  for (const item of bookings.docs) { const value = item.data(); if (value.clientId !== clientId) continue; rows.push({ id: `booking-${item.id}`, kind: "prenotazione", date: String(value.date ?? ""), title: (value.serviceItems as Array<{ titolo?: string }> | undefined)?.map((entry) => entry.titolo).filter(Boolean).join(", ") || "Prenotazione", detail: `${String(value.startMin ? `${String(Math.floor(Number(value.startMin) / 60)).padStart(2, "0")}:${String(Number(value.startMin) % 60).padStart(2, "0")}` : "Orario non indicato")} · ${String(value.stato ?? "")}`, amount: Number(value.prezzoFinale) || undefined, operatorId: String(value.performedByOperatorId ?? value.operatorId ?? ""), couponCode: value.couponCode ? String(value.couponCode) : undefined, status: String(value.stato ?? "") }); }
+  for (const item of sales.docs) { const value = item.data(); if (value.clientId !== clientId || value.stato === "annullata") continue; const saleItems = value.items as Array<{ titolo?: string; qta?: number; tipo?: string }> | undefined; rows.push({ id: `sale-${item.id}`, kind: "acquisto", date: String(value.date ?? timestampDate(value.createdAt)), title: saleItems?.map((entry) => `${entry.titolo ?? "Articolo"}${Number(entry.qta) > 1 ? ` ×${entry.qta}` : ""}`).join(", ") || "Vendita in salone", detail: saleItems?.some((entry) => entry.tipo === "prodotto") ? "Servizi e/o prodotti acquistati" : "Servizio saldato", amount: Number(value.totale) || 0, operatorId: String(value.performedByOperatorId ?? ""), points: Number(value.loyaltyPointsCredited) || undefined, status: String(value.stato ?? "") }); }
+  for (const item of orders.docs) { const value = item.data(); if (value.clientId !== clientId || value.stato === "annullato") continue; const orderItems = value.items as Array<{ titolo?: string; qta?: number }> | undefined; rows.push({ id: `order-${item.id}`, kind: "ordine", date: timestampDate(value.createdAt), title: orderItems?.map((entry) => `${entry.titolo ?? "Prodotto"}${Number(entry.qta) > 1 ? ` ×${entry.qta}` : ""}`).join(", ") || "Ordine prodotti", detail: `Stato: ${String(value.stato ?? "")}`, amount: Number(value.totale) || 0, couponCode: value.couponCode ? String(value.couponCode) : undefined, points: Number(value.pointsEarned) || undefined, status: String(value.stato ?? "") }); }
+  for (const item of visits.docs) { const value = item.data(); if (value.clientId !== clientId) continue; rows.push({ id: `visit-${item.id}`, kind: "visita", date: String(value.date ?? timestampDate(value.createdAt)), title: String(value.serviceTitle ?? "Passaggio in salone"), detail: value.note ? String(value.note) : "Inserita manualmente", amount: Number(value.importo) || 0 }); }
+  for (const item of coupons.docs) { const value = item.data(); if (value.clientId !== clientId) continue; rows.push({ id: `coupon-${item.id}`, kind: "coupon", date: String(value.appointmentDate ?? timestampDate(value.redeemedAt)), title: `Coupon ${String(value.couponCode ?? "utilizzato")}`, detail: "Coupon riscattato", amount: Number(value.discountAmount) || undefined, couponCode: String(value.couponCode ?? "") }); }
+  for (const item of loyalty.docs) { const value = item.data(); rows.push({ id: `loyalty-${item.id}`, kind: "fidelity", date: timestampDate(value.createdAt), title: String(value.descrizione ?? "Movimento fidelity"), detail: String(value.tipo ?? "Movimento punti"), amount: Number(value.importo) || undefined, operatorId: value.operatorId ? String(value.operatorId) : undefined, points: Number(value.punti) || 0 }); }
+  return rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+}
+
 export async function listSalonClients(salonId: string): Promise<SalonClient[]> {
   try { return await listSalonClientsDirect(salonId); }
   catch {

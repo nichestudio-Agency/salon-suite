@@ -35,6 +35,22 @@ describe("calculateSalonAnalytics", () => {
     expect(result.services[0].details[0]).toMatchObject({ client: "Mario Rossi", revenue: 3000 });
   });
 
+  it("applica un intervallo personalizzato anche a classifiche e domanda", () => {
+    const sale = (date: string): Sale => ({ clientId: "c1", date, stato: "pagata", subtotale: 2500, sconto: 0, totale: 2500, paymentMethod: "in_salone", createdByUserId: "owner", items: [{ tipo: "servizio", referenceId: "taglio", titolo: "Taglio", qta: 1, prezzoUnitario: 2500, totale: 2500 }] });
+    const bookings: Booking[] = [
+      { clientId: "c1", operatorId: "op1", serviceId: "taglio", date: "2026-08-12", startMin: 600, endMin: 645, stato: "completata" },
+      { clientId: "c2", operatorId: "op1", serviceId: "taglio", date: "2026-07-12", startMin: 660, endMin: 705, stato: "completata" },
+    ];
+    const result = calculateSalonAnalytics(bookings, [sale("2026-08-12"), sale("2026-07-12")], [], 31, [], { from: "2026-08-01", to: "2026-08-31" });
+
+    expect(result.completedBookings).toBe(1);
+    expect(result.previousCompletedBookings).toBe(1);
+    expect(result.revenue).toBe(2500);
+    expect(result.previousRevenue).toBe(2500);
+    expect(result.services[0]).toMatchObject({ current: 1, previous: 1 });
+    expect(result.demand.reduce((sum, cell) => sum + cell.count, 0)).toBe(1);
+  });
+
   it("misura il ciclo fidelity e il comportamento dei clienti iscritti", () => {
     const createdAt = new Date(); createdAt.setDate(createdAt.getDate() - 8);
     const usedAt = new Date(); usedAt.setDate(usedAt.getDate() - 3);
