@@ -7,6 +7,9 @@ import { formatEuro } from "../domain/money";
 import { listBookings, type BookingWithId } from "../firebase/booking-repo";
 import { listOperators, type OperatorWithId } from "../firebase/operator-repo";
 import { listServices, type ServiceWithId } from "../firebase/service-repo";
+import type { Weekday } from "../domain/availability";
+
+const WEEKDAY_KEYS: Weekday[] = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
 function dateKey(date: Date) {
   const year = date.getFullYear();
@@ -80,9 +83,27 @@ export function DashboardHomePage() {
         .reduce((total, booking) => total + Math.max(0, booking.endMin - booking.startMin), 0);
       return { operator, percentage: Math.min(100, Math.round((minutes / 480) * 100)) };
     });
+    const opportunities = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(); date.setDate(date.getDate() + index + 1);
+      const key = dateKey(date);
+      const configured = salon?.orariApertura?.[WEEKDAY_KEYS[date.getDay()]] ?? [];
+      const opening = configured.length ? configured : ([1, 2, 3, 4, 5].includes(date.getDay()) ? [{ start: 9 * 60, end: 19 * 60 }] : []);
+      if (!opening.length) return null;
+      const dayBookings = bookings.filter((booking) => booking.date === key && activeStatuses.has(booking.stato)).sort((a, b) => a.startMin - b.startMin);
+      const gaps = opening.flatMap((slot) => {
+        const within = dayBookings.filter((booking) => booking.endMin > slot.start && booking.startMin < slot.end);
+        const result: Array<{ start: number; end: number }> = [];
+        let cursor = slot.start;
+        for (const booking of within) { if (booking.startMin > cursor) result.push({ start: cursor, end: booking.startMin }); cursor = Math.max(cursor, booking.endMin); }
+        if (cursor < slot.end) result.push({ start: cursor, end: slot.end });
+        return result;
+      }).filter((gap) => gap.end - gap.start >= 90).sort((a, b) => (b.end - b.start) - (a.end - a.start));
+      const gap = gaps[0];
+      return gap ? { key, date, count: dayBookings.length, ...gap } : null;
+    }).filter(Boolean).sort((a, b) => ((b!.end - b!.start) - (a!.end - a!.start)) || a!.count - b!.count)[0] ?? null;
 
-    return { todayBookings, serviceById, operatorById, revenue, bookedMinutes, capacity, next, days, maxRevenue, team };
-  }, [bookings, operators, services]);
+    return { todayBookings, serviceById, operatorById, revenue, bookedMinutes, capacity, next, days, maxRevenue, team, opportunity: opportunities };
+  }, [bookings, operators, salon?.orariApertura, services]);
 
   const firstName = user?.displayName?.split(" ")[0] || "Fabio";
   const occupation = Math.round((dashboard.bookedMinutes / dashboard.capacity) * 100);
@@ -113,6 +134,8 @@ export function DashboardHomePage() {
         <article><AppIcon name="users" /><div><span>Clienti oggi</span><strong>{uniqueClients}</strong><small>{pending} richieste in attesa</small></div></article>
         <article><AppIcon name="calendar" /><div><span>Prossimo appuntamento</span><strong>{dashboard.next ? formatTime(dashboard.next.startMin) : "—"}</strong><small>{dashboard.next?.clientNome ?? "Agenda libera"}</small></div></article>
       </div>
+
+      {dashboard.opportunity && <Link className="owner-opportunity" to={`/dashboard/notifiche?date=${dashboard.opportunity.key}&from=${formatTime(dashboard.opportunity.start)}&to=${formatTime(dashboard.opportunity.end)}#riempi-agenda`}><span><AppIcon name="spark" size={22} /></span><div><small>Suggerimento spazi liberi</small><h2>{new Intl.DateTimeFormat("it-IT", { weekday: "long", day: "numeric", month: "long" }).format(dashboard.opportunity.date)}</h2><p>La fascia {formatTime(dashboard.opportunity.start)}–{formatTime(dashboard.opportunity.end)} ha molto spazio disponibile. Crea ora una campagna mirata.</p></div><strong>Prepara offerta <AppIcon name="arrow" size={17} /></strong></Link>}
 
       <div className="owner-home__grid">
         <section className="owner-agenda-panel">

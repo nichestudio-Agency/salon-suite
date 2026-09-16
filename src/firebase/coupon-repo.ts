@@ -16,11 +16,12 @@ export interface CouponAnalytics {
   redemptionSeries: Array<{ label: string; count: number }>;
   conversionRate: number;
   averageDaysToUse: number;
-  usagePhases: { iniziale: number; centrale: number; finale: number };
+  usageWindows: { firstThreeDays: number; middlePeriod: number; lastFourDays: number };
   segments: string[];
   lastSentAt?: string;
   usedAtByClient: Record<string, string>;
 }
+export interface CouponAnalyticsRange { from: string; to: string }
 
 const dateFromValue = (value: unknown): Date | null => { const raw = value as { toDate?: () => Date } | string | undefined; const date = typeof raw === "string" ? new Date(raw) : raw?.toDate?.(); return date && !Number.isNaN(date.getTime()) ? date : null; };
 
@@ -49,6 +50,7 @@ export async function updateCoupon(
 export async function getCouponAnalytics(
   salonId: string,
   coupons: CouponWithId[],
+  range?: CouponAnalyticsRange,
 ): Promise<CouponAnalytics[]> {
   const [campaignsSnap, redemptionsSnap] = await Promise.all([
     getDocs(collection(db, "salons", salonId, "campaigns")),
@@ -79,16 +81,21 @@ export async function getCouponAnalytics(
         legacyRecipients += Number(campaign.recipientCount) || 0;
       }
     }
+    const rangeStart = range?.from ? new Date(`${range.from}T00:00:00`) : null;
+    const rangeEnd = range?.to ? new Date(`${range.to}T23:59:59`) : null;
+    const isInRange = (date: Date | null) => Boolean(date && (!rangeStart || date >= rangeStart) && (!rangeEnd || date <= rangeEnd));
     const usedClients = new Set<string>();
     const usedAtByClient: Record<string, string> = {};
     const redemptionDates: Date[] = [];
     for (const redemptionDoc of redemptionsSnap.docs) {
       const redemption = redemptionDoc.data();
       if (redemption.couponId === coupon.id && typeof redemption.clientId === "string") {
-        usedClients.add(redemption.clientId);
         const date = dateFromValue(redemption.redeemedAt);
-        if (date && !Number.isNaN(date.getTime())) redemptionDates.push(date);
-        if (date) usedAtByClient[redemption.clientId] = date.toISOString();
+        if (isInRange(date)) {
+          usedClients.add(redemption.clientId);
+          redemptionDates.push(date!);
+          usedAtByClient[redemption.clientId] = date!.toISOString();
+        }
       }
     }
     const inviati = recipients.size + legacyRecipients;
@@ -96,22 +103,29 @@ export async function getCouponAnalytics(
     const nonUtilizzati = Math.max(inviati - utilizzati, 0);
     const expired = (coupon.scadenza && coupon.scadenza < today)
       || (coupon.dataAppuntamento && coupon.dataAppuntamento < today);
-    const redemptionSeries = Array.from({ length: 8 }, (_, index) => {
-      const endDaysAgo = (7 - index) * 7;
-      const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - endDaysAgo - 6);
-      const end = new Date(); end.setHours(23, 59, 59, 999); end.setDate(end.getDate() - endDaysAgo);
+    const seriesEnd = rangeEnd ? new Date(rangeEnd) : new Date();
+    const seriesStart = rangeStart ? new Date(rangeStart) : (() => { const date = new Date(seriesEnd); date.setDate(date.getDate() - 55); return date; })();
+    const seriesDays = Math.max(1, Math.ceil((seriesEnd.getTime() - seriesStart.getTime()) / 86_400_000) + 1);
+    const bucketCount = Math.min(8, seriesDays);
+    const bucketDays = Math.ceil(seriesDays / bucketCount);
+    const redemptionSeries = Array.from({ length: bucketCount }, (_, index) => {
+      const start = new Date(seriesStart); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() + index * bucketDays);
+      const end = new Date(start); end.setHours(23, 59, 59, 999); end.setDate(end.getDate() + bucketDays - 1);
+      if (end > seriesEnd) end.setTime(seriesEnd.getTime());
       return { label: `${start.getDate()}/${start.getMonth() + 1}`, count: redemptionDates.filter((date) => date >= start && date <= end).length };
     });
     const sentAt = campaignDates.sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
     const expiresAt = coupon.scadenza ? new Date(`${coupon.scadenza}T23:59:59`) : coupon.dataAppuntamento ? new Date(`${coupon.dataAppuntamento}T23:59:59`) : new Date();
-    const totalWindow = sentAt ? Math.max(1, expiresAt.getTime() - sentAt.getTime()) : 1;
-    const usagePhases = { iniziale: 0, centrale: 0, finale: 0 };
+    const firstWindowEnd = sentAt ? new Date(sentAt.getTime() + 3 * 86_400_000) : null;
+    const lastWindowStart = new Date(expiresAt.getTime() - 4 * 86_400_000);
+    const usageWindows = { firstThreeDays: 0, middlePeriod: 0, lastFourDays: 0 };
     let totalDaysToUse = 0;
     for (const date of redemptionDates) {
       if (!sentAt) continue;
       const elapsed = Math.max(0, date.getTime() - sentAt.getTime()); totalDaysToUse += elapsed / 86_400_000;
-      const ratio = Math.min(1, elapsed / totalWindow);
-      if (ratio <= 1 / 3) usagePhases.iniziale++; else if (ratio <= 2 / 3) usagePhases.centrale++; else usagePhases.finale++;
+      if (firstWindowEnd && date < firstWindowEnd) usageWindows.firstThreeDays++;
+      else if (date >= lastWindowStart) usageWindows.lastFourDays++;
+      else usageWindows.middlePeriod++;
     }
     return {
       couponId: coupon.id,
@@ -124,7 +138,7 @@ export async function getCouponAnalytics(
       redemptionSeries,
       conversionRate: inviati ? Math.round((utilizzati / inviati) * 100) : 0,
       averageDaysToUse: redemptionDates.length && sentAt ? Math.round(totalDaysToUse / redemptionDates.length) : 0,
-      usagePhases,
+      usageWindows,
       segments: [...segments],
       ...(campaignDates.length ? { lastSentAt: campaignDates.sort((a, b) => b.getTime() - a.getTime())[0].toISOString() } : {}),
       usedAtByClient,

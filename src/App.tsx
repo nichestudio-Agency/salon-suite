@@ -39,6 +39,7 @@ import { DataImportPage } from "./pages/DataImportPage";
 import { SalonAccessPage } from "./pages/SalonAccessPage";
 import { CashIntegrationsPage } from "./pages/CashIntegrationsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
+import { TutorialPage } from "./pages/TutorialPage";
 
 export default function App() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
               <Route path="notifiche" element={<NotificationsPage />} />
               <Route path="fidelity" element={<LoyaltyManagementPage />} />
               <Route path="assistenza" element={<SalonSupportPage />} />
+              <Route path="tutorial" element={<TutorialPage />} />
               <Route path="importa" element={<DataImportPage />} />
               <Route path="integrazioni" element={<CashIntegrationsPage />} />
             </Route>

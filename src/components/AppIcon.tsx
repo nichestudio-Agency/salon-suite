@@ -27,7 +27,8 @@ type IconName =
   | "ticket"
   | "paperclip"
   | "video"
-  | "send";
+  | "send"
+  | "help";
 
 export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
@@ -58,6 +59,7 @@ export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) 
     paperclip: <path d="m20 12-7.6 7.6a6 6 0 0 1-8.5-8.5l8.2-8.2a4 4 0 0 1 5.7 5.7l-8.3 8.3a2 2 0 0 1-2.8-2.8l7.6-7.6" />,
     video: <><rect x="3" y="5" width="14" height="14" rx="3" /><path d="m17 10 4-2v8l-4-2" /></>,
     send: <><path d="m22 2-7 20-4-9-9-4 20-7Z" /><path d="M22 2 11 13" /></>,
+    help: <><circle cx="12" cy="12" r="9" /><path d="M9.8 9a2.4 2.4 0 1 1 3.8 1.95c-1.05.72-1.6 1.2-1.6 2.55" /><path d="M12 17h.01" /></>,
   };
 
   return (
