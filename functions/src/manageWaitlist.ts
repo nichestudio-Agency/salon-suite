@@ -7,13 +7,15 @@ import { isValidDateKey } from "./booking-core.js";
 if (getApps().length === 0) initializeApp();
 
 interface ManageWaitlistData {
-  action: "join" | "cancel";
+  action: "join" | "cancel" | "accept";
   salonId: string;
   entryId?: string;
   operatorId?: string;
   serviceIds?: string[];
   serviceId?: string;
   date?: string;
+  startMin?: number;
+  bookingId?: string;
 }
 
 function requireId(value: unknown, field: string): string {
@@ -35,18 +37,22 @@ export const manageWaitlist = onCall<ManageWaitlistData>(async (request) => {
     throw new HttpsError("permission-denied", "Solo un cliente può usare la lista d'attesa.");
   }
 
-  if (request.data?.action === "cancel") {
+  if (request.data?.action === "cancel" || request.data?.action === "accept") {
     const entryId = requireId(request.data.entryId, "entryId");
+    const accepted = request.data.action === "accept";
+    const bookingId = accepted ? requireId(request.data.bookingId, "bookingId") : null;
     const entryRef = db.doc(`salons/${salonId}/waitlist/${entryId}`);
     await db.runTransaction(async (transaction) => {
       const entrySnap = await transaction.get(entryRef);
       if (!entrySnap.exists) throw new HttpsError("not-found", "Richiesta non trovata.");
       if (entrySnap.data()?.clientId !== uid) throw new HttpsError("permission-denied", "Richiesta non autorizzata.");
-      if (entrySnap.data()?.status === "active") {
-        transaction.update(entryRef, { status: "cancelled", cancelledAt: FieldValue.serverTimestamp() });
+      if (["active", "notified"].includes(entrySnap.data()?.status)) {
+        transaction.update(entryRef, accepted
+          ? { status: "accepted", bookingId, acceptedAt: FieldValue.serverTimestamp() }
+          : { status: "cancelled", cancelledAt: FieldValue.serverTimestamp() });
       }
     });
-    return { entryId, status: "cancelled" as const };
+    return { entryId, status: accepted ? "accepted" as const : "cancelled" as const };
   }
 
   if (request.data?.action !== "join") throw new HttpsError("invalid-argument", "Azione non valida.");
@@ -58,6 +64,8 @@ export const manageWaitlist = onCall<ManageWaitlistData>(async (request) => {
   if (serviceIds.length < 1 || serviceIds.length > 5) throw new HttpsError("invalid-argument", "Puoi selezionare da 1 a 5 servizi.");
   const date = request.data.date;
   if (typeof date !== "string" || !isValidDateKey(date)) throw new HttpsError("invalid-argument", "Data non valida.");
+  const startMin = request.data.startMin;
+  if (!Number.isInteger(startMin) || Number(startMin) < 0 || Number(startMin) >= 24 * 60) throw new HttpsError("invalid-argument", "Orario non valido.");
 
   const [operatorSnap, ...serviceSnaps] = await db.getAll(
     db.doc(`salons/${salonId}/operators/${operatorId}`),
@@ -66,7 +74,7 @@ export const manageWaitlist = onCall<ManageWaitlistData>(async (request) => {
   if (!operatorSnap.exists || operatorSnap.data()?.attivo !== true) throw new HttpsError("failed-precondition", "Operatore non disponibile.");
   if (serviceSnaps.some((snap) => !snap.exists || snap.data()?.attivo !== true)) throw new HttpsError("failed-precondition", "Uno dei servizi non è disponibile.");
 
-  const key = createHash("sha256").update(`${uid}|${operatorId}|${date}|${serviceIds.join(",")}`).digest("hex").slice(0, 24);
+  const key = createHash("sha256").update(`${uid}|${operatorId}|${date}|${startMin}|${serviceIds.join(",")}`).digest("hex").slice(0, 24);
   const entryRef = db.doc(`salons/${salonId}/waitlist/${key}`);
   const serviceItems = serviceSnaps.map((snap, index) => ({
     serviceId: serviceIds[index],
@@ -74,6 +82,8 @@ export const manageWaitlist = onCall<ManageWaitlistData>(async (request) => {
     durataMin: Number(snap.data()?.durataMin) || 0,
     prezzo: Number(snap.data()?.prezzo) || 0,
   }));
+  const durationMin = serviceItems.reduce((sum, item) => sum + item.durataMin, 0);
+  if (!Number.isInteger(durationMin) || durationMin <= 0) throw new HttpsError("failed-precondition", "Durata del servizio non valida.");
   await entryRef.set({
     clientId: uid,
     clientNome: typeof profile.nome === "string" && profile.nome.trim() ? profile.nome.trim() : "Cliente",
@@ -82,6 +92,8 @@ export const manageWaitlist = onCall<ManageWaitlistData>(async (request) => {
     serviceIds,
     serviceItems,
     date,
+    startMin,
+    endMin: Number(startMin) + durationMin,
     status: "active",
     createdAt: FieldValue.serverTimestamp(),
     notifiedAt: FieldValue.delete(),

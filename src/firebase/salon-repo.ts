@@ -2,8 +2,11 @@ import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore"
 import { db } from "./app";
 import type { Salon } from "../domain/models";
 import type { WeeklyHours } from "../domain/availability";
+import { getEmulatorDocument } from "./emulator-rest";
 
 export type SalonWithId = Salon & { id: string };
+
+const useEmulator = import.meta.env?.VITE_USE_EMULATOR === "true";
 
 export async function listSalons(): Promise<SalonWithId[]> {
   const snap = await getDocs(collection(db, "salons"));
@@ -19,6 +22,15 @@ export async function getSalon(salonId: string): Promise<Salon | null> {
 }
 
 export async function resolveSalonAccessCode(code: string): Promise<SalonWithId | null> {
+  // Il REST endpoint locale evita i blocchi WebChannel osservati in WKWebView/iOS Simulator.
+  if (useEmulator) {
+    const access = await getEmulatorDocument(`salonAccessCodes/${encodeURIComponent(code)}`);
+    if (!access || access.attivo !== true) return null;
+    const salonId = String(access.salonId ?? "");
+    if (!salonId) return null;
+    const salon = await getEmulatorDocument(`salons/${encodeURIComponent(salonId)}`);
+    return salon ? { id: salonId, ...(salon as unknown as Salon) } : null;
+  }
   const accessSnap = await getDoc(doc(db, "salonAccessCodes", code));
   if (!accessSnap.exists() || accessSnap.data().attivo !== true) return null;
   const salonId = String(accessSnap.data().salonId ?? "");
@@ -31,6 +43,13 @@ export async function updateOpeningHours(
   salonId: string, orariApertura: WeeklyHours
 ): Promise<void> {
   await updateDoc(doc(db, "salons", salonId), { orariApertura });
+}
+
+export async function updateBookingConfirmationMode(
+  salonId: string,
+  modalitaConferma: Salon["impostazioni"]["modalitaConferma"],
+): Promise<void> {
+  await updateDoc(doc(db, "salons", salonId), { "impostazioni.modalitaConferma": modalitaConferma });
 }
 
 import type { CompleannoConfig } from "../domain/models";

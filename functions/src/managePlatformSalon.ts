@@ -13,6 +13,8 @@ if (getApps().length === 0) initializeApp();
 const TYPES = ["barberia", "parrucchieria"] as const;
 const STATUSES = ["trial", "attiva", "scaduta", "sospesa"] as const;
 const PLANS = ["start", "studio", "pro"] as const;
+const BILLING_CYCLES = ["mensile", "annuale"] as const;
+const PAYMENT_STATUSES = ["pagato", "in_scadenza", "insoluto"] as const;
 const HEX = /^#[0-9a-f]{6}$/i;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -40,6 +42,9 @@ interface CreatePlatformSalonData {
   piano: (typeof PLANS)[number];
   scadenza: string;
   prezzoMensile: number;
+  ciclo?: typeof BILLING_CYCLES[number];
+  statoPagamento?: typeof PAYMENT_STATUSES[number];
+  rinnovoAutomatico?: boolean;
 }
 
 export const createPlatformSalon = onCall<CreatePlatformSalonData>(
@@ -59,7 +64,10 @@ export const createPlatformSalon = onCall<CreatePlatformSalonData>(
       !PLANS.includes(data.piano) ||
       !/^\d{4}-\d{2}-\d{2}$/.test(data.scadenza) ||
       !Number.isInteger(data.prezzoMensile) ||
-      data.prezzoMensile < 0
+      data.prezzoMensile < 0 ||
+      (data.ciclo !== undefined && !BILLING_CYCLES.includes(data.ciclo)) ||
+      (data.statoPagamento !== undefined && !PAYMENT_STATUSES.includes(data.statoPagamento)) ||
+      (data.rinnovoAutomatico !== undefined && typeof data.rinnovoAutomatico !== "boolean")
     ) {
       throw new HttpsError(
         "invalid-argument",
@@ -109,6 +117,10 @@ export const createPlatformSalon = onCall<CreatePlatformSalonData>(
             piano: data.piano,
             scadenza: data.scadenza,
             prezzoMensile: data.prezzoMensile,
+            ciclo: data.ciclo ?? "mensile",
+            statoPagamento: data.statoPagamento ?? "pagato",
+            rinnovoAutomatico: data.rinnovoAutomatico ?? true,
+            note: "",
           },
           createdAt: FieldValue.serverTimestamp(),
         });

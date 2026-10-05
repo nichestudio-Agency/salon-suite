@@ -18,3 +18,4 @@ export { manageCashConnector } from "./manageCashConnector.js";
 export { cashReceiptWebhook } from "./cashReceiptWebhook.js";
 export { manageWaitlist } from "./manageWaitlist.js";
 export { notifyWaitlistSlot } from "./notifyWaitlistSlot.js";
+export { requestFeatureTrial } from "./requestFeatureTrial.js";

@@ -57,9 +57,10 @@ describe("BookingPage", () => {
 
     render(<SalonTenantProvider><BookingPage /></SalonTenantProvider>);
 
-    await screen.findByRole("option", { name: /Taglio/ });
-    await userEvent.selectOptions(screen.getByLabelText("Servizio"), "svc1");
-    await userEvent.selectOptions(await screen.findByLabelText("Operatore"), "op1");
+    await userEvent.click(await screen.findByRole("button", { name: /Taglio/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Continua/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Marco/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Scegli data/ }));
     await userEvent.type(screen.getByLabelText("Data"), "2026-08-24");
     await userEvent.click(screen.getByRole("button", { name: /cerca orari/i }));
 
@@ -86,6 +87,28 @@ describe("BookingPage", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(/richiesta inviata/i);
   });
 
+  it("permette di scegliere uno slot occupato e mettersi in coda per quell'orario", async () => {
+    vi.spyOn(bookingApi, "getAvailability").mockResolvedValue({
+      date: "2026-08-24", durationMin: 30, stepMin: 15, starts: [540], occupiedStarts: [600, 615],
+    });
+    const join = vi.spyOn(waitlistRepo, "joinWaitlist").mockResolvedValue({ entryId: "w1", status: "active" });
+
+    render(<SalonTenantProvider><BookingPage /></SalonTenantProvider>);
+    await userEvent.click(await screen.findByRole("button", { name: /Taglio/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Continua/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Marco/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Scegli data/ }));
+    await userEvent.type(screen.getByLabelText("Data"), "2026-08-24");
+    await userEvent.click(screen.getByRole("button", { name: /cerca orari/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /10:00.*Coda/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Avvisami per le 10:00/i }));
+
+    await waitFor(() => expect(join).toHaveBeenCalledWith({
+      salonId: "salone-x", serviceId: "svc1", operatorId: "op1", date: "2026-08-24", startMin: 600,
+    }));
+    expect(await screen.findByRole("status")).toHaveTextContent(/in coda per le 10:00/i);
+  });
+
   it("calcola e crea una serie con più servizi", async () => {
     vi.spyOn(serviceRepo, "listServices").mockResolvedValue([
       { id: "svc1", titolo: "Taglio", descrizione: "", prezzo: 2000, durataMin: 30, attivo: true },
@@ -101,10 +124,11 @@ describe("BookingPage", () => {
     });
 
     render(<SalonTenantProvider><BookingPage /></SalonTenantProvider>);
-    await screen.findByRole("option", { name: /Taglio/ });
-    await userEvent.selectOptions(screen.getByLabelText("Servizio"), "svc1");
+    await userEvent.click(await screen.findByRole("button", { name: /Taglio/ }));
     await userEvent.click(screen.getByRole("checkbox", { name: /Barba/ }));
-    await userEvent.selectOptions(screen.getByLabelText("Operatore"), "op1");
+    await userEvent.click(screen.getByRole("button", { name: /Continua/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Marco/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Scegli data/ }));
     await userEvent.selectOptions(screen.getByLabelText("Frequenza"), "4");
     await userEvent.type(screen.getByLabelText("Data"), "2026-08-24");
     await userEvent.click(screen.getByRole("button", { name: /cerca orari/i }));

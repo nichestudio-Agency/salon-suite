@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <rect width="2732" height="2732" fill="#eef3f0"/>
+  <rect x="986" y="876" width="760" height="760" rx="230" fill="#667260"/>
+  <g transform="translate(986 876) scale(.7421875)" fill="none" stroke="#fdfbf6" stroke-linecap="round" stroke-linejoin="round" stroke-width="48">
+    <circle cx="342" cy="682" r="106"/>
+    <circle cx="682" cy="682" r="106"/>
+    <path d="M414 604 704 292c38-40 95-56 148-42L598 550"/>
+    <path d="M610 604 320 292c-38-40-95-56-148-42l254 300"/>
+    <circle cx="512" cy="540" r="48" fill="#ef6a45" stroke="none"/>
+  </g>
+  <text x="1366" y="1825" text-anchor="middle" fill="#20231f" font-family="Arial, Helvetica, sans-serif" font-size="98" font-weight="700" letter-spacing="18">SALON SUITE</text>
+  <text x="1366" y="1918" text-anchor="middle" fill="#647068" font-family="Arial, Helvetica, sans-serif" font-size="42" letter-spacing="5">IL TUO SALONE, SEMPRE CON TE</text>
+</svg>

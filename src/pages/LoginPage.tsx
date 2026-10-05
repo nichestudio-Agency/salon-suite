@@ -11,6 +11,7 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   function goToAccount(ruolo?: string, salonId?: string): boolean {
     if (ruolo === "superadmin") { navigate("/admin"); return true; }
@@ -22,14 +23,19 @@ export function LoginPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setBusy(true);
     try {
       const session = await signIn(email, password);
       if (!goToAccount(session.ruolo, session.salonId)) {
         await signOutUser();
         setError("Il profilo dell'account non è configurato. Ripristina i dati demo e riprova.");
       }
-    } catch {
-      setError("Email o password non validi.");
+    } catch (cause) {
+      setError(cause instanceof Error && cause.message === "auth-timeout"
+        ? "L’accesso sta impiegando troppo tempo. Controlla la connessione e riprova."
+        : "Email o password non validi.");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -77,7 +83,7 @@ export function LoginPage() {
         </div>
 
         {error && <p className="customer-error" role="alert">{error}</p>}
-        <button className="customer-button" type="submit">Accedi</button>
+        <button className="customer-button" type="submit" disabled={busy}>{busy ? "Accesso…" : "Accedi"}</button>
 
         {showDemoAccess && (
           <div className="demo-access" aria-label="Accesso rapido demo">

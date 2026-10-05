@@ -14,6 +14,7 @@ afterEach(async () => {
 async function setupBookableSalon(options: {
   indisponibilita?: Array<{ id: string; dal: string; al: string }>;
   coupon?: { codice: string; tipo: "percentuale" | "fisso"; valore: number; scadenza?: string; dataAppuntamento?: string; attivo: boolean };
+  confirmationMode?: "manuale" | "auto";
 } = {}) {
   const suffix = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const { salonId } = await registerOwner({
@@ -45,6 +46,9 @@ async function setupBookableSalon(options: {
   });
   if (options.coupon) {
     await setDoc(doc(db, `salons/${salonId}/coupons/test-coupon`), options.coupon);
+  }
+  if (options.confirmationMode) {
+    await setDoc(doc(db, `salons/${salonId}`), { impostazioni: { passoMinuti: 15, modalitaConferma: options.confirmationMode } }, { merge: true });
   }
 
   await signOut(auth);
@@ -138,6 +142,14 @@ describe("createBooking", () => {
       date: "2026-08-24",
     });
     expect(availability.starts).toContain(600);
+  });
+
+  it("conferma subito quando il salone usa l'accettazione automatica", async () => {
+    const salonId = await setupBookableSalon({ confirmationMode: "auto" });
+    const result = await createBooking({ salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600 });
+    expect(result.stato).toBe("confermata");
+    const bookings = await listMyBookings(salonId);
+    expect(bookings[0]?.stato).toBe("confermata");
   });
 
   it("fa vincere una sola di due richieste concorrenti sullo stesso slot", async () => {

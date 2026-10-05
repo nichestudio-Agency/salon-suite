@@ -42,7 +42,10 @@ export function SalonAccessPage() {
     setBusy(true);
     setError(null);
     try {
-      const resolved = await resolveSalonAccessCode(normalized);
+      const resolved = await Promise.race([
+        resolveSalonAccessCode(normalized),
+        new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
       if (!resolved) {
         setError("Codice non riconosciuto. Controllalo con il salone.");
         return;
@@ -50,8 +53,10 @@ export function SalonAccessPage() {
       selectSalon(resolved);
       stopScanner();
       navigate("/accedi", { replace: true });
-    } catch {
-      setError("Non riusciamo a verificare il codice. Riprova tra poco.");
+    } catch (cause) {
+      setError(cause instanceof Error && cause.message === "timeout"
+        ? "La verifica sta impiegando troppo tempo. Controlla la connessione e riprova."
+        : "Non riusciamo a verificare il codice. Riprova tra poco.");
     } finally {
       setBusy(false);
     }
@@ -155,7 +160,7 @@ export function SalonAccessPage() {
               onChange={(event) =>
                 setCode(normalizeSalonAccessCode(event.target.value))
               }
-              placeholder="ES. STUDIO7K4P"
+              placeholder="ES. SALONEX26"
               autoCapitalize="characters"
               autoComplete="off"
               enterKeyHint="go"

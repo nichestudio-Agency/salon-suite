@@ -99,9 +99,11 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
     if (!valido) {
       throw new HttpsError("failed-precondition", "Coupon non valido o scaduto.");
     }
-    const sconto = coupon!.tipo === "percentuale"
-      ? `-${coupon!.valore}%`
-      : `-€${(Number(coupon!.valore) / 100).toFixed(2)}`;
+    const sconto = coupon!.tipo === "prodotto_omaggio"
+      ? `${coupon!.giftProductTitle ?? "Prodotto"} in omaggio`
+      : coupon!.tipo === "percentuale"
+        ? `-${coupon!.valore}%`
+        : `-€${(Number(coupon!.valore) / 100).toFixed(2)}`;
     couponSuffix = ` Usa il codice ${coupon!.codice} (${sconto}).`;
   }
   const body = testo + couponSuffix;
@@ -173,6 +175,24 @@ export const sendCampaign = onCall<SendCampaignData>(async (request) => {
     } catch {
       // best effort: l'email resta il canale di riserva
     }
+  }
+
+  // La stessa comunicazione resta consultabile nell'app del cliente anche se
+  // email e push non sono disponibili o vengono aperte in un secondo momento.
+  for (const group of chunk(recipientIds, 450)) {
+    const batch = db.batch();
+    for (const clientId of group) {
+      batch.set(db.doc(`salons/${salonId}/notifications/${campaignRef.id}_${clientId}`), {
+        clientId,
+        campaignId: campaignRef.id,
+        couponId: couponId ?? null,
+        title: titolo,
+        body,
+        read: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
 
   // Audit scritto DOPO gli invii, così riflette che l'invio è realmente avvenuto.

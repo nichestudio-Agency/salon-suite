@@ -73,10 +73,10 @@ async function commitInChunks(writes, size = 350) {
 }
 
 const platformSalons = [
-  { id: "officina-27", nome: "Officina 27", dominio: "officina27.barberia.app", owner: "Riccardo Serra", email: "riccardo@officina27.demo", piano: "pro", stato: "attiva", prezzo: 12900, scadenza: dateOffset(142), clienti: 18, prenotazioni: 11 },
-  { id: "barbieri-navigli", nome: "Barbieri Navigli", dominio: "navigli.barberia.app", owner: "Matteo Villa", email: "matteo@navigli.demo", piano: "start", stato: "trial", prezzo: 4900, scadenza: dateOffset(9), clienti: 9, prenotazioni: 5 },
-  { id: "bottega-1932", nome: "Bottega 1932", dominio: "bottega1932.barberia.app", owner: "Andrea Greco", email: "andrea@bottega1932.demo", piano: "studio", stato: "sospesa", prezzo: 7900, scadenza: dateOffset(-8), clienti: 27, prenotazioni: 3 },
-  { id: "uomo-torino", nome: "Uomo Torino", dominio: "uomotorino.barberia.app", owner: "Stefano Ferri", email: "stefano@uomotorino.demo", piano: "studio", stato: "attiva", prezzo: 7900, scadenza: dateOffset(67), clienti: 14, prenotazioni: 8 },
+  { id: "officina-27", nome: "Officina 27", dominio: "officina27.barberia.app", owner: "Riccardo Serra", email: "riccardo@officina27.demo", piano: "pro", stato: "attiva", prezzo: 12900, scadenza: dateOffset(142), ciclo: "annuale", pagamento: "pagato", clienti: 18, prenotazioni: 11 },
+  { id: "barbieri-navigli", nome: "Barbieri Navigli", dominio: "navigli.barberia.app", owner: "Matteo Villa", email: "matteo@navigli.demo", piano: "start", stato: "trial", prezzo: 4900, scadenza: dateOffset(9), ciclo: "mensile", pagamento: "in_scadenza", clienti: 9, prenotazioni: 5 },
+  { id: "bottega-1932", nome: "Bottega 1932", dominio: "bottega1932.barberia.app", owner: "Andrea Greco", email: "andrea@bottega1932.demo", piano: "studio", stato: "sospesa", prezzo: 7900, scadenza: dateOffset(-8), ciclo: "mensile", pagamento: "insoluto", clienti: 27, prenotazioni: 3 },
+  { id: "uomo-torino", nome: "Uomo Torino", dominio: "uomotorino.barberia.app", owner: "Stefano Ferri", email: "stefano@uomotorino.demo", piano: "studio", stato: "attiva", prezzo: 7900, scadenza: dateOffset(67), ciclo: "mensile", pagamento: "pagato", clienti: 14, prenotazioni: 8 },
 ];
 
 const [adminUid, ownerUid, hairOwnerUid, hairClientUid, ...clientUids] = await Promise.all([
@@ -93,6 +93,14 @@ const salonClients = [
 ];
 
 await Promise.all([
+  db.doc("platformConfig/subscriptions").set({
+    piani: {
+      start: { nome: "Start", descrizione: "Gli strumenti essenziali per digitalizzare agenda e clienti.", prezzoMensile: 4900, funzionalita: ["agenda", "clienti", "servizi_team", "app_cliente"] },
+      studio: { nome: "Studio", descrizione: "Vendita, relazione e fidelizzazione per far crescere l’attività.", prezzoMensile: 7900, funzionalita: ["agenda", "clienti", "servizi_team", "prodotti_ordini", "marketing", "fidelity", "app_cliente"] },
+      pro: { nome: "Pro", descrizione: "Controllo completo, dati avanzati e integrazioni operative.", prezzoMensile: 12900, funzionalita: ["agenda", "clienti", "servizi_team", "prodotti_ordini", "marketing", "fidelity", "statistiche", "integrazioni", "importazione", "app_cliente"] },
+    },
+    updatedAt: new Date().toISOString(),
+  }),
   db.doc("salons/salone-x").set({
     nome: "Salone X",
     codiceAccesso: "SALONEX26",
@@ -111,7 +119,7 @@ await Promise.all([
     fidelity: { attiva: true, puntiPerEuro: 1, sogliaPremio: 100, premioNome: "Buono da 10 €", premioValore: 1000, rewards: [{ id: "reward-buono-10", nome: "Buono da 10 €", descrizione: "Da utilizzare su un servizio a scelta.", tipo: "buono", punti: 100, valore: 1000, attivo: true }, { id: "reward-cera", nome: "Cera opaca omaggio", descrizione: "Prodotto full size da ritirare in salone.", tipo: "prodotto", punti: 160, valore: 1800, attivo: true }, { id: "reward-barba", nome: "Rituale barba", descrizione: "Servizio completo offerto dal salone.", tipo: "servizio", punti: 220, valore: 2800, attivo: true }] },
     compleanno: { attivo: true, messaggio: "Buon compleanno dal team di Salone X. Oggi festeggiamo il tuo stile.", couponId: "birthday-15" },
     dominio: "salonex.barberia.app",
-    licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(118), prezzoMensile: 9900 },
+    licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(118), prezzoMensile: 9900, ciclo: "annuale", statoPagamento: "pagato", rinnovoAutomatico: true, note: "Cliente fondatore" },
     createdAt: Timestamp.fromDate(new Date(Date.now() - 210 * 86_400_000)),
   }),
   db.doc("salonAccessCodes/SALONEX26").set({ salonId: "salone-x", attivo: true, createdAt: new Date().toISOString() }),
@@ -196,7 +204,7 @@ await Promise.all([
     fidelity: { attiva: true, puntiPerEuro: 1, sogliaPremio: 120, premioNome: "Trattamento gloss omaggio", premioValore: 1800, rewards: [{ id: "reward-gloss", nome: "Trattamento gloss", descrizione: "Trattamento luminosità da riscattare in salone.", tipo: "servizio", punti: 120, valore: 1800, attivo: true }, { id: "reward-olio", nome: "Olio luce", descrizione: "Prodotto omaggio da ritirare alla cassa.", tipo: "prodotto", punti: 180, valore: 2600, attivo: true }] },
     compleanno: { attivo: true, messaggio: "Buon compleanno da Atelier Luce. Per te un momento dedicato al tuo stile.", couponId: "luce-birthday" },
     dominio: "atelierluce.barberia.app",
-    licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(176), prezzoMensile: 10900 },
+    licenza: { stato: "attiva", piano: "pro", scadenza: dateOffset(176), prezzoMensile: 10900, ciclo: "annuale", statoPagamento: "pagato", rinnovoAutomatico: true, note: "" },
     createdAt: Timestamp.fromDate(new Date(Date.now() - 128 * 86_400_000)),
   }),
   db.doc("salonAccessCodes/ATELIER26").set({ salonId: "atelier-luce", attivo: true, createdAt: new Date().toISOString() }),
@@ -222,15 +230,21 @@ await Promise.all([
   db.doc("salons/atelier-luce/bookings/demo-hair-today-03").set({ clientId: "demo-hair-marta", clientNome: "Marta Leone", clientEmail: "marta@atelierluce.demo", operatorId: "gaia-neri", serviceId: "piega-seta", date: dateOffset(0), startMin: 840, endMin: 885, stato: "in_attesa", createdAt: Timestamp.now() }),
   db.doc("salons/atelier-luce/bookings/demo-hair-today-04").set({ clientId: "demo-hair-sofia", clientNome: "Sofia Romano", clientEmail: "sofia@atelierluce.demo", operatorId: "elena-moretti", serviceId: "rituale-repair", date: dateOffset(0), startMin: 930, endMin: 975, stato: "confermata", createdAt: Timestamp.now() }),
   db.doc("salons/atelier-luce/orders/demo-hair-order-01").set({ clientId: hairClientUid, clientNome: "Giulia Ferri", clientEmail: "cliente.hair@barberia.local", items: [{ productId: "olio-luce", titolo: "Olio luce", prezzo: 2600, qta: 1 }], totale: 2600, stato: "pronto", createdAt: Timestamp.fromDate(new Date(Date.now() - 2 * 86_400_000)) }),
+  db.doc("salons/atelier-luce/notifications/demo-hair-order-ready").set({ clientId: hairClientUid, title: "Il tuo ordine è pronto", body: "L’Olio luce ti aspetta in salone. Puoi ritirarlo quando preferisci.", orderId: "demo-hair-order-01", read: false, createdAt: Timestamp.fromDate(new Date(Date.now() - 3_600_000)) }),
   db.doc("salons/salone-x/bookings/demo-today-01").set({ clientId: clientUids[1], clientNome: "Luca Bianchi", clientEmail: demoClients[1].email, operatorId: "marco-rinaldi", serviceId: "taglio-sartoriale", date: dateOffset(0), startMin: 570, endMin: 615, stato: "confermata", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-02").set({ clientId: clientUids[2], clientNome: "Alessandro Conti", clientEmail: demoClients[2].email, operatorId: "lorenzo-bassi", serviceId: "combo-signature", date: dateOffset(0), startMin: 630, endMin: 705, stato: "in_attesa", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-03").set({ clientId: clientUids[3], clientNome: "Paolo Romano", clientEmail: demoClients[3].email, operatorId: "marco-rinaldi", serviceId: "rituale-barba", date: dateOffset(0), startMin: 720, endMin: 750, stato: "confermata", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-04").set({ clientId: clientUids[4], clientNome: "Davide Russo", clientEmail: demoClients[4].email, operatorId: "giuseppe-moretti", serviceId: "styling-express", date: dateOffset(0), startMin: 840, endMin: 860, stato: "confermata", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/bookings/demo-today-05").set({ clientId: clientUids[5], clientNome: "Simone Ricci", clientEmail: demoClients[5].email, operatorId: "lorenzo-bassi", serviceId: "taglio-sartoriale", date: dateOffset(0), startMin: 930, endMin: 975, stato: "confermata", createdAt: Timestamp.now() }),
   ...[-1, -2, -3, -4, -5, -6].map((offset, index) => db.doc(`salons/salone-x/bookings/demo-week-${index + 1}`).set({ clientId: clientUids[index % clientUids.length], clientNome: demoClients[index % demoClients.length].nome, clientEmail: demoClients[index % demoClients.length].email, operatorId: index % 2 ? "marco-rinaldi" : "lorenzo-bassi", serviceId: index % 2 ? "combo-signature" : "taglio-sartoriale", date: dateOffset(offset), startMin: 600, endMin: index % 2 ? 675 : 645, stato: "confermata", createdAt: Timestamp.fromDate(new Date(Date.now() + offset * 86_400_000)) })),
+  db.doc("salons/salone-x/bookings/demo-client-upcoming").set({ clientId: clientUids[0], clientNome: demoClients[0].nome, clientEmail: demoClients[0].email, operatorId: "marco-rinaldi", serviceId: "combo-signature", date: dateOffset(1), startMin: 930, endMin: 1005, stato: "confermata", createdAt: Timestamp.now() }),
   db.doc("salons/salone-x/orders/demo-order-01").set({ clientId: clientUids[1], clientNome: "Luca Bianchi", clientEmail: demoClients[1].email, items: [{ productId: "cera-opaca", titolo: "Cera opaca", prezzo: 1800, qta: 1 }], totale: 1800, stato: "ritirato", createdAt: Timestamp.fromDate(new Date(Date.now() - 12 * 86_400_000)) }),
   db.doc("salons/salone-x/orders/demo-order-02").set({ clientId: clientUids[3], clientNome: "Paolo Romano", clientEmail: demoClients[3].email, items: [{ productId: "olio-barba", titolo: "Olio barba", prezzo: 2200, qta: 2 }], totale: 4400, stato: "pronto", createdAt: Timestamp.fromDate(new Date(Date.now() - 95 * 86_400_000)) }),
   db.doc("salons/salone-x/orders/demo-order-03").set({ clientId: clientUids[4], clientNome: "Davide Russo", clientEmail: demoClients[4].email, items: [{ productId: "shampoo-daily", titolo: "Shampoo daily", prezzo: 1600, qta: 1 }], totale: 1600, stato: "in_attesa", createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 86_400_000)) }),
+  db.doc("salons/salone-x/orders/demo-client-order").set({ clientId: clientUids[0], clientNome: demoClients[0].nome, clientEmail: demoClients[0].email, items: [{ productId: "cera-opaca", titolo: "Cera opaca", prezzo: 1800, qta: 1 }, { productId: "shampoo-daily", titolo: "Shampoo daily", prezzo: 1600, qta: 1 }], totale: 3400, stato: "pronto", pointsEarned: 34, pickupDate: dateOffset(2), createdAt: Timestamp.fromDate(new Date(Date.now() - 86_400_000)) }),
+  db.doc("salons/salone-x/notifications/demo-booking-confirmed").set({ clientId: clientUids[0], title: "Prenotazione confermata", body: `Ti aspettiamo domani alle 15:30 per Combo signature con Marco.`, bookingId: "demo-client-upcoming", read: false, createdAt: Timestamp.fromDate(new Date(Date.now() - 45 * 60_000)) }),
+  db.doc("salons/salone-x/notifications/demo-order-ready").set({ clientId: clientUids[0], title: "Il tuo ordine è pronto", body: "Cera opaca e Shampoo daily sono pronti per il ritiro in salone.", orderId: "demo-client-order", read: false, createdAt: Timestamp.fromDate(new Date(Date.now() - 4 * 3_600_000)) }),
+  db.doc("salons/salone-x/notifications/demo-campaign").set({ clientId: clientUids[0], title: "Un momento per il tuo stile", body: "Prenota entro questa settimana e usa RITORNA20 per ricevere il 20% sul prossimo servizio.", campaignId: "demo-ritorna", couponId: "ritorna-20", read: true, createdAt: Timestamp.fromDate(new Date(Date.now() - 3 * 86_400_000)) }),
 ]);
 
 // Uno storico ampio e deterministico rende la demo leggibile anche nelle viste
@@ -248,6 +262,37 @@ const productCatalog = [
   { id: "pomata-lucida", titolo: "Pomata lucida", prezzo: 1950 },
 ];
 const operatorIds = ["marco-rinaldi", "lorenzo-bassi", "giuseppe-moretti"];
+const hairServiceCatalog = [
+  { id: "taglio-luce", titolo: "Taglio su misura", prezzo: 4800, durataMin: 60 },
+  { id: "balayage", titolo: "Balayage luminoso", prezzo: 9800, durataMin: 120 },
+  { id: "piega-seta", titolo: "Piega seta", prezzo: 3200, durataMin: 45 },
+  { id: "rituale-repair", titolo: "Rituale repair", prezzo: 4200, durataMin: 45 },
+];
+const hairProductCatalog = [
+  { id: "olio-luce", titolo: "Olio luce", prezzo: 2600 },
+  { id: "maschera-repair", titolo: "Maschera repair", prezzo: 3100 },
+  { id: "spray-termico", titolo: "Spray termico", prezzo: 2200 },
+];
+const hairOperatorIds = ["elena-moretti", "sara-vitali", "gaia-neri"];
+const hairGeneratedClients = Array.from({ length: 36 }, (_, index) => {
+  const firstNames = ["Alessia", "Beatrice", "Camilla", "Daniela", "Elisa", "Francesca", "Greta", "Ilaria", "Laura", "Noemi", "Paola", "Valentina"];
+  const lastNames = ["Bianchi", "Colombo", "De Angelis", "Ferrari", "Galli", "Leone", "Marchetti", "Riva", "Romano", "Serra", "Villa", "Vitali"];
+  const nome = `${firstNames[index % firstNames.length]} ${lastNames[(index * 5 + Math.floor(index / firstNames.length)) % lastNames.length]}`;
+  return {
+    id: `demo-atelier-client-${String(index + 1).padStart(3, "0")}`,
+    nome,
+    email: `${nome.toLowerCase().replaceAll(" ", ".")}.${String(index + 1).padStart(2, "0")}@atelierluce.demo`,
+    sesso: "femminile",
+    dataNascita: `${1978 + (index * 7) % 24}-${String(1 + (index * 3) % 12).padStart(2, "0")}-${String(1 + (index * 5) % 27).padStart(2, "0")}`,
+  };
+});
+const hairClients = [
+  { id: hairClientUid, nome: "Giulia Ferri", email: "cliente.hair@barberia.local", sesso: "femminile", dataNascita: "1993-10-21" },
+  { id: "demo-hair-chiara", nome: "Chiara Riva", email: "chiara@atelierluce.demo", sesso: "femminile", dataNascita: "1989-06-08" },
+  { id: "demo-hair-marta", nome: "Marta Leone", email: "marta@atelierluce.demo", sesso: "femminile", dataNascita: "1998-02-17" },
+  { id: "demo-hair-sofia", nome: "Sofia Romano", email: "sofia@atelierluce.demo", sesso: "femminile", dataNascita: "1984-12-02" },
+  ...hairGeneratedClients,
+];
 const demoWrites = [];
 
 for (const [index, client] of salonClients.entries()) {
@@ -276,6 +321,26 @@ for (const [index, client] of salonClients.entries()) {
       updatedAt: Timestamp.fromDate(new Date(Date.now() - (index * 13) % 75 * 86_400_000)),
     }));
   }
+}
+
+for (const [index, client] of hairGeneratedClients.entries()) {
+  const totalPoints = 80 + (index * 29) % 390;
+  const redeemedPoints = index % 5 === 0 ? 120 : index % 11 === 0 ? 180 : 0;
+  demoWrites.push(
+    db.doc(`users/${client.id}`).set({ ...client, ruolo: "cliente", salonId: "atelier-luce", fcmTokens: [] }, { merge: true }),
+    db.doc(`salons/atelier-luce/loyaltyAccounts/${client.id}`).set({
+      clientId: client.id,
+      codice: `CARD-AL${String(index + 2).padStart(6, "0")}`,
+      nome: client.nome,
+      email: client.email,
+      punti: Math.max(0, totalPoints - redeemedPoints),
+      puntiTotali: totalPoints,
+      puntiRiscattati: redeemedPoints,
+      visite: 3 + (index * 4) % 13,
+      createdAt: Timestamp.fromDate(new Date(Date.now() - (55 + index % 120) * 86_400_000)),
+      updatedAt: Timestamp.fromDate(new Date(Date.now() - (index * 7) % 42 * 86_400_000)),
+    }),
+  );
 }
 
 let historyIndex = 0;
@@ -340,6 +405,113 @@ for (let daysAgo = 1; daysAgo <= 180; daysAgo++) {
     }
     historyIndex++;
   }
+}
+
+let hairHistoryIndex = 0;
+for (let daysAgo = 1; daysAgo <= 120; daysAgo++) {
+  const appointmentDate = dateOffset(-daysAgo);
+  const weekday = new Date(`${appointmentDate}T12:00:00`).getDay();
+  if (weekday === 0 || weekday === 1) continue;
+  const dailyVolume = 2 + (daysAgo * 5) % 4;
+  for (let slot = 0; slot < dailyVolume; slot++) {
+    const client = hairClients[(daysAgo * 7 + slot * 13) % hairClients.length];
+    const service = hairServiceCatalog[(daysAgo + slot * 2) % hairServiceCatalog.length];
+    const operatorId = hairOperatorIds[(daysAgo + slot) % hairOperatorIds.length];
+    const startMin = 570 + slot * 120 + (daysAgo % 2) * 15;
+    const bookingId = `history-hair-booking-${String(hairHistoryIndex).padStart(4, "0")}`;
+    const isNoShow = hairHistoryIndex % 37 === 0;
+    const isCancelled = hairHistoryIndex % 53 === 0;
+    const status = isCancelled ? "annullata" : isNoShow ? "no_show" : "completata";
+    const occurredAt = new Date(Date.now() - daysAgo * 86_400_000 + startMin * 60_000);
+    demoWrites.push(db.doc(`salons/atelier-luce/bookings/${bookingId}`).set({
+      clientId: client.id,
+      clientNome: client.nome,
+      clientEmail: client.email,
+      operatorId,
+      performedByOperatorId: operatorId,
+      serviceId: service.id,
+      serviceItems: [{ serviceId: service.id, titolo: service.titolo, durataMin: service.durataMin, prezzo: service.prezzo, offsetStartMin: 0, offsetEndMin: service.durataMin }],
+      date: appointmentDate,
+      startMin,
+      endMin: startMin + service.durataMin,
+      stato: status,
+      prezzoOriginale: service.prezzo,
+      sconto: 0,
+      prezzoFinale: service.prezzo,
+      createdAt: Timestamp.fromDate(new Date(occurredAt.getTime() - (2 + hairHistoryIndex % 16) * 86_400_000)),
+      ...(status === "completata" ? { saleId: `history-hair-sale-${String(hairHistoryIndex).padStart(4, "0")}`, completedAt: Timestamp.fromDate(occurredAt) } : {}),
+    }));
+    if (status === "completata") {
+      const includeProduct = hairHistoryIndex % 3 === 0;
+      const product = hairProductCatalog[(hairHistoryIndex + daysAgo) % hairProductCatalog.length];
+      const saleItems = [
+        { tipo: "servizio", referenceId: service.id, titolo: service.titolo, qta: 1, prezzoUnitario: service.prezzo, totale: service.prezzo, performedByOperatorId: operatorId },
+        ...(includeProduct ? [{ tipo: "prodotto", referenceId: product.id, titolo: product.titolo, qta: 1, prezzoUnitario: product.prezzo, totale: product.prezzo, soldByOperatorId: operatorId }] : []),
+      ];
+      const total = saleItems.reduce((sum, item) => sum + item.totale, 0);
+      demoWrites.push(db.doc(`salons/atelier-luce/sales/history-hair-sale-${String(hairHistoryIndex).padStart(4, "0")}`).set({
+        clientId: client.id,
+        clientNome: client.nome,
+        bookingId,
+        date: appointmentDate,
+        stato: "pagata",
+        items: saleItems,
+        subtotale: total,
+        sconto: 0,
+        totale: total,
+        paymentMethod: "in_salone",
+        performedByOperatorId: operatorId,
+        createdByUserId: hairOwnerUid,
+        loyaltyPointsCredited: Math.floor(total / 100),
+        createdAt: Timestamp.fromDate(occurredAt),
+        paidAt: Timestamp.fromDate(occurredAt),
+      }));
+    }
+    hairHistoryIndex++;
+  }
+}
+
+for (let index = 0; index < 24; index++) {
+  const client = hairClients[(index * 7 + 2) % hairClients.length];
+  const product = hairProductCatalog[index % hairProductCatalog.length];
+  const quantity = index % 7 === 0 ? 2 : 1;
+  const createdAt = new Date(Date.now() - (2 + index * 4) * 86_400_000);
+  demoWrites.push(db.doc(`salons/atelier-luce/orders/history-hair-order-${String(index).padStart(3, "0")}`).set({
+    clientId: client.id,
+    clientNome: client.nome,
+    clientEmail: client.email,
+    items: [{ productId: product.id, titolo: product.titolo, prezzo: product.prezzo, qta: quantity }],
+    totale: product.prezzo * quantity,
+    stato: index < 3 ? "in_attesa" : index < 6 ? "pronto" : "ritirato",
+    pointsEarned: Math.floor(product.prezzo * quantity / 100),
+    paymentMethod: "in_salone",
+    createdAt: Timestamp.fromDate(createdAt),
+    ...(index >= 6 ? { paidAt: Timestamp.fromDate(createdAt) } : {}),
+  }));
+}
+
+const hairCampaignRecipients = hairClients.slice(0, 32).map((client) => client.id);
+demoWrites.push(
+  db.doc("salons/atelier-luce/coupons/torna-luce").set({ codice: "TORNALUCE20", tipo: "percentuale", valore: 20, attivo: true, scadenza: dateOffset(18) }),
+  db.doc("salons/atelier-luce/coupons/piega-week").set({ codice: "PIEGA10", tipo: "importo", valore: 1000, attivo: true, scadenza: dateOffset(8) }),
+  db.doc("salons/atelier-luce/campaigns/demo-hair-ritorno").set({ filtri: { bookingInactiveDays: 45 }, titolo: "Il tuo momento di luce", testo: "Torna in atelier con un vantaggio dedicato.", couponId: "torna-luce", recipientCount: hairCampaignRecipients.length, recipientIds: hairCampaignRecipients, sentAt: Timestamp.fromDate(new Date(Date.now() - 12 * 86_400_000)) }),
+  db.doc("salons/atelier-luce/campaigns/demo-hair-piega").set({ filtri: { recipientIds: hairCampaignRecipients.slice(0, 18) }, titolo: "Piega della settimana", testo: "Prenota la tua piega nei prossimi giorni.", couponId: "piega-week", recipientCount: 18, recipientIds: hairCampaignRecipients.slice(0, 18), sentAt: Timestamp.fromDate(new Date(Date.now() - 5 * 86_400_000)) }),
+  db.doc("salons/atelier-luce/rewardRedemptions/demo-hair-gloss-01").set({ rewardId: "reward-gloss", rewardNome: "Trattamento gloss", clientId: hairClients[4].id, stato: "utilizzato", createdAt: Timestamp.fromDate(new Date(Date.now() - 18 * 86_400_000)), usedAt: Timestamp.fromDate(new Date(Date.now() - 12 * 86_400_000)) }),
+  db.doc("salons/atelier-luce/rewardRedemptions/demo-hair-gloss-02").set({ rewardId: "reward-gloss", rewardNome: "Trattamento gloss", clientId: hairClients[8].id, stato: "emesso", createdAt: Timestamp.fromDate(new Date(Date.now() - 7 * 86_400_000)) }),
+  db.doc("salons/atelier-luce/rewardRedemptions/demo-hair-olio-01").set({ rewardId: "reward-olio", rewardNome: "Olio luce", clientId: hairClients[12].id, stato: "utilizzato", createdAt: Timestamp.fromDate(new Date(Date.now() - 31 * 86_400_000)), usedAt: Timestamp.fromDate(new Date(Date.now() - 22 * 86_400_000)) }),
+);
+for (let index = 0; index < 17; index++) {
+  const couponId = index < 11 ? "torna-luce" : "piega-week";
+  const client = hairClients[(index * 3 + 1) % hairClients.length];
+  const daysAgo = couponId === "torna-luce" ? 10 - Math.floor(index / 2) : 4 - Math.floor((index - 11) / 2);
+  demoWrites.push(db.doc(`salons/atelier-luce/couponRedemptions/demo-${couponId}-${String(index).padStart(3, "0")}`).set({
+    couponId,
+    couponCode: couponId === "torna-luce" ? "TORNALUCE20" : "PIEGA10",
+    clientId: client.id,
+    appointmentDate: dateOffset(-Math.max(0, daysAgo)),
+    discountAmount: couponId === "torna-luce" ? 960 : 1000,
+    redeemedAt: Timestamp.fromDate(new Date(Date.now() - Math.max(1, daysAgo) * 86_400_000)),
+  }));
 }
 
 for (let index = 0; index < 58; index++) {
@@ -413,7 +585,7 @@ for (const [salonIndex, salon] of platformSalons.entries()) {
       timezone: "Europe/Rome",
       orariApertura: { lun: [{ start: 540, end: 1080 }], mar: [{ start: 540, end: 1080 }], mer: [{ start: 540, end: 1080 }], gio: [{ start: 540, end: 1080 }], ven: [{ start: 540, end: 1080 }], sab: [{ start: 540, end: 1080 }] },
       impostazioni: { passoMinuti: 15, modalitaConferma: "manuale" },
-      licenza: { stato: salon.stato, piano: salon.piano, scadenza: salon.scadenza, prezzoMensile: salon.prezzo },
+      licenza: { stato: salon.stato, piano: salon.piano, scadenza: salon.scadenza, prezzoMensile: salon.prezzo, ciclo: salon.ciclo, statoPagamento: salon.pagamento, rinnovoAutomatico: salon.stato !== "sospesa", note: "", funzionalitaPersonalizzate: {}, funzionalitaTemporanee: salon.id === "uomo-torino" ? [{ funzione: "statistiche", scadeIl: dateOffset(21) }] : [] },
       createdAt: Timestamp.fromDate(new Date(Date.now() - (40 + salonIndex * 37) * 86_400_000)),
     }),
     db.doc(`salonAccessCodes/${codiceAccesso}`).set({ salonId: salon.id, attivo: true, createdAt: new Date().toISOString() }),

@@ -91,6 +91,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /platformConfig/{configId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSuperAdmin();
+      allow delete: if false;
+    }
+
     match /salonAccessCodes/{accessCode} {
       // Il codice individua il tenant, ma non autentica né autorizza operazioni.
       allow get: if true;
@@ -189,6 +195,9 @@ service cloud.firestore {
         allow read: if isSignedIn()
           && (resource.data.clientId == request.auth.uid || isStaffOf(salonId));
         allow create: if isStaffOf(salonId);
+        allow update: if isSignedIn()
+          && resource.data.clientId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       }
 
       match /loyaltyAccounts/{clientId} {

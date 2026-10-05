@@ -57,8 +57,10 @@ export function CustomerProfilePage() {
       </header>
 
       <div className="profile-shortcuts" aria-label="Collegamenti del profilo">
+        <Link to="/appuntamenti"><AppIcon name="calendar" /><span><strong>I miei appuntamenti</strong><small>Prossime prenotazioni e storico</small></span><AppIcon name="arrow" size={17} /></Link>
         <Link to="/fidelity"><AppIcon name="card" /><span><strong>Fidelity card</strong><small>Punti, QR code e premi</small></span><AppIcon name="arrow" size={17} /></Link>
         <Link to="/i-miei-ordini"><AppIcon name="orders" /><span><strong>I miei ordini</strong><small>Stato e storico acquisti</small></span><AppIcon name="arrow" size={17} /></Link>
+        <Link to="/aggiornamenti"><AppIcon name="bell" /><span><strong>Aggiornamenti</strong><small>Conferme, offerte e novità</small></span><AppIcon name="arrow" size={17} /></Link>
         <Link to="/assistenza"><AppIcon name="ticket" /><span><strong>Assistenza</strong><small>Apri un ticket con il salone</small></span><AppIcon name="arrow" size={17} /></Link>
       </div>
 
@@ -74,7 +76,7 @@ export function CustomerProfilePage() {
         <button className="customer-button" type="submit" disabled={saving}>{saving ? "Salvataggio…" : "Salva modifiche"}</button>
       </form>
 
-      <button className="profile-logout" type="button" onClick={() => void logout()}><AppIcon name="logout" size={19} /> Esci e cambia salone</button>
+      <button className="profile-logout" type="button" onClick={() => void logout()}><AppIcon name="logout" size={19} /> Esci</button>
     </section>
   );
 }

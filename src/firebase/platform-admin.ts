@@ -2,9 +2,11 @@ import { httpsCallable } from "firebase/functions";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   runTransaction,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -12,6 +14,11 @@ import { db, functions, storage } from "./app";
 import type {
   LicensePlan,
   LicenseStatus,
+  BillingCycle,
+  PaymentStatus,
+  SubscriptionFeatureKey,
+  SubscriptionPlansConfig,
+  TemporaryFeatureAccess,
   SalonBranding,
   SalonLicense,
   SalonType,
@@ -45,6 +52,9 @@ export interface CreatePlatformSalonInput {
   piano: LicensePlan;
   scadenza: string;
   prezzoMensile: number;
+  ciclo?: BillingCycle;
+  statoPagamento?: PaymentStatus;
+  rinnovoAutomatico?: boolean;
 }
 
 export type UpdateBrandingInput = { salonId: string } & SalonBranding;
@@ -55,6 +65,49 @@ export interface UpdateLicenseInput {
   piano: LicensePlan;
   scadenza: string;
   prezzoMensile: number;
+  ciclo?: BillingCycle;
+  statoPagamento?: PaymentStatus;
+  rinnovoAutomatico?: boolean;
+  note?: string;
+  funzionalitaPersonalizzate?: Partial<Record<SubscriptionFeatureKey, boolean>>;
+  funzionalitaTemporanee?: TemporaryFeatureAccess[];
+}
+
+export const DEFAULT_SUBSCRIPTION_PLANS: SubscriptionPlansConfig = {
+  piani: {
+    start: {
+      nome: "Start",
+      descrizione: "Gli strumenti essenziali per digitalizzare agenda e clienti.",
+      prezzoMensile: 4900,
+      funzionalita: ["agenda", "clienti", "servizi_team", "app_cliente"],
+    },
+    studio: {
+      nome: "Studio",
+      descrizione: "Vendita, relazione e fidelizzazione per far crescere l’attività.",
+      prezzoMensile: 7900,
+      funzionalita: ["agenda", "clienti", "servizi_team", "prodotti_ordini", "marketing", "fidelity", "app_cliente"],
+    },
+    pro: {
+      nome: "Pro",
+      descrizione: "Controllo completo, dati avanzati e integrazioni operative.",
+      prezzoMensile: 12900,
+      funzionalita: ["agenda", "clienti", "servizi_team", "prodotti_ordini", "marketing", "fidelity", "statistiche", "integrazioni", "importazione", "app_cliente"],
+    },
+  },
+};
+
+export async function getSubscriptionPlansConfig(): Promise<SubscriptionPlansConfig> {
+  const snapshot = await getDoc(doc(db, "platformConfig", "subscriptions"));
+  if (!snapshot.exists()) return DEFAULT_SUBSCRIPTION_PLANS;
+  const data = snapshot.data() as Partial<SubscriptionPlansConfig>;
+  return { piani: { ...DEFAULT_SUBSCRIPTION_PLANS.piani, ...(data.piani ?? {}) } };
+}
+
+export async function updateSubscriptionPlansConfig(config: SubscriptionPlansConfig): Promise<void> {
+  await setDoc(doc(db, "platformConfig", "subscriptions"), {
+    ...config,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export async function listPlatformSalons(): Promise<PlatformSalon[]> {
@@ -63,7 +116,11 @@ export async function listPlatformSalons(): Promise<PlatformSalon[]> {
       Record<string, never>,
       { salons: PlatformSalon[] }
     >(functions, "listPlatformSalons");
-    return (await callable({})).data.salons;
+    const salons = (await callable({})).data.salons;
+    // Una funzione cloud non ancora aggiornata può rispondere correttamente ma
+    // con un elenco vuoto. Per la console amministrativa è più sicuro rileggere
+    // direttamente Firestore, dove il superadmin ha già accesso autorizzato.
+    return salons.length ? salons : listPlatformSalonsDirect();
   } catch {
     return listPlatformSalonsDirect();
   }

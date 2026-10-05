@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, connectEmulators } from "./app";
-import { createPlatformSalon, listPlatformSalons, updatePlatformSalonBranding, updatePlatformSalonLicense, uploadPlatformBrandAsset } from "./platform-admin";
+import { createPlatformSalon, getSubscriptionPlansConfig, listPlatformSalons, updatePlatformSalonBranding, updatePlatformSalonLicense, updateSubscriptionPlansConfig, uploadPlatformBrandAsset } from "./platform-admin";
 import { registerOwner } from "./onboarding";
 
 let testEnv: RulesTestEnvironment;
@@ -36,6 +36,20 @@ async function setupSuperAdmin() {
 }
 
 describe("amministrazione piattaforma", () => {
+  it("salva il catalogo commerciale dei piani", async () => {
+    await setupSuperAdmin();
+    await updateSubscriptionPlansConfig({
+      piani: {
+        start: { nome: "Essenziale", descrizione: "Agenda e clienti", prezzoMensile: 4500, funzionalita: ["agenda", "clienti"] },
+        studio: { nome: "Crescita", descrizione: "Marketing e vendite", prezzoMensile: 7900, funzionalita: ["agenda", "clienti", "marketing"] },
+        pro: { nome: "Completo", descrizione: "Tutte le funzioni", prezzoMensile: 12900, funzionalita: ["agenda", "clienti", "marketing", "statistiche"] },
+      },
+    });
+    await expect(getSubscriptionPlansConfig()).resolves.toMatchObject({
+      piani: { start: { nome: "Essenziale", prezzoMensile: 4500 } },
+    });
+  });
+
   it("consente al super admin di leggere i tenant e aggiornare una licenza", async () => {
     const salonId = await setupSuperAdmin();
     const salons = await listPlatformSalons();

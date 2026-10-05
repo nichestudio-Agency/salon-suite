@@ -4,15 +4,23 @@ import { AppIcon } from "../components/AppIcon";
 import type {
   LicensePlan,
   LicenseStatus,
+  BillingCycle,
+  PaymentStatus,
+  SubscriptionFeatureKey,
+  SubscriptionPlansConfig,
+  TemporaryFeatureAccess,
   SalonBranding,
   SalonType,
 } from "../domain/models";
 import {
   createPlatformSalon,
+  DEFAULT_SUBSCRIPTION_PLANS,
   ensurePlatformSalonAccessCode,
+  getSubscriptionPlansConfig,
   listPlatformSalons,
   updatePlatformSalonBranding,
   updatePlatformSalonLicense,
+  updateSubscriptionPlansConfig,
   uploadPlatformBrandAsset,
   type BrandAssetSlot,
   type PlatformSalon,
@@ -24,6 +32,24 @@ const STATUS_LABELS: Record<LicenseStatus, string> = {
   scaduta: "Scaduta",
   sospesa: "Sospesa",
 };
+const PAYMENT_LABELS: Record<PaymentStatus, string> = {
+  pagato: "In regola",
+  in_scadenza: "Da verificare",
+  insoluto: "Insoluto",
+};
+const PLAN_KEYS: LicensePlan[] = ["start", "studio", "pro"];
+const FEATURE_CATALOG: Array<{ key: SubscriptionFeatureKey; label: string; detail: string }> = [
+  { key: "agenda", label: "Agenda", detail: "Prenotazioni, disponibilità e calendario" },
+  { key: "clienti", label: "Clienti", detail: "Anagrafiche, storico e visite manuali" },
+  { key: "servizi_team", label: "Servizi e team", detail: "Catalogo servizi, operatori e orari" },
+  { key: "prodotti_ordini", label: "Prodotti e ordini", detail: "Shop, catalogo retail e ordini" },
+  { key: "marketing", label: "Marketing", detail: "Notifiche, coupon e campagne mirate" },
+  { key: "fidelity", label: "Fidelity", detail: "Card, punti, premi e riscatti QR" },
+  { key: "statistiche", label: "Statistiche", detail: "Performance, trend e analisi avanzate" },
+  { key: "integrazioni", label: "Cassa e integrazioni", detail: "Collegamenti e automazioni operative" },
+  { key: "importazione", label: "Importazione dati", detail: "Acquisizione dati da sistemi esterni" },
+  { key: "app_cliente", label: "App cliente", detail: "Esperienza mobile white-label" },
+];
 const DEFAULT_BRANDING: Record<SalonType, SalonBranding> = {
   barberia: {
     backgroundColor: "#181817",
@@ -58,10 +84,82 @@ function defaultExpiry() {
   return date.toISOString().slice(0, 10);
 }
 
+function PlanCatalogEditor({
+  config,
+  onSaved,
+  onClose,
+}: {
+  config: SubscriptionPlansConfig;
+  onSaved: (value: SubscriptionPlansConfig) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState<SubscriptionPlansConfig>(() => structuredClone(config));
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function updatePlan(plan: LicensePlan, patch: Partial<SubscriptionPlansConfig["piani"][LicensePlan]>) {
+    setDraft((current) => ({
+      piani: { ...current.piani, [plan]: { ...current.piani[plan], ...patch } },
+    }));
+  }
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      await updateSubscriptionPlansConfig(draft);
+      onSaved(draft);
+      setNotice("Catalogo abbonamenti aggiornato.");
+    } catch {
+      setError("Non siamo riusciti a salvare il catalogo abbonamenti.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="plan-catalog-editor" aria-labelledby="plan-catalog-title">
+      <header>
+        <div><span>Catalogo commerciale</span><h2 id="plan-catalog-title">Configura i piani</h2><p>Nomi, listini e dotazioni diventano il riferimento per tutti i nuovi contratti.</p></div>
+        <button type="button" onClick={onClose} aria-label="Chiudi configurazione piani"><AppIcon name="close" /></button>
+      </header>
+      <form onSubmit={save}>
+        <div className="plan-catalog-grid">
+          {PLAN_KEYS.map((plan, index) => {
+            const item = draft.piani[plan];
+            return <article className={plan === "studio" ? "is-featured" : ""} key={plan}>
+              <div className="plan-catalog-card__number">0{index + 1}</div>
+              <label>Nome piano<input value={item.nome} maxLength={32} onChange={(event) => updatePlan(plan, { nome: event.target.value })} required /></label>
+              <label>Descrizione<textarea value={item.descrizione} maxLength={140} onChange={(event) => updatePlan(plan, { descrizione: event.target.value })} required /></label>
+              <label>Prezzo mensile (€)<input type="number" min="0" step="1" value={item.prezzoMensile / 100} onChange={(event) => updatePlan(plan, { prezzoMensile: Math.round(Number(event.target.value) * 100) })} required /></label>
+              <fieldset><legend>Funzionalità incluse</legend>{FEATURE_CATALOG.map((feature) => {
+                const checked = item.funzionalita.includes(feature.key);
+                return <label className="plan-feature-check" key={feature.key}>
+                  <input type="checkbox" checked={checked} onChange={(event) => updatePlan(plan, { funzionalita: event.target.checked ? [...item.funzionalita, feature.key] : item.funzionalita.filter((key) => key !== feature.key) })} />
+                  <span><strong>{feature.label}</strong><small>{feature.detail}</small></span>
+                </label>;
+              })}</fieldset>
+            </article>;
+          })}
+        </div>
+        <footer>
+          <p>Le eccezioni già assegnate alle singole attività restano invariate.</p>
+          <div>{error && <span className="platform-form-error" role="alert">{error}</span>}{notice && <span className="platform-form-success">{notice}</span>}<button className="platform-button" disabled={busy}>{busy ? "Salvataggio…" : "Salva catalogo"}</button></div>
+        </footer>
+      </form>
+    </section>
+  );
+}
+
 function CreateSalonPanel({
+  plans,
   onCreated,
   onCancel,
 }: {
+  plans: SubscriptionPlansConfig;
   onCreated: () => void;
   onCancel: () => void;
 }) {
@@ -75,7 +173,8 @@ function CreateSalonPanel({
   const [piano, setPiano] = useState<LicensePlan>("studio");
   const [stato, setStato] = useState<LicenseStatus>("trial");
   const [scadenza, setScadenza] = useState(defaultExpiry);
-  const [prezzo, setPrezzo] = useState("79");
+  const [prezzo, setPrezzo] = useState(String(plans.piani.studio.prezzoMensile / 100));
+  const [ciclo, setCiclo] = useState<BillingCycle>("mensile");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   function updateName(value: string) {
@@ -101,6 +200,9 @@ function CreateSalonPanel({
         stato,
         scadenza,
         prezzoMensile: Math.round(Number(prezzo) * 100),
+        ciclo,
+        statoPagamento: "pagato",
+        rinnovoAutomatico: true,
       });
       onCreated();
     } catch (caught) {
@@ -212,11 +314,20 @@ function CreateSalonPanel({
             <select
               id="new-plan"
               value={piano}
-              onChange={(event) => setPiano(event.target.value as LicensePlan)}
+              onChange={(event) => {
+                const nextPlan = event.target.value as LicensePlan;
+                setPiano(nextPlan);
+                setPrezzo(String(plans.piani[nextPlan].prezzoMensile / 100));
+              }}
             >
-              <option value="start">Start</option>
-              <option value="studio">Studio</option>
-              <option value="pro">Pro</option>
+              {PLAN_KEYS.map((key) => <option value={key} key={key}>{plans.piani[key].nome}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="new-cycle">Fatturazione</label>
+            <select id="new-cycle" value={ciclo} onChange={(event) => setCiclo(event.target.value as BillingCycle)}>
+              <option value="mensile">Mensile</option>
+              <option value="annuale">Annuale</option>
             </select>
           </div>
           <div className="field">
@@ -278,9 +389,11 @@ function CreateSalonPanel({
 
 function LicenseEditor({
   salon,
+  plans,
   onSaved,
 }: {
   salon: PlatformSalon;
+  plans: SubscriptionPlansConfig;
   onSaved: () => void;
 }) {
   const [stato, setStato] = useState<LicenseStatus>(salon.licenza.stato);
@@ -289,6 +402,12 @@ function LicenseEditor({
   const [prezzo, setPrezzo] = useState(
     (salon.licenza.prezzoMensile / 100).toFixed(0),
   );
+  const [ciclo, setCiclo] = useState<BillingCycle>(salon.licenza.ciclo ?? "mensile");
+  const [statoPagamento, setStatoPagamento] = useState<PaymentStatus>(salon.licenza.statoPagamento ?? "pagato");
+  const [rinnovoAutomatico, setRinnovoAutomatico] = useState(salon.licenza.rinnovoAutomatico ?? true);
+  const [note, setNote] = useState(salon.licenza.note ?? "");
+  const [featureOverrides, setFeatureOverrides] = useState<Partial<Record<SubscriptionFeatureKey, boolean>>>(salon.licenza.funzionalitaPersonalizzate ?? {});
+  const [temporaryFeatures, setTemporaryFeatures] = useState<TemporaryFeatureAccess[]>(salon.licenza.funzionalitaTemporanee ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   async function submit(event: FormEvent) {
@@ -302,6 +421,12 @@ function LicenseEditor({
         piano,
         scadenza,
         prezzoMensile: Math.round(Number(prezzo) * 100),
+        ciclo,
+        statoPagamento,
+        rinnovoAutomatico,
+        note,
+        funzionalitaPersonalizzate: featureOverrides,
+        funzionalitaTemporanee: temporaryFeatures,
       });
       onSaved();
     } catch {
@@ -312,17 +437,35 @@ function LicenseEditor({
   }
   return (
     <form className="license-editor" onSubmit={submit} id="licenze">
-      <h3>Abbonamento</h3>
+      <header className="license-editor__header">
+        <div><span>Contratto e fatturazione</span><h3>Gestisci abbonamento</h3></div>
+        <span className={`payment-status is-${statoPagamento}`}>{PAYMENT_LABELS[statoPagamento]}</span>
+      </header>
       <div className="field">
         <label htmlFor={`plan-${salon.id}`}>Piano</label>
         <select
           id={`plan-${salon.id}`}
           value={piano}
-          onChange={(event) => setPiano(event.target.value as LicensePlan)}
+          onChange={(event) => {
+            const nextPlan = event.target.value as LicensePlan;
+            setPiano(nextPlan);
+            setPrezzo(String(plans.piani[nextPlan].prezzoMensile / 100));
+          }}
         >
-          <option value="start">Start</option>
-          <option value="studio">Studio</option>
-          <option value="pro">Pro</option>
+          {PLAN_KEYS.map((key) => <option value={key} key={key}>{plans.piani[key].nome}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor={`cycle-${salon.id}`}>Fatturazione</label>
+        <select id={`cycle-${salon.id}`} value={ciclo} onChange={(event) => setCiclo(event.target.value as BillingCycle)}>
+          <option value="mensile">Mensile</option>
+          <option value="annuale">Annuale</option>
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor={`payment-${salon.id}`}>Stato pagamento</label>
+        <select id={`payment-${salon.id}`} value={statoPagamento} onChange={(event) => setStatoPagamento(event.target.value as PaymentStatus)}>
+          {Object.entries(PAYMENT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </div>
       <div className="field">
@@ -339,6 +482,21 @@ function LicenseEditor({
           ))}
         </select>
       </div>
+      <label className="license-editor__switch">
+        <input type="checkbox" checked={rinnovoAutomatico} onChange={(event) => setRinnovoAutomatico(event.target.checked)} />
+        <span>Rinnovo automatico</span>
+        <small>{rinnovoAutomatico ? "Il contratto prosegue alla scadenza" : "Richiede rinnovo manuale"}</small>
+      </label>
+      <div className="field license-editor__notes">
+        <label htmlFor={`notes-${salon.id}`}>Note interne</label>
+        <textarea id={`notes-${salon.id}`} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Accordi commerciali, condizioni o promemoria…" />
+      </div>
+      <aside className="license-plan-summary">
+        <span>Piano di partenza</span>
+        <strong>{plans.piani[piano].nome}</strong>
+        <p>{plans.piani[piano].descrizione}</p>
+        <ul>{plans.piani[piano].funzionalita.map((featureKey) => <li key={featureKey}><AppIcon name="check" size={14} />{FEATURE_CATALOG.find((feature) => feature.key === featureKey)?.label ?? featureKey}</li>)}</ul>
+      </aside>
       <div className="field">
         <label htmlFor={`expiry-${salon.id}`}>Scadenza</label>
         <input
@@ -349,6 +507,35 @@ function LicenseEditor({
           required
         />
       </div>
+      <section className="tenant-entitlements">
+        <header><div><span>Piano personalizzato</span><h4>Accessi e prove temporanee</h4></div><p>Lascia “Da piano” per seguire il catalogo. Puoi sbloccare una funzione stabilmente o concederla in prova fino a una data.</p></header>
+        <div className="tenant-entitlements__list">
+          {FEATURE_CATALOG.map((feature) => {
+            const baseEnabled = plans.piani[piano].funzionalita.includes(feature.key);
+            const override = featureOverrides[feature.key];
+            const temporary = temporaryFeatures.find((item) => item.funzione === feature.key);
+            const activeTrial = Boolean(temporary?.scadeIl && temporary.scadeIl >= new Date().toISOString().slice(0, 10));
+            const effective = activeTrial || (override ?? baseEnabled);
+            return <article key={feature.key} className={effective ? "is-enabled" : ""}>
+              <div><span><AppIcon name={effective ? "check" : "close"} size={15} /></span><p><strong>{feature.label}</strong><small>{feature.detail}</small></p></div>
+              <label>Accesso<select aria-label={`Accesso ${feature.label}`} value={override === undefined ? "inherit" : override ? "enabled" : "disabled"} onChange={(event) => {
+                const value = event.target.value;
+                setFeatureOverrides((current) => {
+                  const next = { ...current };
+                  if (value === "inherit") delete next[feature.key];
+                  else next[feature.key] = value === "enabled";
+                  return next;
+                });
+              }}><option value="inherit">Da piano ({baseEnabled ? "inclusa" : "non inclusa"})</option><option value="enabled">Sempre attiva</option><option value="disabled">Disattivata</option></select></label>
+              <label>Prova fino al<input aria-label={`Prova ${feature.label}`} type="date" value={temporary?.scadeIl ?? ""} onChange={(event) => setTemporaryFeatures((current) => {
+                const without = current.filter((item) => item.funzione !== feature.key);
+                return event.target.value ? [...without, { funzione: feature.key, scadeIl: event.target.value }] : without;
+              })} /></label>
+              <small className="tenant-entitlements__result">{activeTrial ? `In prova fino al ${temporary?.scadeIl}` : effective ? "Accesso attivo" : "Non disponibile"}</small>
+            </article>;
+          })}
+        </div>
+      </section>
       <div className="field">
         <label htmlFor={`price-${salon.id}`}>Canone mensile (€)</label>
         <input
@@ -640,19 +827,28 @@ function BrandEditor({
 
 export function PlatformDashboardPage() {
   const [salons, setSalons] = useState<PlatformSalon[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlansConfig>(DEFAULT_SUBSCRIPTION_PLANS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"tutte" | LicenseStatus>("tutte");
+  const [plan, setPlan] = useState<"tutti" | LicensePlan>("tutti");
+  const [attention, setAttention] = useState<"tutte" | "trial" | "rinnovi" | "rischio">("tutte");
   const [editing, setEditing] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   async function reload(initial = false) {
     if (!initial) {
       setLoading(true);
       setError(null);
     }
     try {
-      setSalons(await listPlatformSalons());
+      const [nextSalons, nextPlans] = await Promise.all([
+        listPlatformSalons(),
+        getSubscriptionPlansConfig(),
+      ]);
+      setSalons(nextSalons);
+      setPlans(nextPlans);
     } catch {
       setError("Non siamo riusciti a caricare i dati della piattaforma.");
     } finally {
@@ -676,6 +872,11 @@ export function PlatformDashboardPage() {
     (salon) =>
       salon.licenza.scadenza >= today && salon.licenza.scadenza <= inThirtyDays,
   ).length;
+  const overdue = salons.filter((salon) =>
+    salon.licenza.statoPagamento === "insoluto" ||
+    (salon.licenza.scadenza && salon.licenza.scadenza < today && salon.licenza.stato !== "sospesa"),
+  );
+  const trials = salons.filter((salon) => salon.licenza.stato === "trial");
   const bookings = salons.reduce(
     (sum, salon) => sum + salon.prenotazioni30g,
     0,
@@ -686,35 +887,40 @@ export function PlatformDashboardPage() {
         .toLowerCase()
         .includes(query.toLowerCase()) &&
       (status === "tutte" || salon.licenza.stato === status),
-  );
+  ).filter(
+    (salon) => plan === "tutti" || salon.licenza.piano === plan,
+  ).filter((salon) => {
+    if (attention === "trial") return salon.licenza.stato === "trial";
+    if (attention === "rinnovi") return salon.licenza.scadenza >= today && salon.licenza.scadenza <= inThirtyDays;
+    if (attention === "rischio") return salon.licenza.statoPagamento === "insoluto" || (salon.licenza.scadenza && salon.licenza.scadenza < today && salon.licenza.stato !== "sospesa");
+    return true;
+  });
   return (
     <section className="platform-dashboard">
       <header className="platform-title">
         <div>
-          <span>Controllo piattaforma</span>
+          <span>Niche · Controllo abbonamenti</span>
           <h1>
-            Il tuo business,
+            La rete cresce,
             <br />
-            attività per attività.
+            sotto controllo.
           </h1>
         </div>
         <div>
           <p>
-            Licenze, adozione e identità white-label in un’unica vista. Ogni
-            tenant resta indipendente.
+            Attività, contratti, rinnovi e identità white-label in una console
+            operativa costruita per Niche.
           </p>
-          <button
-            className="platform-add"
-            type="button"
-            onClick={() => setCreating(!creating)}
-          >
-            <AppIcon name={creating ? "close" : "plus"} />
-            {creating ? "Chiudi" : "Nuova attività"}
-          </button>
+          <div className="platform-title__actions">
+            <button className="platform-catalog-button" type="button" onClick={() => setCatalogOpen(!catalogOpen)}><AppIcon name="key" size={18} />{catalogOpen ? "Chiudi piani" : "Configura piani"}</button>
+            <button className="platform-add" type="button" onClick={() => setCreating(!creating)}><AppIcon name={creating ? "close" : "plus"} />{creating ? "Chiudi" : "Nuova attività"}</button>
+          </div>
         </div>
       </header>
+      {catalogOpen && <PlanCatalogEditor config={plans} onClose={() => setCatalogOpen(false)} onSaved={setPlans} />}
       {creating && (
         <CreateSalonPanel
+          plans={plans}
           onCancel={() => setCreating(false)}
           onCreated={() => {
             setCreating(false);
@@ -726,10 +932,7 @@ export function PlatformDashboardPage() {
         <div>
           <span>Ricavo mensile ricorrente</span>
           <strong>{money(mrr)}</strong>
-          <p>
-            {active.length} licenze attive su {salons.length} attività
-            registrate
-          </p>
+          <p>{active.length} abbonamenti attivi · {trials.length} in prova</p>
         </div>
         <div className="platform-hero__signal">
           <i />
@@ -756,6 +959,42 @@ export function PlatformDashboardPage() {
             </dd>
           </div>
         </dl>
+      </section>
+      <section className="subscription-command" id="abbonamenti" aria-label="Controllo abbonamenti">
+        <div className="subscription-command__intro">
+          <span>Priorità commerciali</span>
+          <h2>Abbonamenti da seguire</h2>
+          <p>Rinnovi, prove e pagamenti che richiedono un’azione prima di diventare criticità.</p>
+        </div>
+        <div className="subscription-command__queue">
+          <button type="button" onClick={() => { setAttention("trial"); setStatus("tutte"); }}>
+            <span className="is-warm"><AppIcon name="clock" size={18} /></span>
+            <strong>{trials.length}</strong><small>prove aperte</small>
+            <AppIcon name="arrow" size={17} />
+          </button>
+          <button type="button" onClick={() => { setAttention("rinnovi"); setStatus("tutte"); }}>
+            <span className="is-blue"><AppIcon name="calendar" size={18} /></span>
+            <strong>{expiring}</strong><small>rinnovi entro 30 giorni</small>
+            <AppIcon name="arrow" size={17} />
+          </button>
+          <button type="button" onClick={() => { setAttention("rischio"); setStatus("tutte"); }}>
+            <span className="is-red"><AppIcon name="card" size={18} /></span>
+            <strong>{overdue.length}</strong><small>posizioni da verificare</small>
+            <AppIcon name="arrow" size={17} />
+          </button>
+        </div>
+        <div className="subscription-plans">
+          {PLAN_KEYS.map((key) => {
+            const item = plans.piani[key];
+            const count = salons.filter((salon) => salon.licenza.piano === key).length;
+            const percentage = salons.length ? Math.round((count / salons.length) * 100) : 0;
+            return <button type="button" key={key} onClick={() => { setPlan(key); setAttention("tutte"); }}>
+              <div><span>{item.nome}</span><b>{count}</b></div>
+              <small>{item.descrizione} · {money(item.prezzoMensile)}</small>
+              <i><span style={{ width: `${percentage}%` }} /></i>
+            </button>;
+          })}
+        </div>
       </section>
       <div className="platform-kpis">
         <article>
@@ -794,11 +1033,11 @@ export function PlatformDashboardPage() {
           </div>
         </article>
       </div>
-      <section className="platform-salons" id="saloni">
+      <section className="platform-salons" id="attivita">
         <header>
           <div>
-            <span>Tenant</span>
-            <h2>Attività e licenze</h2>
+            <span>Portfolio clienti</span>
+            <h2>Attività e abbonamenti</h2>
           </div>
           <div className="platform-filters">
             <input
@@ -810,9 +1049,10 @@ export function PlatformDashboardPage() {
             <select
               aria-label="Filtra per stato"
               value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as typeof status)
-              }
+              onChange={(event) => {
+                setStatus(event.target.value as typeof status);
+                setAttention("tutte");
+              }}
             >
               <option value="tutte">Tutte le licenze</option>
               {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -821,6 +1061,13 @@ export function PlatformDashboardPage() {
                 </option>
               ))}
             </select>
+            <select aria-label="Filtra per piano" value={plan} onChange={(event) => setPlan(event.target.value as typeof plan)}>
+              <option value="tutti">Tutti i piani</option>
+              {PLAN_KEYS.map((key) => <option value={key} key={key}>{plans.piani[key].nome}</option>)}
+            </select>
+            {attention !== "tutte" && <button className="platform-filter-chip" type="button" onClick={() => setAttention("tutte")}>
+              {attention === "trial" ? "Prove aperte" : attention === "rinnovi" ? "Rinnovi entro 30 giorni" : "Posizioni da verificare"} <AppIcon name="close" size={14} />
+            </button>}
           </div>
         </header>
         {loading ? (
@@ -889,14 +1136,12 @@ export function PlatformDashboardPage() {
                   </span>
                 </div>
                 <div className="platform-salon__license">
-                  <span className={`license-status is-${salon.licenza.stato}`}>
-                    {STATUS_LABELS[salon.licenza.stato]}
-                  </span>
+                  <div className="platform-salon__badges"><span className={`license-status is-${salon.licenza.stato}`}>{STATUS_LABELS[salon.licenza.stato]}</span><span className={`payment-status is-${salon.licenza.statoPagamento ?? "pagato"}`}>{PAYMENT_LABELS[salon.licenza.statoPagamento ?? "pagato"]}</span></div>
                   <strong>
-                    {salon.licenza.piano.toUpperCase()} ·{" "}
+                    {plans.piani[salon.licenza.piano].nome} ·{" "}
                     {money(salon.licenza.prezzoMensile)}/mese
                   </strong>
-                  <small>Scade il {salon.licenza.scadenza || "—"}</small>
+                  <small>{salon.licenza.ciclo === "annuale" ? "Annuale" : "Mensile"} · rinnovo {salon.licenza.scadenza || "—"}</small>
                 </div>
                 <button
                   className="platform-row-action"
@@ -915,6 +1160,7 @@ export function PlatformDashboardPage() {
                     />
                     <LicenseEditor
                       salon={salon}
+                      plans={plans}
                       onSaved={() => void reload()}
                     />
                     <BrandEditor salon={salon} onSaved={() => void reload()} />
