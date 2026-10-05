@@ -30,10 +30,13 @@ npm run test:emu
 ## Frontend
 
 - [ ] Build `dist/` completata.
+- [ ] Pubblicazione eseguita con `npm run deploy:pages`.
 - [ ] Fallback SPA `_redirects` attivo.
 - [ ] Home, presentazioni, accesso, app demo, dashboard e admin apribili da URL diretto.
 - [ ] Cache aggiornata dopo il rilascio.
 - [ ] Smoke test mobile e desktop sul dominio pubblico.
+
+La pubblicazione viene eseguita dall'interno di `dist/`: è intenzionale. Se Wrangler viene avviato dalla root, può interpretare la cartella Firebase `functions/` come Cloudflare Pages Functions e tentare una compilazione non compatibile.
 
 ## Firebase
 

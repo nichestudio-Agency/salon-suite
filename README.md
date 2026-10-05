@@ -69,3 +69,11 @@ npm run test:emu
 - [Privacy e consensi — bozza operativa](docs/PRIVACY_AND_CONSENT_DRAFT.md)
 - [Scheda feedback pilot](docs/PILOT_FEEDBACK_TEMPLATE.md)
 - [Note di rilascio Pilot v1](docs/RELEASE_NOTES_PILOT_V1.md)
+
+## Pubblicazione della demo
+
+```bash
+npm run deploy:pages
+```
+
+Il comando compila il frontend e pubblica soltanto `dist/` nel progetto Cloudflare Pages `salon-suite-share`.

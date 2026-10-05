@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "deploy:pages": "npm run build && cd dist && npx --yes wrangler pages deploy . --project-name salon-suite-share --branch main --commit-dirty=true",
     "test": "vitest run",
     "mobile:sync": "npm run build && cap sync",
     "ios:open": "npm run build && cap sync ios && cap open ios",
