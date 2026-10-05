@@ -1,7 +1,14 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
-import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
 import {
-  getFirestore,
+  getAuth,
+  initializeAuth,
+  browserLocalPersistence,
+  connectAuthEmulator,
+  type Auth,
+} from "firebase/auth";
+import { Capacitor } from "@capacitor/core";
+import {
+  initializeFirestore,
   connectFirestoreEmulator,
   type Firestore,
 } from "firebase/firestore";
@@ -21,15 +28,23 @@ const config = {
 };
 
 export const app: FirebaseApp = initializeApp(config);
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
+// Nel contenitore nativo evitiamo IndexedDB (instabile in alcune WKWebView) e
+// usiamo direttamente localStorage, così il login resta valido ai riavvii.
+export const auth: Auth = Capacitor.isNativePlatform()
+  ? initializeAuth(app, { persistence: browserLocalPersistence })
+  : getAuth(app);
+export const db: Firestore = initializeFirestore(app, {
+  // WebChannel può restare sospeso dentro WKWebView e browser incorporati.
+  // Il long polling è limitato alla demo locale; in produzione resta il trasporto standard.
+  experimentalForceLongPolling: useEmulator,
+});
 export const functions: Functions = getFunctions(app);
 export const storage: FirebaseStorage = getStorage(app);
 
 let emulatorsConnected = false;
 /** Aggancia auth+firestore+functions+storage agli emulatori. Idempotente. */
 export function connectEmulators(
-  host = "127.0.0.1",
+  host = "localhost",
   authPort = 9099,
   firestorePort = 8085
 ): void {

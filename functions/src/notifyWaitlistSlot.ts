@@ -32,13 +32,14 @@ export const notifyWaitlistSlot = onDocumentUpdated(
       .filter((interval): interval is Interval => Number.isInteger(interval.start) && Number.isInteger(interval.end));
     const matches = candidates.docs.filter((doc) => {
       const entry = doc.data();
-      if (entry.status !== "active" || entry.operatorId !== after.operatorId || !Array.isArray(entry.serviceItems)) return false;
+      if (entry.status !== "active" || entry.operatorId !== after.operatorId || !Array.isArray(entry.serviceItems) || !Number.isInteger(entry.startMin)) return false;
       const durationMin = entry.serviceItems.reduce((sum: number, item: { durataMin?: unknown }) => sum + (Number(item.durataMin) || 0), 0);
       if (!Number.isInteger(durationMin) || durationMin <= 0) return false;
-      return computeAvailableStartTimes({
+      const available = computeAvailableStartTimes({
         salonHours: salon.orariApertura ?? {}, operatorHours: operator.orariPersonalizzati,
         day: weekdayOf(after.date), busy, durationMin, stepMin: salon.impostazioni?.passoMinuti ?? 15,
-      }).length > 0;
+      });
+      return available.includes(entry.startMin);
     }).slice(0, 10);
 
     await Promise.all(matches.map(async (entrySnap) => {
@@ -46,7 +47,9 @@ export const notifyWaitlistSlot = onDocumentUpdated(
       const notificationId = `waitlist_${entrySnap.id}`;
       const notificationRef = db.doc(`salons/${salonId}/notifications/${notificationId}`);
       const title = "Si è liberato un posto";
-      const body = `È tornata disponibile una fascia per il ${entry.date}. Prenota ora: lo slot resta disponibile fino alla conferma.`;
+      const hours = Math.floor(entry.startMin / 60).toString().padStart(2, "0");
+      const minutes = (entry.startMin % 60).toString().padStart(2, "0");
+      const body = `Lo slot del ${entry.date} alle ${hours}:${minutes} è di nuovo libero. Ti interessa ancora? Confermalo ora prima che venga scelto da qualcun altro.`;
       await db.runTransaction(async (transaction) => {
         const [freshEntry, existingNotification] = await Promise.all([
           transaction.get(entrySnap.ref),

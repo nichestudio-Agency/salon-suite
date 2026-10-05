@@ -12,12 +12,16 @@ export function CatalogPage() {
   const { salon } = useSalonTenant();
   const salonId = salon?.id ?? "";
   const [products, setProducts] = useState<ProductWithId[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!salonId) return;
+    setLoading(true);
+    setError(null);
     void listProducts(salonId).then((list) =>
       setProducts(list.filter((p) => p.attivo))
-    );
+    ).catch(() => setError("Non siamo riusciti a caricare il catalogo.")).finally(() => setLoading(false));
   }, [salonId]);
 
   return (
@@ -33,26 +37,30 @@ export function CatalogPage() {
         </Link>
       </div>
 
-      <div className="booking-slots" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
-        {products.map((p) => (
-          <div className="booking-panel" key={p.id}>
+      <p className="customer-page__intro">Una selezione curata dal salone. Ordina dall’app e paga comodamente al ritiro.</p>
+      {error && <p className="customer-error" role="alert">{error}</p>}
+      {loading && <div className="customer-list-skeleton" aria-label="Caricamento prodotti"><span /><span /><span /></div>}
+      <div className="customer-product-grid">
+        {!loading && products.map((p) => (
+          <article className="customer-product-card" key={p.id}>
             {p.fotoUrl ? (
-              <img src={p.fotoUrl} alt="" />
+              <img src={p.fotoUrl} alt={`Prodotto ${p.titolo}`} />
             ) : (
               <div className="product-card__ph" aria-hidden="true">{p.titolo.slice(0, 1).toUpperCase()}</div>
             )}
-            <strong>{p.titolo}</strong>
-            <p className="customer-booking__meta">{p.descrizione}</p>
-            <p><strong>€ {formatEuro(p.prezzo)}</strong></p>
+            <div className="customer-product-card__body"><span>Prodotto</span><h2>{p.titolo}</h2><p>{p.descrizione || "Selezionato dal salone per la cura quotidiana."}</p></div>
+            <footer><strong>€ {formatEuro(p.prezzo)}</strong>
             <button
               className="customer-button"
+              aria-label={`Aggiungi al carrello: ${p.titolo}`}
               onClick={() => cart.add(salonId, p)}
             >
-              Aggiungi al carrello
+              Aggiungi
             </button>
-          </div>
+            </footer>
+          </article>
         ))}
-        {products.length === 0 && <p className="customer-booking__meta">Nessun prodotto disponibile.</p>}
+        {!loading && products.length === 0 && <div className="customer-empty customer-empty--stacked"><AppIcon name="bag" /><strong>Catalogo in aggiornamento</strong><p>I prodotti del salone saranno presto disponibili.</p></div>}
       </div>
     </section>
   );

@@ -21,7 +21,7 @@ export interface CreateBookingResult {
   bookingIds?: string[];
   occurrenceCount?: number;
   endMin: number;
-  stato: "in_attesa";
+  stato: "in_attesa" | "confermata";
   prezzoOriginale: number;
   sconto: number;
   prezzoFinale: number;
@@ -42,6 +42,8 @@ export interface GetAvailabilityResult {
   durationMin: number;
   stepMin: number;
   starts: number[];
+  /** Fasce nell'orario di lavoro già occupate e prenotabili tramite lista d'attesa. */
+  occupiedStarts?: number[];
 }
 
 export async function getAvailability(

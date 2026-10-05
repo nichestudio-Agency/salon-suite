@@ -39,7 +39,7 @@ async function waitForDocument(path: string) {
 describe("lista d'attesa", () => {
   it("iscrive in modo idempotente, permette di annullare e applica le rules", async () => {
     const salonId = await setup();
-    const input = { salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24" };
+    const input = { salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600 };
     const first = await joinWaitlist(input);
     const second = await joinWaitlist(input);
     expect(second.entryId).toBe(first.entryId);
@@ -50,7 +50,7 @@ describe("lista d'attesa", () => {
 
   it("avvisa il cliente quando una prenotazione libera la fascia", async () => {
     const salonId = await setup();
-    const entry = await joinWaitlist({ salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24" });
+    const entry = await joinWaitlist({ salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600 });
     const booking = await createBooking({ salonId, operatorId: "op1", serviceId: "svc1", date: "2026-08-24", startMin: 600 });
     await cancelBooking(salonId, booking.bookingId);
     const notification = await waitForDocument(`salons/${salonId}/notifications/waitlist_${entry.entryId}`);

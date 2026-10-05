@@ -7,6 +7,7 @@ import {
 } from "react";
 import { getSalon, type SalonWithId } from "../firebase/salon-repo";
 import { useAuth } from "./auth-context";
+import { mixWithWhite, readDemoBrandPreview } from "./demo-brand-preview";
 
 interface SalonTenantState {
   loading: boolean;
@@ -88,10 +89,22 @@ export function SalonTenantProvider({ children }: { children: ReactNode }) {
             );
           const salon = await getSalon(configuredId);
           if (!salon) throw new Error("tenant-not-found");
+          const previewBrand = readDemoBrandPreview();
+          const resolvedSalon = previewBrand ? {
+            ...salon,
+            nome: previewBrand.name || salon.nome,
+            branding: {
+              ...salon.branding,
+              logoUrl: previewBrand.logo || salon.branding?.logoUrl,
+              backgroundColor: mixWithWhite(previewBrand.support, .16),
+              foregroundColor: "#20231f",
+              accentColor: previewBrand.accent,
+            },
+          } : salon;
           if (active)
             setState({
               loading: false,
-              salon: { id: configuredId, ...salon },
+              salon: { id: configuredId, ...resolvedSalon },
               error: null,
               selectSalon,
               clearSalonSelection,

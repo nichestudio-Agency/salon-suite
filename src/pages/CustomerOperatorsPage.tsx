@@ -10,8 +10,13 @@ export function CustomerOperatorsPage() {
   const salonId = salon?.id ?? "";
   const experience = getSalonExperience(salon?.tipo, salon?.branding);
   const [operators, setOperators] = useState<OperatorWithId[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (salonId) void listOperators(salonId).then((items) => setOperators(items.filter((item) => item.attivo))); }, [salonId]);
+  useEffect(() => {
+    if (!salonId) return;
+    setLoading(true);
+    void listOperators(salonId).then((items) => setOperators(items.filter((item) => item.attivo))).catch(() => setOperators([])).finally(() => setLoading(false));
+  }, [salonId]);
 
   return (
     <section className="customer-page">
@@ -20,8 +25,9 @@ export function CustomerOperatorsPage() {
         <span className="customer-page__tenant">{salon?.nome}</span>
       </header>
       <p className="customer-page__intro">Conosci i professionisti del salone e scegli chi si prenderà cura del tuo prossimo look.</p>
+      {loading && <div className="customer-list-skeleton" aria-label="Caricamento team"><span /><span /><span /></div>}
       <div className="operator-grid">
-        {operators.map((operator, index) => (
+        {!loading && operators.map((operator, index) => (
           <article className="operator-card" key={operator.id}>
             <span className="operator-card__number">0{index + 1}</span>
             {operator.fotoUrl ? <img className="operator-card__photo" src={operator.fotoUrl} alt={`Foto di ${operator.nome}`} /> : <div className="operator-card__monogram" aria-hidden="true">{operator.nome.slice(0, 1).toUpperCase()}</div>}
@@ -31,7 +37,7 @@ export function CustomerOperatorsPage() {
             <Link to="/prenota">Scegli questo {experience.professional.toLowerCase()} →</Link>
           </article>
         ))}
-        {operators.length > 0 && operators.length % 2 === 1 && (
+        {!loading && operators.length > 0 && operators.length % 2 === 1 && (
           <div className="operator-card operator-card--filler" aria-hidden="true">
             <img src={experience.images.editorial} alt="" />
             <div className="operator-card__filler-copy">
@@ -40,7 +46,7 @@ export function CustomerOperatorsPage() {
             </div>
           </div>
         )}
-        {operators.length === 0 && <div className="customer-empty"><span>—</span><p>Nessun operatore disponibile per questo salone.</p></div>}
+        {!loading && operators.length === 0 && <div className="customer-empty"><span>—</span><p>Nessun operatore disponibile per questo salone.</p></div>}
       </div>
     </section>
   );

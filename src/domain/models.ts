@@ -157,6 +157,35 @@ export interface LoyaltyTransaction {
 
 export type LicenseStatus = "trial" | "attiva" | "scaduta" | "sospesa";
 export type LicensePlan = "start" | "studio" | "pro";
+export type BillingCycle = "mensile" | "annuale";
+export type PaymentStatus = "pagato" | "in_scadenza" | "insoluto";
+export type SubscriptionFeatureKey =
+  | "agenda"
+  | "clienti"
+  | "servizi_team"
+  | "prodotti_ordini"
+  | "marketing"
+  | "fidelity"
+  | "statistiche"
+  | "integrazioni"
+  | "importazione"
+  | "app_cliente";
+
+export interface SubscriptionPlanDefinition {
+  nome: string;
+  descrizione: string;
+  prezzoMensile: number;
+  funzionalita: SubscriptionFeatureKey[];
+}
+
+export interface SubscriptionPlansConfig {
+  piani: Record<LicensePlan, SubscriptionPlanDefinition>;
+}
+
+export interface TemporaryFeatureAccess {
+  funzione: SubscriptionFeatureKey;
+  scadeIl: string;
+}
 
 export interface SalonLicense {
   stato: LicenseStatus;
@@ -164,6 +193,16 @@ export interface SalonLicense {
   scadenza: string;
   /** Canone mensile in centesimi. */
   prezzoMensile: number;
+  ciclo?: BillingCycle;
+  statoPagamento?: PaymentStatus;
+  rinnovoAutomatico?: boolean;
+  note?: string;
+  /** Eccezioni permanenti rispetto al piano: true sblocca, false disattiva. */
+  funzionalitaPersonalizzate?: Partial<Record<SubscriptionFeatureKey, boolean>>;
+  /** Funzionalità extra concesse in prova fino alla data indicata. */
+  funzionalitaTemporanee?: TemporaryFeatureAccess[];
+  /** Registro server-side delle prove già utilizzate, per evitare riattivazioni ripetute. */
+  proveUtilizzate?: Partial<Record<SubscriptionFeatureKey, string>>;
 }
 
 /** Documento in `salons/{salonId}/operators/{id}`. */
@@ -276,7 +315,7 @@ export interface BookingServiceItem {
   offsetEndMin: number;
 }
 
-export type WaitlistStatus = "active" | "notified" | "cancelled";
+export type WaitlistStatus = "active" | "notified" | "accepted" | "cancelled";
 
 /** Richiesta del cliente di essere avvisato quando si libera uno slot. */
 export interface WaitlistEntry {
@@ -287,7 +326,11 @@ export interface WaitlistEntry {
   serviceIds: string[];
   serviceItems: Array<Pick<BookingServiceItem, "serviceId" | "titolo" | "durataMin" | "prezzo">>;
   date: string;
+  /** Orario preciso richiesto dal cliente, espresso in minuti dalla mezzanotte. */
+  startMin: number;
+  endMin: number;
   status: WaitlistStatus;
+  bookingId?: string;
   notifiedAt?: Timestamp;
   createdAt?: Timestamp;
 }

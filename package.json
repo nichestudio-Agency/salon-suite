@@ -8,12 +8,18 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "deploy:pages": "npm run build && cd dist && npx --yes wrangler pages deploy . --project-name salon-suite-share --branch main --commit-dirty=true",
     "test": "vitest run",
+    "mobile:sync": "npm run build && cap sync",
+    "ios:open": "npm run build && cap sync ios && cap open ios",
+    "ios:run": "npm run build && cap sync ios && cap run ios",
     "emu:start": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:start --only auth,firestore,functions,storage --project demo-barbershop",
     "emu:seed": "FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 node functions/scripts/seed-demo.mjs",
     "test:emu": "npm --prefix functions run build && PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:exec --only auth,firestore,functions,storage --project demo-barbershop \"vitest run --config vitest.emu.config.ts\""
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "firebase": "^12.18.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
@@ -21,6 +27,7 @@
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
     "@firebase/rules-unit-testing": "^5.0.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
@@ -35,5 +42,8 @@
     "typescript": "~6.0.2",
     "vite": "^8.2.0",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.5"
   }
 }

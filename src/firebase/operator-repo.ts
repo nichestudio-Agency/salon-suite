@@ -2,15 +2,22 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, deleteField,
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "./app";
+import { auth, db, storage } from "./app";
 import type { Operator } from "../domain/models";
+import { getEmulatorCollection } from "./emulator-rest";
 
 export type OperatorWithId = Operator & { id: string };
+const useEmulator = import.meta.env?.VITE_USE_EMULATOR === "true";
 
 const operatorsCol = (salonId: string) =>
   collection(db, "salons", salonId, "operators");
 
 export async function listOperators(salonId: string): Promise<OperatorWithId[]> {
+  if (useEmulator) {
+    const token = await auth.currentUser?.getIdToken();
+    const items = await getEmulatorCollection(`salons/${encodeURIComponent(salonId)}/operators`, token);
+    return items as unknown as OperatorWithId[];
+  }
   const snap = await getDocs(operatorsCol(salonId));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Operator) }));
 }

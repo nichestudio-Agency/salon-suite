@@ -97,6 +97,17 @@ export const getAvailability = onCall<GetAvailabilityData>(async (request) => {
     return computeAvailableStartTimes({ salonHours: salon.orariApertura ?? {}, operatorHours: operator.orariPersonalizzati, day: weekdayOf(dates[index]), busy, durationMin, stepMin });
   });
   const starts = startsByDate[0]?.filter((start) => startsByDate.every((items) => items.includes(start))) ?? [];
+  const firstDayBusy = bookingSnaps[0]?.docs.map((booking) => booking.data())
+    .filter((booking) => ["in_attesa", "confermata"].includes(booking.stato))
+    .map((booking) => ({ start: booking.startMin, end: booking.endMin }))
+    .filter((interval): interval is Interval => Number.isInteger(interval.start) && Number.isInteger(interval.end)) ?? [];
+  const allFirstDayStarts = recurrenceCount === 1 ? computeAvailableStartTimes({
+    salonHours: salon.orariApertura ?? {}, operatorHours: operator.orariPersonalizzati,
+    day: weekdayOf(date), busy: [], durationMin, stepMin,
+  }) : [];
+  const occupiedStarts = recurrenceCount === 1
+    ? allFirstDayStarts.filter((start) => firstDayBusy.some((interval) => start < interval.end && start + durationMin > interval.start))
+    : [];
 
   return {
     date,
@@ -104,5 +115,6 @@ export const getAvailability = onCall<GetAvailabilityData>(async (request) => {
     durationMin,
     stepMin,
     starts,
+    occupiedStarts,
   };
 });

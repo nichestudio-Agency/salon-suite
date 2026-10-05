@@ -27,11 +27,13 @@ describe("HoursPage", () => {
   it("carica gli orari del salone e li salva", async () => {
     vi.spyOn(repo, "getSalon").mockResolvedValue(salon);
     const save = vi.spyOn(repo, "updateOpeningHours").mockResolvedValue();
+    const saveMode = vi.spyOn(repo, "updateBookingConfirmationMode").mockResolvedValue();
 
     render(<HoursPage />);
 
     expect(await screen.findByDisplayValue("09:00")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /salva orari/i }));
+    await userEvent.click(screen.getByRole("radio", { name: /accettazione automatica/i }));
+    await userEvent.click(screen.getByRole("button", { name: /salva impostazioni/i }));
 
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith(
@@ -39,5 +41,6 @@ describe("HoursPage", () => {
         expect.objectContaining({ lun: [{ start: 540, end: 1140 }] }),
       ),
     );
+    expect(saveMode).toHaveBeenCalledWith("s1", "auto");
   });
 });

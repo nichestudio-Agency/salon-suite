@@ -8,6 +8,7 @@ import {
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../firebase/app";
+import { getUserProfile } from "../firebase/auth";
 import type { UserRole } from "../domain/models";
 
 interface AuthState {
@@ -29,6 +30,7 @@ export function useAuth(): AuthState {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const useEmulator = import.meta.env?.VITE_USE_EMULATOR === "true";
   const [state, setState] = useState<AuthState>({
     loading: true,
     user: null,
@@ -48,6 +50,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       setState((s) => ({ ...s, loading: true, user }));
+      if (useEmulator) {
+        void user.getIdToken().then((idToken) => getUserProfile(user.uid, idToken)).then((data) => {
+          setState({
+            loading: false,
+            user,
+            role: data?.ruolo ?? null,
+            salonId: data?.salonId ?? null,
+          });
+        }).catch(() => {
+          setState({ loading: false, user, role: null, salonId: null });
+        });
+        return;
+      }
       unsubProfile = onSnapshot(
         doc(db, "users", user.uid),
         (snap) => {
@@ -68,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubAuth();
       if (unsubProfile) unsubProfile();
     };
-  }, []);
+  }, [useEmulator]);
 
   return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
 }

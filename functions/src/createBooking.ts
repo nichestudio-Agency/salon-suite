@@ -25,7 +25,7 @@ interface CreateBookingData {
 
 interface SalonData {
   orariApertura?: WeeklyHours;
-  impostazioni?: { passoMinuti?: number };
+  impostazioni?: { passoMinuti?: number; modalitaConferma?: "manuale" | "auto" };
 }
 
 interface OperatorData {
@@ -139,6 +139,7 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
     const services = serviceSnaps.map((snap) => snap.data() as ServiceData & { titolo?: string });
     const durationMin = services.reduce((sum, service) => sum + (Number(service.durataMin) || 0), 0);
     const stepMin = salon.impostazioni?.passoMinuti ?? 15;
+    const bookingStatus = salon.impostazioni?.modalitaConferma === "auto" ? "confermata" : "in_attesa";
     if (!Number.isInteger(durationMin) || !durationMin || durationMin <= 0 || services.some((service) => !Number.isInteger(service.durataMin) || Number(service.durataMin) <= 0)) {
       throw new HttpsError("failed-precondition", "Durata del servizio non valida.");
     }
@@ -195,7 +196,7 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
       transaction.create(bookingRefs[index], {
         clientId: uid, clientNome: user.nome?.trim() || "Cliente", clientEmail: user.email ?? null,
         operatorId, serviceId, serviceIds, serviceItems, date: occurrenceDate, startMin, endMin,
-        stato: "in_attesa", prezzoOriginale: originalPrice, sconto: occurrenceDiscount,
+        stato: bookingStatus, prezzoOriginale: originalPrice, sconto: occurrenceDiscount,
         prezzoFinale: Math.max(originalPrice - occurrenceDiscount, 0),
         ...(seriesId ? { seriesId, occurrenceIndex: index, occurrenceCount: recurrenceCount } : {}),
         ...(couponRef && index === 0 ? { couponId: couponRef.id, couponCode } : {}),
@@ -220,7 +221,7 @@ export const createBooking = onCall<CreateBookingData>(async (request) => {
       bookingIds: bookingRefs.map((ref) => ref.id),
       occurrenceCount: recurrenceCount,
       endMin,
-      stato: "in_attesa" as const,
+      stato: bookingStatus,
       prezzoOriginale: originalPrice,
       sconto: discountAmount,
       prezzoFinale: Math.max(originalPrice - discountAmount, 0),

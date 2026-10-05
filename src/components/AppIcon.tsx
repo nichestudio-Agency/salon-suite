@@ -28,7 +28,8 @@ type IconName =
   | "paperclip"
   | "video"
   | "send"
-  | "help";
+  | "help"
+  | "lock";
 
 export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
@@ -60,10 +61,11 @@ export function AppIcon({ name, size = 22 }: { name: IconName; size?: number }) 
     video: <><rect x="3" y="5" width="14" height="14" rx="3" /><path d="m17 10 4-2v8l-4-2" /></>,
     send: <><path d="m22 2-7 20-4-9-9-4 20-7Z" /><path d="M22 2 11 13" /></>,
     help: <><circle cx="12" cy="12" r="9" /><path d="M9.8 9a2.4 2.4 0 1 1 3.8 1.95c-1.05.72-1.6 1.2-1.6 2.55" /><path d="M12 17h.01" /></>,
+    lock: <><rect x="4" y="10" width="16" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></>,
   };
 
   return (
-    <svg className="app-icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg className="app-icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       {paths[name]}
     </svg>
   );

@@ -2,6 +2,9 @@ import { httpsCallable } from "firebase/functions";
 import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, runTransaction, serverTimestamp, updateDoc, where, type Timestamp } from "firebase/firestore";
 import type { FidelityConfig, FidelityReward, LoyaltyAccount, LoyaltyTransaction, RewardRedemption } from "../domain/models";
 import { auth, db, functions } from "./app";
+import { getEmulatorCollection, getEmulatorDocument } from "./emulator-rest";
+
+const useEmulator = import.meta.env?.VITE_USE_EMULATOR === "true";
 
 interface LoyaltyResponse {
   account?: LoyaltyAccount;
@@ -44,6 +47,42 @@ function accountFromDoc(item: { id: string; data(): Record<string, unknown> | un
 }
 
 export async function getMyLoyalty(salonId: string): Promise<LoyaltyResponse> {
+  if (useEmulator) {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error("unauthenticated");
+    const token = await auth.currentUser?.getIdToken();
+    const [account, salon, movements] = await Promise.all([
+      getEmulatorDocument(`salons/${encodeURIComponent(salonId)}/loyaltyAccounts/${encodeURIComponent(uid)}`, token),
+      getEmulatorDocument(`salons/${encodeURIComponent(salonId)}`, token),
+      getEmulatorCollection(`salons/${encodeURIComponent(salonId)}/loyaltyAccounts/${encodeURIComponent(uid)}/transactions`, token),
+    ]);
+    const config = (salon?.fidelity ?? DEFAULT_CONFIG) as FidelityConfig;
+    // La prima apertura crea la card tramite la funzione server, che assegna
+    // codice e saldo iniziale. Le aperture successive restano sul percorso
+    // REST stabile usato dal simulatore.
+    if (!account) return await callLoyalty({ action: "getMine", salonId });
+    return {
+      account: {
+        clientId: uid,
+        codice: String(account.codice ?? ""),
+        nome: String(account.nome ?? "Cliente"),
+        email: String(account.email ?? ""),
+        punti: Number(account.punti) || 0,
+        puntiTotali: Number(account.puntiTotali) || 0,
+        puntiRiscattati: Number(account.puntiRiscattati) || 0,
+        visite: Number(account.visite) || 0,
+      },
+      config,
+      transactions: movements.map((item) => ({
+        id: item.id,
+        tipo: item.tipo as LoyaltyTransaction["tipo"],
+        punti: Number(item.punti) || 0,
+        descrizione: String(item.descrizione ?? "Movimento"),
+        ...(item.importo ? { importo: Number(item.importo) } : {}),
+        createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
+      })).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20),
+    };
+  }
   try { return await callLoyalty({ action: "getMine", salonId }); }
   catch {
     const uid = auth.currentUser?.uid;

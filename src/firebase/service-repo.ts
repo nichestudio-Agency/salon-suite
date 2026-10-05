@@ -2,15 +2,22 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs,
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "./app";
+import { auth, db, storage } from "./app";
 import type { Service } from "../domain/models";
+import { getEmulatorCollection } from "./emulator-rest";
 
 export type ServiceWithId = Service & { id: string };
+const useEmulator = import.meta.env?.VITE_USE_EMULATOR === "true";
 
 const servicesCol = (salonId: string) =>
   collection(db, "salons", salonId, "services");
 
 export async function listServices(salonId: string): Promise<ServiceWithId[]> {
+  if (useEmulator) {
+    const token = await auth.currentUser?.getIdToken();
+    const items = await getEmulatorCollection(`salons/${encodeURIComponent(salonId)}/services`, token);
+    return items as unknown as ServiceWithId[];
+  }
   const snap = await getDocs(servicesCol(salonId));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Service) }));
 }
